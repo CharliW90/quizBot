@@ -1,0 +1,19 @@
+{
+  "name": "quizbot",
+  "version": "2.0.0",
+  "description": "Discord bot for helping to run virtual 'pub quizzes' over discord; handles team registration, with role and channel creation",
+  "main": "quizBot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["discord", "quiz"],
+  "author": "Charli Williams",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "enmap": "^5.9.8",
+    "csv-parser": "^3.0.0",
+    "request": "^2.88.2",
+    "puppeteer": "^21.7.0"
+  }
+}
