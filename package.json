@@ -2,7 +2,7 @@
   "name": "quizbot",
   "version": "2.0.0",
   "description": "Discord bot for helping to run virtual 'pub quizzes' over discord; handles team registration, with role and channel creation",
-  "main": "quizBot.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
