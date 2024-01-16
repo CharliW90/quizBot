@@ -6,14 +6,25 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["discord", "quiz"],
+  "keywords": [
+    "discord",
+    "quiz"
+  ],
   "author": "Charli Williams",
   "license": "ISC",
   "dependencies": {
+    "csv-parser": "^3.0.0",
     "discord.js": "^14.14.1",
     "enmap": "^5.9.8",
-    "csv-parser": "^3.0.0",
-    "request": "^2.88.2",
-    "puppeteer": "^21.7.0"
+    "puppeteer": "^21.7.0",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-promise": "^6.1.1",
+    "eslint-plugin-vue": "^9.20.1"
   }
 }
