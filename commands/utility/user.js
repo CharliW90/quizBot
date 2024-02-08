@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 
-module.exports = {
+const user = {
 	category: 'utility',
 	data: new SlashCommandBuilder()
 		.setName('user')
@@ -11,3 +11,5 @@ module.exports = {
 		await interaction.reply(`This command was run by ${interaction.user.username}, who joined on ${interaction.member.joinedAt}.`);
 	},
 };
+
+module.exports = user;
