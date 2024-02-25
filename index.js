@@ -27,48 +27,29 @@ for (const folder of commandFolders) {
 		}
 	}
 }
+client.once(Events.ClientReady, readyClient => {
+	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+});
 
-// dynamically retrieve all event files
-const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter((file) => {return file.endsWith('.js')});
+client.on(Events.InteractionCreate, async interaction => {
+	if (!interaction.isChatInputCommand()) return;
+	const command = interaction.client.commands.get(interaction.commandName);
 
-for (const file of eventFiles) {
-	const filePath = path.join(eventsPath, file);
-	const event = require(filePath);
-	if (event.once) {
-		client.once(event.name, (...args) => {return event.execute(...args)});
-	} else {
-		client.on(event.name, (...args) => {return event.execute(...args)});
+	if (!command) {
+		console.error(`No command matching ${interaction.commandName} was found.`);
+		return;
 	}
-}
 
-// handle slash commands
-client.on(Events.InteractionCreate, async (interaction) => {
-  if(!interaction.isChatInputCommand()) {
-    return  //use Discord's native flag for slash commands (aka input commands) to ignore interactions that are not slash commands
-  }
-  if(!command){
-    console.error(`No command matching ${interaction.commandName} was found.`)
-    return;
-  }
-  command.execute(interaction)
-  .then(() => {})
-  .catch((err) => {
-    if(interaction.replied || interaction.deferred){
-      interaction.followUp({ content: "There was an error while executing this command!", ephemeral: true })
-      .then(() => {
-        console.error(err);
-        return;
-      })
-    } else {
-      interaction.reply({ content: "There was an error while executing this command!", ephemeral: true })
-      .then(() => {
-        console.error(err);
-        return;
-      })
-    }
-  })
-})
+	try {
+		await command.execute(interaction);
+	} catch (error) {
+		console.error(error);
+		if (interaction.replied || interaction.deferred) {
+			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+		} else {
+			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+		}
+	}
+});
 
-// Log in to Discord with client token
 client.login(token);
