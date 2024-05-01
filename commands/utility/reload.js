@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 
-const reload = {
+module.exports = {
   category: 'utility',
   data: new SlashCommandBuilder()
     .setName('reload')
@@ -24,11 +24,10 @@ const reload = {
       const newCommand = require(`../${command.category}/${command.data.name}.js`);
       interaction.client.commands.set(newCommand.data.name, newCommand);
       await interaction.reply(`Command \`${newCommand.data.name}\` was reloaded!`);
+      console.log(interaction.client.commands);
     } catch (error) {
       console.error(error);
       await interaction.reply(`There was an error while reloading a command \`${command.data.name}\`:\n\`${error.message}\``);
     }
   },
 };
-
-module.exports = reload;

@@ -1,12 +1,21 @@
 const { SlashCommandBuilder } = require('discord.js');
 
-const ping = {
+module.exports = {
+  category: 'utility',
 	data: new SlashCommandBuilder()
 		.setName('ping')
-		.setDescription('Replies with Pong!'),
+		.setDescription('Replies with Pong!')
+    .addBooleanOption(option =>
+      option
+      .setName('bool')
+      .setDescription('Do you want me to respond?')
+      .setRequired(false)),
 	async execute(interaction) {
-		await interaction.reply('Pong!');
+    const trigger = interaction.options.getBoolean('bool') ?? true
+    if(trigger){
+      await interaction.reply('Pong!');
+    } else {
+      await interaction.reply('Me? I heard nothing...')
+    }
 	},
 };
-
-module.exports = ping;
