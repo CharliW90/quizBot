@@ -4,13 +4,13 @@ const findCategoryChannel = require('./findCategoryChannel');
 module.exports = async (categoryChannel, interaction) => {
   const channelExists = findCategoryChannel(categoryChannel.name, interaction);
   if(channelExists){
-    return channelExists.id;
+    return {error: "Channel already exists", channel: channelExists};
   } else {
     const newCategoryChannel = await interaction.guild.channels.create({
       name: categoryChannel.name,
       type: ChannelType.GuildCategory,
     });
-    return newCategoryChannel;
+    return {error: null, channel: newCategoryChannel};
   }
 }
 

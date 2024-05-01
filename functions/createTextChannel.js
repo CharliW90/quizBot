@@ -4,13 +4,13 @@ const findTextChannel = require('./findTextChannel');
 module.exports = async (textChannel, interaction) => {
   const channelExists = findTextChannel(textChannel.name, interaction);
   if(channelExists){
-    return channelExists;
+    return {error: "Channel already exists", channel: channelExists};
   } else {
     const newTextChannel = await interaction.guild.channels.create({
       name: textChannel.name,
       type: ChannelType.GuildText,
     });
-    return newTextChannel;
+    return {error: null, channel: newTextChannel};
   }
 }
 

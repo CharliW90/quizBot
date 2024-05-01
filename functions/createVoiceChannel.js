@@ -4,13 +4,13 @@ const findVoiceChannel = require('./findVoiceChannel');
 module.exports = async (voiceChannel, interaction) => {
   const channelExists = findVoiceChannel(voiceChannel.name, interaction);
   if(channelExists){
-    return channelExists;
+    return {error: "Channel already exists", channel: channelExists};
   } else {
     const newvoiceChannel = await interaction.guild.channels.create({
       name: voiceChannel.name,
       type: ChannelType.GuildVoice,
     });
-    return newvoiceChannel;
+    return {error: null, channel: newvoiceChannel};
   }
 }
 
