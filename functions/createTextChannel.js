@@ -1,8 +1,8 @@
 const {ChannelType } = require('discord.js');
 const findTextChannel = require('./findTextChannel');
 
-module.exports = async (textChannel, interaction) => {
-  const channelExists = findTextChannel(textChannel.name, interaction);
+module.exports = async (interaction, textChannel) => {
+  const channelExists = findTextChannel(interaction, textChannel.name);
   if(channelExists){
     return {error: "Channel already exists", channel: channelExists};
   } else {

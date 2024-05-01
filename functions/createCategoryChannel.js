@@ -1,8 +1,8 @@
 const {ChannelType } = require('discord.js');
 const findCategoryChannel = require('./findCategoryChannel');
 
-module.exports = async (categoryChannel, interaction) => {
-  const channelExists = findCategoryChannel(categoryChannel.name, interaction);
+module.exports = async (interaction, categoryChannel) => {
+  const channelExists = findCategoryChannel(interaction, categoryChannel.name);
   if(channelExists){
     return {error: "Channel already exists", channel: channelExists};
   } else {

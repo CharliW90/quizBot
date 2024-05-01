@@ -1,8 +1,8 @@
 const {ChannelType } = require('discord.js');
 const findVoiceChannel = require('./findVoiceChannel');
 
-module.exports = async (voiceChannel, interaction) => {
-  const channelExists = findVoiceChannel(voiceChannel.name, interaction);
+module.exports = async (interaction, voiceChannel) => {
+  const channelExists = findVoiceChannel(interaction, voiceChannel.name);
   if(channelExists){
     return {error: "Channel already exists", channel: channelExists};
   } else {

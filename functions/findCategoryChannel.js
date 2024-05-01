@@ -1,6 +1,6 @@
 const {ChannelType} = require('discord.js');
 
-module.exports = (categoryName, interaction) => {
+module.exports = (interaction, categoryName) => {
   const category = interaction.guild.channels.cache.find(channel => channel.type === ChannelType.GuildCategory && channel.name === categoryName);
   return category ? category : null;
 }

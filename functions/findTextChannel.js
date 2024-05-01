@@ -1,6 +1,6 @@
 const {ChannelType} = require('discord.js');
 
-module.exports = (textChannelName, interaction) => {
+module.exports = (interaction, textChannelName) => {
   const textChannel = interaction.guild.channels.cache.find(channel => channel.type === ChannelType.GuildText && channel.name === textChannelName);
   return textChannel ? textChannel : null;
 }
