@@ -6,11 +6,11 @@ module.exports = async (voiceChannel, interaction) => {
   if(channelExists){
     return {error: "Channel already exists", channel: channelExists};
   } else {
-    const newvoiceChannel = await interaction.guild.channels.create({
+    const newVoiceChannel = await interaction.guild.channels.create({
       name: voiceChannel.name,
       type: ChannelType.GuildVoice,
     });
-    return {error: null, channel: newvoiceChannel};
+    return {error: null, channel: newVoiceChannel};
   }
 }
 
