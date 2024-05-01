@@ -1,6 +1,6 @@
 const { Events } = require('discord.js');
 
-const interactionCreate = {
+module.exports = {
 	name: Events.InteractionCreate,
 	async execute(interaction) {
 		if (!interaction.isChatInputCommand()) return;
@@ -24,5 +24,3 @@ const interactionCreate = {
 		}
 	},
 };
-
-module.exports = interactionCreate;
