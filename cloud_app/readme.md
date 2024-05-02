@@ -32,6 +32,8 @@ clasp is googles Apps Script CLI, which lets you edit, and deploy Apps Script pr
 }
 ```
 
+WIP: The Apps Script needs to only respond to the express app, to prevent anyone else being able to get the results
+
 ### CircleCI
 
 WIP
