@@ -1,4 +1,3 @@
-const fetchSecrets = require("../../utility/fetchSecrets.js");
 const { fetchFormResponses } = require("../models/formResponses.model.js");
 
 exports.fetchResponse = (req, res, next) => {

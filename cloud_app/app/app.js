@@ -1,7 +1,6 @@
 const express = require('express');
 const { fetchResponse } = require('./mvc/controllers/formResponses.controller.js');
 const { checker } = require('./mvc/controllers/health.controller.js');
-const runSample = require('./mvc/controllers/authForms.js');
 
 const app = express();
 app.use(express.json());
@@ -12,8 +11,6 @@ app.get('/api/health', (req, res) => {
   console.log('Received ping request on /api/health');
   res.status(200).send('pong');
 })
-
-app.get('/api/forms', runSample)
 
 app.get('/api/responses/:roundNumber', fetchResponse)
 
