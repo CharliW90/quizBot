@@ -4,7 +4,7 @@ A bot for Discord servers to help run a 'pub quiz' - creates categories, channel
 
 ## Pub Quiz
 
-This discord bot project arose from my work with a charity fundraising quiz, which is streamed on twitch.  The [quiz](https://www.virtual-quizzes.com/) is on the first Friday of every month, at 7:00PM UK time. Everyone is welcome to play along by watching our broadcast on Twitch.tv
+This discord bot project arose from my work with a [charity fundraising quiz](https://www.virtual-quizzes.com/), which is streamed on twitch.  The quiz is on the first Friday of every month, at 7:00PM UK time. Everyone is welcome to play along by watching our broadcast on Twitch.tv
 
 ## Web App
 
