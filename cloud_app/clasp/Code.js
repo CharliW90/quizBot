@@ -2,43 +2,42 @@ const key = JSON.parse(PropertiesService.getScriptProperties().getProperty("form
 const quizBotUrl = PropertiesService.getScriptProperties().getProperty("quizBot")
 
 function doGet(e) {
-  const passcheck = UrlFetchApp.fetch(`${quizBotUrl}/api/passcheck?password=${e.parameter.passKey}`, {'muteHttpExceptions': true});
-  if(passcheck.getResponseCode() === 200 && passcheck.toString() === e.parameter.passKey){
+  const passcheck = UrlFetchApp.fetch(`${quizBotUrl}/api/passcheck?password=${e.parameter.passkey}`, {'muteHttpExceptions': true});
+  if(passcheck.getResponseCode() === 200 && passcheck.toString() === e.parameter.passkey){
     const roundNumber = e.parameter.formId
     const formId = key[roundNumber]
 
     const form = FormApp.openById(formId);
     const responses = form.getResponses();
 
-    const results = [];
+    const results = {};
 
     responses.forEach((teamResponse) => {
       const responses = parseTeamResponse(teamResponse);
-
-      const teamResult = {
-        teamName: responses[0].answerGiven,
+      const teamName = responses[0].answerGiven
+      results[teamName] = {
         answers: [],
         score: 0
       };
 
       for(let i=1; i<responses.length; i++){
-        teamResult.answers.push(responses[i]);
-        teamResult.score += responses[i].answerScore;
+        results[teamName].answers.push({...responses[i]});
+        results[teamName].score += responses[i].answerScore;
       }
-      console.log(teamResult)
-      results.push(teamResult)
     })
-    console.log(results)
-    return ContentService.createTextOutput(JSON.stringify(results)).setMimeType(ContentService.MimeType.JSON);
+    const response = JSON.stringify(results)
+    return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
   } else {
-    err = [
-      "error",
+    console.error(`${quizBotUrl} passcheck response code: ${passcheck.getResponseCode()}, ${passcheck.toString()}`)
+    const err = {
+      "error":
       {
         "code": 403,
         "reason": "password incorrect"
       }
-    ]
-    return ContentService.createTextOutput(JSON.stringify(err)).setMimeType(ContentService.MimeType.JSON);
+    }
+    const response = JSON.stringify(err)
+    return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
