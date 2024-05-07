@@ -2,6 +2,10 @@
 
 A bot for Discord servers to help run a 'pub quiz' - creates categories, channels and roles for teams and quiz masters to interact.  Also fetches responses from google forms, via a web app and google apps script.
 
+## Pub Quiz
+
+This discord bot project arose from my work with a [charity fundraising quiz](https://www.virtual-quizzes.com/), which is streamed on twitch.  The quiz is on the first Friday of every month, at 7:00PM UK time. Everyone is welcome to play along by watching our broadcast on Twitch.tv
+
 ## Web App
 
 an express app, on google Cloud Run, that provides an API that can serve, to the discord bot, the responses from Google Forms, which themselves are handled by a google Apps Script (for authorisation reasons) which also exposes an endpoint, but which only responds to the express app
