@@ -7,6 +7,7 @@ function listen() {
     if (err) {
       console.error(err)
     } else {
+      console.log(`Server running on ${process.release.name} ${process.version}...`)
       console.log(`Server listening on port ${PORT}...`)
     }
   })
