@@ -2,20 +2,28 @@ const { newPassword } = require("../../utility/hotPass.js");
 const { fetchFormResponses } = require("../models/formResponses.model.js");
 
 exports.fetchResponse = (req, res, next) => {
-  const {roundNumber} = req.params;
-  const password = newPassword();
-  const scriptUrl = `https://script.google.com/macros/s/${process.env.scriptId}/exec`;
-
-  fetchFormResponses(scriptUrl, roundNumber, password)
-  .then((data) => {
-    console.log(data)
-    res.status(200).send(data)
-  })
-  .catch((err) => {
-    if(err.code === '23502'){
-      next({status: 400, msg: "Bad request"})  //needs amending once common error codes known
+  if(req.query.passkey === process.env.apiPasskey){
+    const {roundNumber} = req.params;
+    console.log(typeof(roundNumber));
+    if(typeof(roundNumber) === 'number'){
+      console.log("roundnumber is number")
     } else {
-      next(err)
+      if(roundNumber === "all"){
+        console.log("all rounds wanted")
+      }
     }
-  })
+
+    const password = newPassword();
+
+    fetchFormResponses(`https://script.google.com/macros/s/${process.env.scriptId}/exec?formId=${roundNumber}&passkey=${password}`)
+    .then((data) => {
+      // no need to JSON.parse the data thanks to app.use(express.json()) in our app.js file
+      res.status(200).send(data);
+    })
+    .catch((err) => {
+        next(err);
+    })
+  } else {
+    next({status: 401, msg: "You have not provided valid access rights to this endpoint."})
+  }
 };

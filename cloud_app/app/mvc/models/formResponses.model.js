@@ -1,7 +1,7 @@
 const instance = require("../../utility/connection.js")
 
-exports.fetchFormResponses = (scriptUrl, round_number, password) => {
-  return instance.get(scriptUrl + `?formId=${round_number}&passKey=${password}`)
+exports.fetchFormResponses = (parsedURL) => {
+  return instance.get(parsedURL)
   .then(response => {
     return response.data;
   })
