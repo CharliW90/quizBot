@@ -18,7 +18,7 @@ app.get('/api/passcheck', passcheck)
 
 app.use((err, req, res, next) => {
   if(err.status && err.msg){
-    res.status(err.status).send(err);
+    res.status(err.status).send(err.msg);
   } else {
     next(err);
   }
