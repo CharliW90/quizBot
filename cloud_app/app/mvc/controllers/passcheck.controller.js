@@ -1,7 +1,7 @@
 const { checkPassword } = require("../models/passcheck.model");
 
 exports.passcheck = (req, res, next) => {
-  const {password} = req.query;
+  const {password} = req.headers;
 
   checkPassword(password)
   .then((bool) => {
