@@ -1,6 +1,6 @@
 const express = require('express');
 const portal = require('./adminPortal.js');
-const { fetchResponse } = require('./mvc/controllers/formResponses.controller.js');
+const { fetchResponse, fetchAllResponses, listResponses } = require('./mvc/controllers/formResponses.controller.js');
 const { checker } = require('./mvc/controllers/health.controller.js');
 const { passcheck } = require('./mvc/controllers/passcheck.controller.js');
 
@@ -30,7 +30,11 @@ app.get('/api/health', (req, res) => {
   res.status(200).send('pong');
 });
 
+app.get('/api/responses/all', fetchAllResponses);
+
 app.get('/api/responses/:roundNumber', fetchResponse);
+
+app.get('/api/responses/', listResponses);
 
 app.get('/api/passcheck', passcheck);
 
