@@ -21,11 +21,7 @@ function doGet(e) {
 
   if(passcheck.getResponseCode() === 200 && passcheck.toString() === e.parameter.passkey){
     const roundNumber = e.parameter.formId
-    if(roundNumber === "all"){
-      console.warn("All Forms requested...")
-      const response = "this is a work in progress"
-      return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
-    } else {
+    if(!isNaN(roundNumber)){
       if(Object.keys(key).includes(roundNumber)){     // roundNumber matches a known form ID
         const formId = key[roundNumber];
 
@@ -93,6 +89,12 @@ function doGet(e) {
           "reason": `${roundNumber} is not a valid round number...`
         }
       }
+    } else {
+      console.warn(`${roundNumber} is not a number...`);
+        err.error = {
+          "code": 400,
+          "reason": `${roundNumber} is not a number...`
+        }
     }
   } else {
     console.error(`${quizBotUrl} passcheck response code: ${passcheck.getResponseCode()}, ${passcheck.toString()}`)
