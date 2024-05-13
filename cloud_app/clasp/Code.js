@@ -1,32 +1,50 @@
 const key = JSON.parse(PropertiesService.getScriptProperties().getProperty("forms"))
 const quizBotUrl = PropertiesService.getScriptProperties().getProperty("quizBot")
+const apiKey = PropertiesService.getScriptProperties().getProperty("apiKey")
 
 function doGet(e) {
-  const passcheck = UrlFetchApp.fetch(`${quizBotUrl}/api/passcheck?password=${e.parameter.passkey}`, {'muteHttpExceptions': true});
+  console.log(e)
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Password': e.parameter.passkey,
+  }
+  const options = {
+    'method': 'get',
+    'headers': headers,
+    'muteHttpExceptions': true
+  }
+  const passcheck = UrlFetchApp.fetch(`${quizBotUrl}/api/passcheck`, options);
+  console.log(passcheck)
   if(passcheck.getResponseCode() === 200 && passcheck.toString() === e.parameter.passkey){
     const roundNumber = e.parameter.formId
-    const formId = key[roundNumber]
+    if(roundNumber === "all"){
+      console.warn("All Forms requested...")
+      const response = "this is a work in progress"
+      return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
+    } else {
+      const formId = key[roundNumber]
 
-    const form = FormApp.openById(formId);
-    const responses = form.getResponses();
+      const form = FormApp.openById(formId);
+      const responses = form.getResponses();
 
-    const results = {};
+      const results = {};
 
-    responses.forEach((teamResponse) => {
-      const responses = parseTeamResponse(teamResponse);
-      const teamName = responses[0].answerGiven
-      results[teamName] = {
-        answers: [],
-        score: 0
-      };
+      responses.forEach((teamResponse) => {
+        const responses = parseTeamResponse(teamResponse);
+        const teamName = responses[0].answerGiven
+        results[teamName] = {
+          answers: [],
+          score: 0
+        };
 
-      for(let i=1; i<responses.length; i++){
-        results[teamName].answers.push({...responses[i]});
-        results[teamName].score += responses[i].answerScore;
-      }
-    })
-    const response = JSON.stringify(results)
-    return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
+        for(let i=1; i<responses.length; i++){
+          results[teamName].answers.push({...responses[i]});
+          results[teamName].score += responses[i].answerScore;
+        }
+      })
+      const response = JSON.stringify(results)
+      return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
+    }
   } else {
     console.error(`${quizBotUrl} passcheck response code: ${passcheck.getResponseCode()}, ${passcheck.toString()}`)
     const err = {
