@@ -63,7 +63,7 @@ function doGet(e) {
 
           responses.forEach((teamResponse) => {
             const responses = parseTeamResponse(teamResponse);
-            const teamName = responses[0].answerGiven   // the first question always asks for team name
+            const teamName = responses[0].answer   // the first question always asks for team name
             results[teamName] = {
               answers: [],
               score: 0
@@ -71,7 +71,7 @@ function doGet(e) {
                                                         // the remaining questions are quiz questions
             for(let i=1; i<responses.length; i++){
               results[teamName].answers.push({...responses[i]});
-              results[teamName].score += responses[i].answerScore;
+              results[teamName].score += responses[i].score;
             }
           })
 
@@ -121,10 +121,10 @@ function parseTeamResponse(teamResponse) {
 function parseAnswer(question) {
   const questionIndex = Number(question.getItem().getIndex());
   const answerGiven = String(question.getResponse());
-  const answerScore = Number(question.getScore());
-  const correctAnswer = Boolean(answerScore > 0);
+  const score = Number(question.getScore());
+  const correct = Boolean(score > 0);
 
-  const result = {questionIndex, answer: {answerGiven, answerScore, correctAnswer}};
+  const result = {questionIndex, answer: {answer: answerGiven, score, correct}};
 
   return result;
 }
