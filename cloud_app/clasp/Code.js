@@ -3,7 +3,6 @@ const quizBotUrl = PropertiesService.getScriptProperties().getProperty("quizBot"
 const apiKey = PropertiesService.getScriptProperties().getProperty("apiKey")
 
 function doGet(e) {
-  console.log(e)
   const headers = {
     'Authorization': `Bearer ${apiKey}`,
     'Password': e.parameter.passkey,
@@ -13,8 +12,13 @@ function doGet(e) {
     'headers': headers,
     'muteHttpExceptions': true
   }
+
+  const err = {
+    "error": {}
+  }
+
   const passcheck = UrlFetchApp.fetch(`${quizBotUrl}/api/passcheck`, options);
-  console.log(passcheck)
+
   if(passcheck.getResponseCode() === 200 && passcheck.toString() === e.parameter.passkey){
     const roundNumber = e.parameter.formId
     if(roundNumber === "all"){
@@ -22,41 +26,83 @@ function doGet(e) {
       const response = "this is a work in progress"
       return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
     } else {
-      const formId = key[roundNumber]
+      if(Object.keys(key).includes(roundNumber)){     // roundNumber matches a known form ID
+        const formId = key[roundNumber];
 
-      const form = FormApp.openById(formId);
-      const responses = form.getResponses();
+        const form = FormApp.openById(formId);
 
-      const results = {};
+        if(!form.isAcceptingResponses()){             // form is closed to responses, safe to proceed with handling scores
+          const roundDetails = {
+            number: Number(roundNumber),
+            questions: 0,
+            totalScore: 0
+          }
 
-      responses.forEach((teamResponse) => {
-        const responses = parseTeamResponse(teamResponse);
-        const teamName = responses[0].answerGiven
-        results[teamName] = {
-          answers: [],
-          score: 0
-        };
+          const questions = form.getItems()         // first build up some information about the questions
 
-        for(let i=1; i<responses.length; i++){
-          results[teamName].answers.push({...responses[i]});
-          results[teamName].score += responses[i].answerScore;
+          questions.forEach((question) => {
+            if(question.getType().name() === "TEXT"){
+              const parsedItem = question.asTextItem();
+              const possiblePoints = parsedItem.getPoints();
+              if(possiblePoints > 0){
+                roundDetails.questions ++;
+                roundDetails.totalScore += possiblePoints;
+              }
+            } else if(question.getType().name() === "MULTIPLE_CHOICE"){
+              const parsedItem = question.asMultipleChoiceItem();
+              const possiblePoints = parsedItem.getPoints();
+              if(possiblePoints > 0){
+                roundDetails.questions ++;
+                roundDetails.totalScore += possiblePoints;
+              }
+            }
+          })
+
+          const responses = form.getResponses();      // now build up the responses provided
+          const results = {};
+
+          responses.forEach((teamResponse) => {
+            const responses = parseTeamResponse(teamResponse);
+            const teamName = responses[0].answerGiven   // the first question always asks for team name
+            results[teamName] = {
+              answers: [],
+              score: 0
+            };
+                                                        // the remaining questions are quiz questions
+            for(let i=1; i<responses.length; i++){
+              results[teamName].answers.push({...responses[i]});
+              results[teamName].score += responses[i].answerScore;
+            }
+          })
+
+          const response = {roundDetails, results}
+
+          const stringResponse = JSON.stringify(response)
+          return ContentService.createTextOutput(stringResponse).setMimeType(ContentService.MimeType.JSON);
+        } else {
+          console.warn(`Form is still accepting responses - refusing results...`);
+          err.error = {
+            "code": 409,
+            "reason": `Form is still accepting responses`
+          }
         }
-      })
-      const response = JSON.stringify(results)
-      return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
+      } else {
+        console.warn(`${roundNumber} is not a valid round number...`);
+        err.error = {
+          "code": 404,
+          "reason": `${roundNumber} is not a valid round number...`
+        }
+      }
     }
   } else {
     console.error(`${quizBotUrl} passcheck response code: ${passcheck.getResponseCode()}, ${passcheck.toString()}`)
-    const err = {
-      "error":
-      {
-        "code": 403,
-        "reason": "password incorrect"
-      }
+    err.error = {
+      "code": 403,
+      "reason": "password incorrect"
     }
-    const response = JSON.stringify(err)
-    return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
   }
+  const response = JSON.stringify(err)
+  return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
 }
 
 function parseTeamResponse(teamResponse) {
