@@ -1,6 +1,8 @@
 const axios = require('axios');
 const { apiEndpoint, apiPasskey } = require('../../config.json');
+
 const { parse } = require('./parseFormResponses');
+const { heldResponses } = require('./holdFormResponses');
 
 module.exports = async (roundNumber) => {
   const config = {
@@ -8,12 +10,24 @@ module.exports = async (roundNumber) => {
   }
   return axios.get(`${apiEndpoint}/responses/${roundNumber}`, config)
   .then(response => {
-    return parse(response.data)
+    if(response.data === undefined || response.data.length === 0){
+      return []
+    }
+    if(response.data.length){
+      response.data.forEach((round) => {
+        parse(round, true)
+      })
+      return heldResponses();
+    } else {
+      parse(response.data, true);
+      return heldResponses(roundNumber);
+    }
   })
   .then(embeds => {
     return embeds
-  }) //req.query.formId
+  })
   .catch(error => {
-    console.error(error)
+    console.error(error);
+    return Promise.reject(error);
   })
 };

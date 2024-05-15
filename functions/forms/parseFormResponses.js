@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
+const { hold } = require("./holdFormResponses");
 
-exports.parse = (response) => {
+exports.parse = (response, isHeld = false) => {
   const {roundDetails, results} = response;
 
   const embedMessages = [];
@@ -27,8 +28,11 @@ exports.parse = (response) => {
     })
     embedMessages.push(teamEmbed);
   })
-
-  return embedMessages;
+  if(isHeld){
+    hold(roundDetails.number, embedMessages, teams);
+  } else {
+    return embedMessages;
+  }
 }
 
 const determineEmoji = (percent) => {
