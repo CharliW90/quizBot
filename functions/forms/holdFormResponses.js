@@ -1,13 +1,11 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
+const sendFormResponses = require("./sendFormResponses");
 
 const holding = {};
 
-exports.hold = (roundnum, embeds, teams) => {
-  holding[roundnum] = {teams, embeds};
-}
-
-exports.fetch = (roundnum) => {
-  return holding[roundnum]
+exports.hold = (roundNum, embeds, teamNames) => {
+  const teams = teamNames.map(name => name.toLowerCase());
+  holding[roundNum] = {teams, embeds};
 }
 
 exports.heldResponses = (roundNum = 0) => {
@@ -76,9 +74,25 @@ exports.followUp = async (interaction, roundNum) => {
     } else if(toDo.customId === 'send') {
       await toDo.update({ content: `Results for ${roundMsg} are being sent out now... :incoming_envelope:`, components: [] });
       // handle sending results to individual channels here
-
+      if(isNaN(roundNum)){
+        // handle sending all rounds
+        return sendFormResponses(holding)
+        .then((response) => {
+          console.log("handle all responses")
+          return `Results have been sent to each team - some teams did not work, see: ...`
+        })
+      } else {
+        // handle sending a single round
+        return sendFormResponses([holding[roundNum]])
+        .then((response) => {
+          const {successes, failures} = response;
+          return `Succesfully posted to ${successes}, failed to post to ${failures}`
+        })
+        .catch((error) => {
+          throw error;
+        })
+      }
       // include logic for handling failed teams sends
-      return `Results have been sent to each team - some teams did not work, see: ...`
     } else if(toDo.customId === 'delete') {
       await toDo.update({ content: `Results for ${roundMsg} are being deleted! :x:`, components: [] });
       

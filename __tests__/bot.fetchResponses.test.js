@@ -60,7 +60,7 @@ describe('fetchFormResponses.js', () => {
 
     expect(holdSpy).toHaveBeenCalledTimes(rounds);
     for(let i = 0; i < rounds; i++){
-      expect(holdSpy).toHaveBeenNthCalledWith(i+1, input[i].roundDetails.number, expect.any(Array), Object.keys(input[i].results).sort());
+      expect(holdSpy).toHaveBeenNthCalledWith(i+1, input[i].roundDetails.number, expect.any(Array), Object.keys(input[i].results));
     }
 
     expect(heldResponsesSpy).toHaveBeenCalledTimes(1);
