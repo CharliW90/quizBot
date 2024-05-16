@@ -6,7 +6,9 @@ exports.hold = (roundnum, embeds, teams) => {
   holding[roundnum] = {teams, embeds};
 }
 
-  // to access: return holding[`${roundNumber}`]
+exports.fetch = (roundnum) => {
+  return holding[roundnum]
+}
 
 exports.heldResponses = (roundNum = 0) => {
   if(roundNum === 0){
