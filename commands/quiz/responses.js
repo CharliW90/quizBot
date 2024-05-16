@@ -1,5 +1,6 @@
 const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder } = require('discord.js');
-const fetchForms = require('../../functions/forms/fetchFormResponses.js')
+const fetchForms = require('../../functions/forms/fetchFormResponses.js');
+const { followUp } = require('../../functions/forms/holdFormResponses.js');
 
 module.exports = {
   category: 'utility',
@@ -60,15 +61,32 @@ module.exports = {
         await fetch.update({ content: `${message} being fetched now, please wait...`, components: [] });
         fetchForms(roundNumberToFetch)
         .then((response) => {
-          interaction.channel.send({embeds: response})
+          if(response.length === 0){
+            return Promise.reject(`No results found for ${roundNumberToFetch}`)
+          }
+          interaction.channel.send({embeds: response});
+          fetch.editReply({ content: `${message} ready - see summary below:`, components: [] });
+          return followUp(interaction, roundNumberToFetch)
+        })
+        .then((confirmation) => {
+          if(confirmation){
+            interaction.channel.send(confirmation)
+          }
+        })
+        .catch((err) => {
+          // handles errors thrown by 'followUp' in '../../functions/forms/holdFormResponses.js'
+          interaction.channel.send({ content: err.message, components: [] });
         })
       } else if(fetch.customId === 'cancel'){
         await fetch.update({ content: `Action cancelled.`, components: [] });
       }
     } catch(e) {
-      await interaction.editReply({ content: 'Response not received within 1 minute, cancelling', components: [] });
+      if(e.message === "Collector received no interactions before ending with reason: time"){
+        // handles failure to reply to the initial response of 'which round do you want to fetch?'
+        await userResponse.edit({ content: 'Response not received within 1 minute, cancelling...', components: [] });
+      } else {
+        throw e;
+      }
     }
-
-    
   },
 };
