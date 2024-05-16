@@ -13,13 +13,14 @@ module.exports = async (roundNumber) => {
     if(response.data === undefined || response.data.length === 0){
       return []
     }
-    if(response.data.length){
+
+    if(response.data.length > 1){
       response.data.forEach((round) => {
         parse(round, true)
       })
       return heldResponses();
     } else {
-      parse(response.data, true);
+      parse(response.data[0], true);
       return heldResponses(roundNumber);
     }
   })

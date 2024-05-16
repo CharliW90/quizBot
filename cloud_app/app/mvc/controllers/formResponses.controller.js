@@ -14,7 +14,8 @@ exports.fetchResponse = (req, res, next) => {
     fetchFormResponses(`${scriptUrl}?formId=${roundNumber}&passkey=${password}`)
     .then((data) => {
       // no need to JSON.parse the data thanks to app.use(express.json()) in our app.js file
-      res.status(200).send(data);
+      // responses endpoint should always return response as an array
+      res.status(200).send([data]);
     })
     .catch((err) => {
       if(err.status === 403){
@@ -41,6 +42,8 @@ exports.fetchAllResponses = (req, res, next) => {
     return allResponses
   })
   .then((responses) => {
+    // no need to JSON.parse the data thanks to app.use(express.json()) in our app.js file
+    // responses endpoint should always return response as an array (responses is already an array)
     res.status(200).send(responses);
   })
   .catch((err) => {

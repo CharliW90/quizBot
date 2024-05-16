@@ -22,6 +22,7 @@ describe('fetchFormResponses.js', () => {
     const response = await fetchFormResponses(1);
     expect(response).toEqual([]);
     expect(parseSpy).not.toHaveBeenCalled();
+    expect(holdSpy).not.toHaveBeenCalled();
     expect(heldResponsesSpy).not.toHaveBeenCalled();
   });
 
@@ -37,16 +38,16 @@ describe('fetchFormResponses.js', () => {
     expect(parseSpy).toHaveBeenCalledWith(input, true);
 
     expect(holdSpy).toHaveBeenCalledTimes(1);
-    expect(holdSpy).toHaveBeenCalledWith(input.roundDetails.number, expect.any(Object), Object.keys(input.results).sort())
+    expect(holdSpy).toHaveBeenCalledWith(input.roundDetails.number, expect.any(Object), Object.keys(input.results))
     
     expect(heldResponsesSpy).toHaveBeenCalledTimes(1);
-    expect(heldResponsesSpy).toHaveBeenCalledWith();
+    expect(heldResponsesSpy).toHaveBeenCalledWith(input.roundDetails.number);
   });
 
   test('parses and stores 6 lots of embeds when API returns data for all rounds, returns a single embed response', async () => {
     const input = mockData
     const rounds = mockData.length
-    axios.get.mockResolvedValueOnce({ data: input });
+    axios.get.mockResolvedValueOnce({ data: [...input] });
 
     const [embed] = await fetchFormResponses("all");
     expect(embed).toBeInstanceOf(EmbedBuilder);
@@ -71,7 +72,7 @@ describe('fetchFormResponses.js', () => {
     const error = new Error('API request failed');
     axios.get.mockRejectedValueOnce(error);
     await expect(fetchFormResponses(1)).rejects.toEqual(error);
-    
+
     expect(parseSpy).not.toHaveBeenCalled();
     expect(heldResponsesSpy).not.toHaveBeenCalled();
     expect(holdSpy).not.toHaveBeenCalled();
