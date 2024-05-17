@@ -8,7 +8,7 @@ module.exports = async (heldResponses, teamName = null) => {
     if(teamName){
       if(teams.includes(teamName.toLowerCase())){
         const teamEmbed = embeds.filter((embed) => { return embed.data.title.toLowerCase() === teamName.toLowerCase()});
-        const channel = channelFromTeam(teamName)
+        const [err, channel] = channelFromTeam(teamName)
         if(channel){
           channel.send(teamEmbed);
           response.successes.push(teamName);
@@ -24,7 +24,7 @@ module.exports = async (heldResponses, teamName = null) => {
       // handle all teams
       embeds.forEach((embed) => {
         const team = embed.data.title;
-        const channel = channelFromTeam(team)
+        const [err, channel] = channelFromTeam(team)
         if(channel){
           channel.send(embed);
           response.successes.push(team);
