@@ -13,9 +13,6 @@ describe('fetchFormResponses.js', () => {
   beforeEach(() => {
     jest.clearAllMocks(); // Clear mocks before each test
   });
-  afterEach(() => {
-    jest.restoreAllMocks();
-  })
 
   test('returns an empty array when API returns no data', async () => {
     axios.get.mockResolvedValueOnce({ data: [] });
