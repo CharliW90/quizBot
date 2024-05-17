@@ -12,7 +12,5 @@ describe('parseFormResponses.js', () => {
     jest.restoreAllMocks();
   })
 
-  test('returns an empty array when passed no data', async () => {
-    const input = 'x';
-  })
+  test.todo('returns an empty array when passed no data')
 })
