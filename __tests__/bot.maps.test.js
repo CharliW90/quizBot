@@ -24,10 +24,10 @@ describe('teamChannels.js - error first functions', () => {
 
       const registration = registerTeamChannel();
       expect(registration).toHaveLength(2);
-      const [err, respoonse] = registration;
+      const [err, response] = registration;
       expect(err.code).toBe(400);
       expect(err.message).toEqual(`Team Name was undefined, Channel was undefined`);
-      expect(respoonse).toBeNull();
+      expect(response).toBeNull();
     })
 
     test('returns error message and null response if no team name given', () => {

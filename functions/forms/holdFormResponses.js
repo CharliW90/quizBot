@@ -4,13 +4,41 @@ const sendFormResponses = require("./sendFormResponses");
 const holding = {};
 
 exports.hold = (roundNum, embeds, teamNames) => {
+  if(!roundNum || !embeds || !teamNames) {
+    return [{"message": `round number was ${roundNum}; embeds were ${embeds}; team names were ${teamNames}`, "code": 400, "loc": "holdFormResponses.js/hold()"}, null]
+  }
+
+  if(embeds.constructor !== Array || embeds.length < 1) {
+    return [{"message": `embeds must be provided as an array; received ${JSON.stringify(embeds)}`, "code": 400, "loc": "holdFormResponses.js/hold()"}, null];
+  }
+
+  if(teamNames.constructor !== Array || teamNames.length < 1) {
+    return [{"message": `team names must be provided as an array; received ${JSON.stringify(teamNames)}`, "code": 400, "loc": "holdFormResponses.js/hold()"}, null];
+  }
+
+  if(teamNames.length !== embeds.length) {
+    const details = {teamNames, embeds, "loc": "holdFormResponses.js/hold()"}
+    return [{"message": `mismatch between team names and embeds received`, "code": 400, details}, null];
+  }
+
   const teams = teamNames.map(name => name.toLowerCase());
   holding[roundNum] = {teams, embeds};
+
+  if(holding[roundNum].teams && holding[roundNum].embeds) {
+    return [null, `holding responses for ${teams.length} teams, round ${roundNum}`]
+  } else {
+    const details = {roundNum, teamNames, teams, embeds, holding, "loc": "holdFormResponses.js/hold()"}
+    [{"message": `error occured when storing ${embeds.length} embeds for ${teams.length} teams against round number ${roundNum}`, "code": 500, details}, null]
+  }
 }
 
 exports.heldResponses = (roundNum = 0) => {
   if(roundNum === 0){
     const rounds = Object.keys(holding);
+    if(rounds.length < 1) {
+      return [{"message": `did not find any stored rounds`, "code": 404, "loc": "holdFormResponses.js/heldResponses()"}, null]
+    }
+
     const heldEmbeds = new EmbedBuilder()
       .setColor('Purple')
       .setTitle("Embeds held for retrieval")
@@ -23,8 +51,12 @@ exports.heldResponses = (roundNum = 0) => {
         {name: `Responses for Quiz Round ${round}`, value: teams.join('\n')}
       )
     })
-    return [heldEmbeds];
+    return [null, heldEmbeds];
   } else {
+    if(!holding[roundNum]) {
+      return [{"message": `could not find a stored round for round number ${roundNum}`, "code": 404, "loc": "holdFormResponses.js/heldResponses()"}, null]
+    }
+
     const round = holding[roundNum];
     const teams = round.teams;
     const heldEmbed = new EmbedBuilder()
@@ -33,7 +65,7 @@ exports.heldResponses = (roundNum = 0) => {
       .setAuthor({name: `Virtual Quizzes Response Handler`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
       .addFields({name: `Teams`, value: teams.join('\n')})
 
-    return [heldEmbed];
+    return [null, heldEmbed];
   }
 }
 
@@ -78,7 +110,6 @@ exports.followUp = async (interaction, roundNum) => {
         // handle sending all rounds
         return sendFormResponses(holding)
         .then((response) => {
-          console.log("handle all responses")
           return `Results have been sent to each team - some teams did not work, see: ...`
         })
       } else {

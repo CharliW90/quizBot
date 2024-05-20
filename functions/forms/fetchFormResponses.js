@@ -10,25 +10,36 @@ module.exports = async (roundNumber) => {
   }
   return axios.get(`${apiEndpoint}/responses/${roundNumber}`, config)
   .then(response => {
-    if(response.data === undefined || response.data.length === 0){
-      return []
+    if(response.data === undefined || response.data.length < 1){
+      return [{"message": `forms API response was ${JSON.stringify(response.data)}`, "code": 404}, null]
     }
 
     if(response.data.length > 1){
       response.data.forEach((round) => {
-        parse(round, true)
+        const parsedRound = parse(round, true);
+        const [err, data] = parsedRound;
+        if(err){
+          throw err;
+        }
       })
       return heldResponses();
-    } else {
-      parse(response.data[0], true);
-      return heldResponses(roundNumber);
     }
+
+    const parsedRound = parse(response.data[0], true);
+    const [err, data] = parsedRound;
+    if(err){
+      throw err;
+    }
+    return heldResponses(roundNumber);
   })
-  .then(embeds => {
-    return embeds
+  .then(([err, embeds]) => {
+    if(err){
+      throw err;
+    }
+    return [null, embeds];
   })
   .catch(error => {
     console.error(error);
-    return Promise.reject(error);
+    return [error, null];
   })
 };
