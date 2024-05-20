@@ -1,27 +1,15 @@
-const { EmbedBuilder } = require("discord.js");
 const data = require('../__data__');
-
-const { registerTeamChannel, deleteTeam } = require("../functions/maps/teamChannels");
-
-const sendFormResponses = require('../functions/forms/sendFormResponses');
 const {mockTextChannel} = require("../__mocks__/textChannels");
 
-const mockedChannel = mockTextChannel('teamName', '123-456');
-
-console.log(mockedChannel)
-
 describe('sendFormResponses.js', () => {
-  beforeEach(() => {
-    jest.restoreAllMocks();
-  });
   afterEach(() => {
-    jest.clearAllMocks(); // Clear mocks before each test
-    deleteTeam("teamName");
-    deleteTeam("another");
-    deleteTeam("a_third")
+    jest.clearAllMocks();
+    jest.resetModules();
   })
 
   test('returns an empty object when passed no data', () => {
+    const sendFormResponses = require('../functions/forms/sendFormResponses');
+
     sendFormResponses([])
     .then((output) => {
       expect(output).toEqual([]);
@@ -29,25 +17,47 @@ describe('sendFormResponses.js', () => {
   })
 
   test('sends a message to a channel matching the teamName, when passed a single round of embeds and a teamname', () => {
+    const { registerTeamChannel } = require("../functions/maps/teamChannels");
+    const sendFormResponses = require('../functions/forms/sendFormResponses');
+
+    const mockedChannel = mockTextChannel('teamName', '123-456');
+
     registerTeamChannel("teamName", mockedChannel);
     sendFormResponses([data.botHeldEmbeds], "teamName");
-    // expect(mockedChannel.send).toHaveBeenCalledTimes(1);
+    expect(mockedChannel.send).toHaveBeenCalledTimes(1);
   })
 
   test('sends embeds to each team channel, when passed a single round of embeds and no teamname', () => {
-    registerTeamChannel("teamName", mockedChannel);
-    registerTeamChannel("another", mockedChannel);
-    registerTeamChannel("a_third", mockedChannel);
+    const { registerTeamChannel } = require("../functions/maps/teamChannels");
+    const sendFormResponses = require('../functions/forms/sendFormResponses');
+
+    const mockedChannelA = mockTextChannel('teamName', '123-456');
+    const mockedChannelB = mockTextChannel('another', '456-789');
+    const mockedChannelC = mockTextChannel('a_third', '789-123');
+
+    registerTeamChannel("teamName", mockedChannelA);
+    registerTeamChannel("another", mockedChannelB);
+    registerTeamChannel("a_third", mockedChannelC);
     sendFormResponses([data.botHeldEmbeds]);
-    expect(mockedChannel.send).toHaveBeenCalledTimes(3);
-    data.botHeldEmbeds.embeds.forEach((embed) => {
-      expect(mockedChannel.send).toHaveBeenCalledWith(embed)
-    })
+    expect(mockedChannelA.send).toHaveBeenCalledTimes(1);
+    expect(mockedChannelA.send).toHaveBeenCalledWith(data.botHeldEmbeds.embeds[0]);
+    expect(mockedChannelB.send).toHaveBeenCalledTimes(1);
+    expect(mockedChannelB.send).toHaveBeenCalledWith(data.botHeldEmbeds.embeds[1]);
+    expect(mockedChannelC.send).toHaveBeenCalledTimes(1);
+    expect(mockedChannelC.send).toHaveBeenCalledWith(data.botHeldEmbeds.embeds[2]);
   })
 
   test('returns accurate success and failure information when teams cannot be found', () => {
-    registerTeamChannel("teamName", mockedChannel);
-    registerTeamChannel("a_third", mockedChannel);
+    const { registerTeamChannel } = require("../functions/maps/teamChannels");
+    const sendFormResponses = require('../functions/forms/sendFormResponses');
+
+    const mockedChannelA = mockTextChannel('teamName', '123-456');
+    const mockedChannelB = mockTextChannel('another', '456-789');
+    const mockedChannelC = mockTextChannel('a_third', '789-123');
+
+    registerTeamChannel("teamName", mockedChannelA);
+    registerTeamChannel("a_third", mockedChannelC);
+
     sendFormResponses([data.botHeldEmbeds])
     .then((response) => {
       expect(response[0].successes).toHaveLength(2);
@@ -55,12 +65,18 @@ describe('sendFormResponses.js', () => {
       expect(response[0].failures).toHaveLength(1);
       expect(response[0].failures).toEqual(["another"]);
     })
-    expect(mockedChannel.send).toHaveBeenCalledTimes(2);
+    expect(mockedChannelA.send).toHaveBeenCalledTimes(1);
+    expect(mockedChannelB.send).not.toHaveBeenCalled();
+    expect(mockedChannelC.send).toHaveBeenCalledTimes(1);
     data.botHeldEmbeds.embeds.forEach((embed) => {
-      if(embed.data.title === "teamName" || embed.data.title === "a_third"){
-        expect(mockedChannel.send).toHaveBeenCalledWith(embed)
-      } else if(embed.data.title === "another"){
-        expect(mockedChannel.send).not.toHaveBeenCalledWith(embed)
+      if(embed.data.title === "teamName"){
+        expect(mockedChannelA.send).toHaveBeenCalledWith(embed);
+      }
+      if(embed.data.title === "a_third"){
+        expect(mockedChannelC.send).toHaveBeenCalledWith(embed);
+      }
+      if(embed.data.title === "another"){
+        expect(mockedChannelB.send).not.toHaveBeenCalledWith(embed)
       }
     })
   })

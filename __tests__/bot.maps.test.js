@@ -11,7 +11,7 @@ const copyOfChannel = JSON.stringify(textChannel);
 describe('teamChannels.js - error first functions', () => {
   describe('registerTeamChannel()', () => {
     beforeEach(() => {
-      const {registerTeamChannel, channelFromTeam} = require("../functions/maps/teamChannels");
+      const {registerTeamChannel} = require("../functions/maps/teamChannels");
       channels.forEach((channel) => {registerTeamChannel(...channel)});
     })
   
@@ -72,7 +72,7 @@ describe('teamChannels.js - error first functions', () => {
       expect(secondRegistration).toHaveLength(2);
       const [err, response] = secondRegistration;
       expect(err.code).toBe(409);
-      expect(err.message).toEqual(`${teamName} already linked to ${textChannel.id}`);
+      expect(err.message).toEqual(`${teamName} already linked to a channel`);
       expect(response).toBeNull();
     })
   })
