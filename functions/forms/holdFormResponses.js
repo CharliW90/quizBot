@@ -1,5 +1,5 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
-const sendFormResponses = require("./sendFormResponses");
+const { sendResponses } = require("./sendFormResponses");
 
 const holding = {};
 
@@ -108,13 +108,13 @@ exports.followUp = async (interaction, roundNum) => {
       // handle sending results to individual channels here
       if(isNaN(roundNum)){
         // handle sending all rounds
-        return sendFormResponses(holding)
+        return sendResponses(holding)
         .then((response) => {
           return `Results have been sent to each team - some teams did not work, see: ...`
         })
       } else {
         // handle sending a single round
-        return sendFormResponses([holding[roundNum]])
+        return sendResponses([holding[roundNum]])
         .then((response) => {
           const {successes, failures} = response;
           return `Succesfully posted to ${successes}, failed to post to ${failures}`

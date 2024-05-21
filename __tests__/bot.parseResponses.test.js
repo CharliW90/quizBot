@@ -1,6 +1,6 @@
 const { EmbedBuilder, embedLength } = require('discord.js');
 const data = require('../__data__');
-const {holdSpy} = require('../__mocks__/spies'); // note: spies must be called before declaring the function they will be called by
+const {holdSpy} = require('../__mocks__/functionSpies'); // note: spies must be called before declaring the function they will be called by
 
 const {parse} = require('../functions/forms/parseFormResponses');
 
@@ -21,6 +21,7 @@ describe('parseFormResponses.js', () => {
         const [err, response] = output;
         expect(err.code).toEqual(404);
         expect(err.message).toEqual("forms API response is undefined");
+        expect(err.loc).toBeDefined();
         expect(response).toBeNull();
       })
 
@@ -30,7 +31,7 @@ describe('parseFormResponses.js', () => {
         const [err, response] = output;
         expect(err.code).toEqual(400);
         expect(err.message).toEqual(`forms API response malformed`);
-        expect(err.details).toEqual(input);
+        expect(err.details).toEqual({...input, "loc": expect.any(String)});
         expect(response).toBeNull();
       })
 
@@ -40,7 +41,7 @@ describe('parseFormResponses.js', () => {
         const [err, response] = output;
         expect(err.code).toEqual(400);
         expect(err.message).toEqual(`forms API response results were undefined`);
-        expect(err.details).toBeUndefined();
+        expect(err.loc).toBeDefined();
         expect(response).toBeNull();
       })
 
@@ -50,7 +51,7 @@ describe('parseFormResponses.js', () => {
         const [err, response] = output;
         expect(err.code).toEqual(400);
         expect(err.message).toEqual(`forms API response roundDetails were undefined`);
-        expect(err.details).toBeUndefined();
+        expect(err.loc).toBeDefined();
         expect(response).toBeNull();
       })
 
@@ -60,7 +61,7 @@ describe('parseFormResponses.js', () => {
         let [err, response] = output;
         expect(err.code).toEqual(400);
         expect(err.message).toEqual(`forms API response roundDetails were ${JSON.stringify(input.roundDetails)}`);
-        expect(err.details).toBeUndefined();
+        expect(err.loc).toBeDefined();
         expect(response).toBeNull();
 
         input = {"roundDetails": {"data": "object"}, "results": "this is a string"}
@@ -68,7 +69,7 @@ describe('parseFormResponses.js', () => {
         [err, response] = output;
         expect(err.code).toEqual(400);
         expect(err.message).toEqual(`forms API response results were ${JSON.stringify(input.results)}`);
-        expect(err.details).toBeUndefined();
+        expect(err.loc).toBeDefined();
         expect(response).toBeNull();
       })
 
@@ -78,7 +79,7 @@ describe('parseFormResponses.js', () => {
         [err, response] = output;
         expect(err.code).toEqual(404);
         expect(err.message).toEqual(`forms API response results ${JSON.stringify(input.results)} does not contain any teams`);
-        expect(err.details).toBeUndefined();
+        expect(err.loc).toBeDefined();
         expect(response).toBeNull();
       })
     })
@@ -108,11 +109,11 @@ describe('parseFormResponses.js', () => {
         expect(response).toHaveLength(teams.length);
         response.forEach((teamEmbed, index) => {
           expect(teamEmbed).toBeInstanceOf(EmbedBuilder);
-          expect(teamEmbed.data.title).toEqual(teams[index]);
-          expect(teamEmbed.data.author.name).toEqual(`Virtual Quizzes - Round Number ${input.roundDetails.number}`)
-          const totals = teamEmbed.data.fields.shift();
-          expect(totals).toMatchObject({"name": "Total Score", "value": expect.any(String)});
-          expect(teamEmbed.data.fields).toHaveLength(input.roundDetails.questions);
+          expect(teamEmbed).toEqual(data.botRoundEmbed(input.roundDetails.number, teams[index]));
+          const rounds = [...teamEmbed.data.fields];
+          const totals = rounds.shift();
+          expect(totals).toEqual({"name": "Total Score", "value": expect.stringMatching(/(^\d+\ \/\ \d+$)/)});
+          expect(rounds).toHaveLength(input.roundDetails.questions);
         })
       })
     })

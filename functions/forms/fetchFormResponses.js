@@ -4,14 +4,14 @@ const { apiEndpoint, apiPasskey } = require('../../config.json');
 const { parse } = require('./parseFormResponses');
 const { heldResponses } = require('./holdFormResponses');
 
-module.exports = async (roundNumber) => {
+exports.fetch = async (roundNumber) => {
   const config = {
     headers: { Authorization: `Bearer ${apiPasskey}` }
   }
   return axios.get(`${apiEndpoint}/responses/${roundNumber}`, config)
   .then(response => {
     if(response.data === undefined || response.data.length < 1){
-      return [{"message": `forms API response was ${JSON.stringify(response.data)}`, "code": 404}, null]
+      throw {"message": `forms API response was ${JSON.stringify(response.data)}`, "code": 404, "loc": "fetchFormResponses.js/fetch():response"}
     }
 
     if(response.data.length > 1){
@@ -34,7 +34,7 @@ module.exports = async (roundNumber) => {
   })
   .then(([err, embeds]) => {
     if(err){
-      throw err;
+      throw {...err, "loc": "fetchFormResponses.js/fetch():embeds"};
     }
     return [null, embeds];
   })

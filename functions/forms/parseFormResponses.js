@@ -3,27 +3,27 @@ const { hold } = require("./holdFormResponses");
 
 exports.parse = (response, isHeld = false) => {
   if(!response) {
-    return [{"message": `forms API response is ${response}`, "code": 404}, null]
+    return [{"message": `forms API response is ${response}`, "code": 404, "loc": "parseFormResponses.js/parse()"}, null]
   }
 
   if(!response.roundDetails && !response.results) {
-    const details = {...response}
+    const details = {...response, "loc": "parseFormResponses.js/parse()"}
     return [{"message": `forms API response malformed`, "code": 400, details}, null];
   } 
 
   if(!response.roundDetails || typeof(response.roundDetails) !== "object") {
-    return [{"message": `forms API response roundDetails were ${JSON.stringify(response.roundDetails)}`, "code": 400}, null];
+    return [{"message": `forms API response roundDetails were ${JSON.stringify(response.roundDetails)}`, "code": 400, "loc": "parseFormResponses.js/parse()"}, null];
   } 
   
   if(!response.results || typeof(response.results) !== "object") {
-    return [{"message": `forms API response results were ${JSON.stringify(response.results)}`, "code": 400}, null];
+    return [{"message": `forms API response results were ${JSON.stringify(response.results)}`, "code": 400, "loc": "parseFormResponses.js/parse()"}, null];
   }
 
   const {roundDetails, results} = response;
   const teams = Object.keys(results);
   
   if(teams.length < 1) {
-    return [{"message": `forms API response results ${JSON.stringify(response.results)} does not contain any teams`, "code": 404}, null];
+    return [{"message": `forms API response results ${JSON.stringify(response.results)} does not contain any teams`, "code": 404, "loc": "parseFormResponses.js/parse()"}, null];
   }
   
   const embedMessages = [];

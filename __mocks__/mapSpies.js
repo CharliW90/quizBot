@@ -1,6 +1,7 @@
-exports.holdSpy = jest.spyOn(require('../functions/forms/holdFormResponses'), 'hold');
-exports.heldResponsesSpy = jest.spyOn(require('../functions/forms/holdFormResponses'), 'heldResponses');
-exports.parseSpy = jest.spyOn(require('../functions/forms/parseFormResponses'), 'parse');
+/*
+the order of these matters, since they are dependent on one another
+they must be called via spyOn from most deeply nested to least nested
+*/
 
 exports.registerTeam = jest.spyOn(require('../functions/maps/teamChannels'), 'registerTeamChannel');
 exports.setAlias = jest.spyOn(require('../functions/maps/teamChannels'), 'setAlias');

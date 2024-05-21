@@ -1,6 +1,6 @@
 const { channelFromTeam } = require("../maps/teamChannels");
 
-module.exports = async (heldResponses, teamName = null) => {
+exports.sendResponses = async (heldResponses, teamName = null) => {
   const responses = [];
   heldResponses.forEach((heldResponse) => {
     const {teams, embeds} = heldResponse;

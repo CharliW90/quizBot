@@ -1,13 +1,13 @@
 const axios = require('axios');
 const { EmbedBuilder } = require('discord.js');
 const data = require('../__data__');
-const {holdSpy, heldResponsesSpy, parseSpy} = require('../__mocks__/spies'); // note: spies must be called before declaring the function they will be called by
+const {holdSpy, heldResponsesSpy, parseSpy} = require('../__mocks__/functionSpies'); // note: spies must be called before declaring the function they will be called by
 
 jest.mock('axios')
 
 const mockData = data.apiResponses;
 
-describe('fetchFormResponses.js', () => {
+describe('fetch.js', () => {
   beforeEach(() => {
     jest.clearAllMocks(); // Clear mocks before each test
   });
@@ -18,13 +18,14 @@ describe('fetchFormResponses.js', () => {
   test('returns an error when API returns no data', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    const fetchFormResponses = require('../functions/forms/fetchFormResponses');
+    const {fetch} = require('../functions/forms/fetchFormResponses');
 
     axios.get.mockResolvedValueOnce({ data: [] });
-    const response = await fetchFormResponses(1);
+    const response = await fetch(1);
     const [err, data] = response;
     expect(err.code).toEqual(404);
     expect(err.message).toEqual("forms API response was []");
+    expect(err.loc).toBeDefined();
     expect(data).toBeNull();
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(err)
@@ -34,13 +35,13 @@ describe('fetchFormResponses.js', () => {
   });
 
   test('returns an error when API returns a Promise rejection', async () => {
-    const fetchFormResponses = require('../functions/forms/fetchFormResponses');
+    const {fetch} = require('../functions/forms/fetchFormResponses');
 
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     const error = new Error('API request failed');
     axios.get.mockRejectedValueOnce(error);
 
-    const output = await fetchFormResponses(1);
+    const output = await fetch(1);
     const [err, response] = output;
     expect(err).toEqual(error);
     expect(response).toBeNull();
@@ -52,17 +53,17 @@ describe('fetchFormResponses.js', () => {
   });
 
   test('parses and stores embeds when API returns data for a single round, returns a single embed response', async () => {
-    const fetchFormResponses = require('../functions/forms/fetchFormResponses');
+    const {fetch} = require('../functions/forms/fetchFormResponses');
 
     const input = mockData[0]
     axios.get.mockResolvedValueOnce({ data: [input] });
 
-    const response = await fetchFormResponses(1);
-    const [err, embed] = response;
+    const output = await fetch(1);
+    const [err, response] = output;
 
     expect(err).toBeNull();
-    expect(embed).toBeInstanceOf(EmbedBuilder);
-    expect(embed).toMatchObject<EmbedBuilder>(data.botRoundEmbed);
+    expect(response).toBeInstanceOf(EmbedBuilder);
+    expect(response).toEqual(data.botSummaryEmbed);
 
     expect(parseSpy).toHaveBeenCalledTimes(1);
     expect(parseSpy).toHaveBeenCalledWith(input, true);
@@ -75,16 +76,16 @@ describe('fetchFormResponses.js', () => {
   });
 
   test('parses and stores 6 lots of embeds when API returns data for all rounds, returns a single embed response', async () => {
-    const fetchFormResponses = require('../functions/forms/fetchFormResponses');
+    const {fetch} = require('../functions/forms/fetchFormResponses');
     
     const input = mockData
     const rounds = mockData.length
     axios.get.mockResolvedValueOnce({ data: [...input] });
 
-    const [err, embed] = await fetchFormResponses("all");
+    const [err, response] = await fetch("all");
     expect(err).toBeNull()
-    expect(embed).toBeInstanceOf(EmbedBuilder);
-    expect(embed).toMatchObject<EmbedBuilder>(data.botRoundEmbed);
+    expect(response).toBeInstanceOf(EmbedBuilder);
+    expect(response).toEqual(data.botSummaryEmbed);
 
     expect(parseSpy).toHaveBeenCalledTimes(rounds);
     for(let i = 0; i < rounds; i++){
@@ -115,21 +116,22 @@ describe('fetchFormResponses.js', () => {
 
       const axios = require('axios');
 
-      const mockErrorMsg = {"message": "this would not be a useful error message", "code": 400}
+      const mockErrorMsg = {"message": "this would not be a useful error message", "code": 400, "loc": "parse()"}
       jest.mock('../functions/forms/parseFormResponses')
       const {parse} = require('../functions/forms/parseFormResponses');
       parse.mockReturnValue([mockErrorMsg, null]);
 
-      const fetchFormResponses = require('../functions/forms/fetchFormResponses');
+      const {fetch} = require('../functions/forms/fetchFormResponses');
       
       const input = mockData[0]
       axios.get.mockResolvedValueOnce({ data: [input] });
-      const output = await fetchFormResponses(1);
+      const output = await fetch(1);
       const [err, response] = output;
       expect(response).toBeNull();
       expect(err.code).toEqual(mockErrorMsg.code);
-      expect(err.message).toEqual(mockErrorMsg.message)
-      expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg)
+      expect(err.message).toEqual(mockErrorMsg.message);
+      expect(err.loc).toBeDefined();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
     })
 
     test('handles errors from the hold() function', async () => {
@@ -137,7 +139,7 @@ describe('fetchFormResponses.js', () => {
 
       const axios = require('axios');
 
-      const mockErrorMsg = {"message": "this might one day be a useful error message", "code": 400}
+      const mockErrorMsg = {"message": "this might one day be a useful error message", "code": 400, "loc": "hold()"}
       jest.mock('../functions/forms/holdFormResponses', () => {
         const originalFunctions = jest.requireActual('../functions/forms/holdFormResponses');
 
@@ -148,16 +150,17 @@ describe('fetchFormResponses.js', () => {
         }
       });
 
-      const fetchFormResponses = require('../functions/forms/fetchFormResponses');
+      const {fetch} = require('../functions/forms/fetchFormResponses');
 
       const input = mockData[0];
       axios.get.mockResolvedValueOnce({ data: [input] });
-      const output = await fetchFormResponses(1);
+      const output = await fetch(1);
       const [err, response] = output;
 
       expect(response).toBeNull();
       expect(err.code).toEqual(mockErrorMsg.code);
-      expect(err.message).toEqual(mockErrorMsg.message)
+      expect(err.message).toEqual(mockErrorMsg.message);
+      expect(err.loc).toBeDefined();
       expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
     })
 
@@ -177,17 +180,18 @@ describe('fetchFormResponses.js', () => {
         }
       });
 
-      const fetchFormResponses = require('../functions/forms/fetchFormResponses');
+      const {fetch} = require('../functions/forms/fetchFormResponses');
 
       const input = mockData[0];
       axios.get.mockResolvedValueOnce({ data: [input] });
-      const output = await fetchFormResponses(1);
+      const output = await fetch(1);
       const [err, response] = output;
 
       expect(response).toBeNull();
       expect(err.code).toEqual(mockErrorMsg.code);
-      expect(err.message).toEqual(mockErrorMsg.message)
-      expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
+      expect(err.message).toEqual(mockErrorMsg.message);
+      expect(err.loc).toBeDefined();
+      expect(consoleErrorSpy).toHaveBeenCalledWith({...mockErrorMsg, "loc": expect.any(String)});
     })
   })
 });
