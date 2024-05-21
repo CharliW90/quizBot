@@ -45,7 +45,6 @@ exports.registerTeamChannel = (teamName, channel) => {
 }
 
 exports.setAlias = (alias, teamName, overwrite = false) => {
-  console.log(teamsChannels)
   if(!alias || !teamName){
     const error = {"code": 400, "message": `Alias was ${alias}, Team Name was ${teamName}`};
     return {error, response: null};
