@@ -9,37 +9,29 @@ exports.fetch = async (roundNumber) => {
     headers: { Authorization: `Bearer ${apiPasskey}` }
   }
   return axios.get(`${apiEndpoint}/responses/${roundNumber}`, config)
-  .then(response => {
-    if(response.data === undefined || response.data.length < 1){
-      throw {"message": `forms API response was ${JSON.stringify(response.data)}`, "code": 404, "loc": "fetchFormResponses.js/fetch():response"}
+  .then(res => {
+    if(res.data === undefined || res.data.length < 1){
+      throw {"message": `forms API response was ${JSON.stringify(res.data)}`, "code": 404, "loc": "fetchFormResponses.js/fetch():response"}
     }
 
-    if(response.data.length > 1){
-      response.data.forEach((round) => {
-        const parsedRound = parse(round, true);
-        const [err, data] = parsedRound;
-        if(err){
-          throw err;
-        }
+    if(res.data.length > 1){
+      res.data.forEach((round) => {
+        const {error, response} = parse(round, true);
+        if(error){ throw error }
       })
       return heldResponses();
     }
 
-    const parsedRound = parse(response.data[0], true);
-    const [err, data] = parsedRound;
-    if(err){
-      throw err;
-    }
+    const {error, response} = parse(res.data[0], true);
+    if(error){ throw error }
     return heldResponses(roundNumber);
   })
-  .then(([err, embeds]) => {
-    if(err){
-      throw {...err, "loc": "fetchFormResponses.js/fetch():embeds"};
-    }
-    return [null, embeds];
+  .then(({error, response}) => {
+    if(error){ throw error }
+    return {error: null, response};
   })
   .catch(error => {
     console.error(error);
-    return [error, null];
+    return {error, response: null};
   })
 };

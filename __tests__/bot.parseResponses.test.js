@@ -17,69 +17,64 @@ describe('parseFormResponses.js', () => {
   describe('parse()', () => {
     describe('returns an error when passed incorrect data', () => {
       test('returns an error when passed no data', () => {
-        const output = parse();
-        const [err, response] = output;
-        expect(err.code).toEqual(404);
-        expect(err.message).toEqual("forms API response is undefined");
-        expect(err.loc).toBeDefined();
+        const {error, response} = parse();
+        expect(error.code).toEqual(404);
+        expect(error.message).toEqual("forms API data is undefined");
+        expect(error.loc).toBeDefined();
         expect(response).toBeNull();
       })
 
       test('returns an error when passed incorrect data', () => {
         const input = {"data": "this is not correct data"}
-        const output = parse(input);
-        const [err, response] = output;
-        expect(err.code).toEqual(400);
-        expect(err.message).toEqual(`forms API response malformed`);
-        expect(err.details).toEqual({...input, "loc": expect.any(String)});
+        const {error, response} = parse(input);
+        expect(error.code).toEqual(400);
+        expect(error.message).toEqual(`forms API data malformed`);
+        expect(error.details).toEqual({...input, "loc": expect.any(String)});
         expect(response).toBeNull();
       })
 
       test('returns an error when passed data missing results', () => {
         const input = {"roundDetails": {"data": "object"}}
-        const output = parse(input);
-        const [err, response] = output;
-        expect(err.code).toEqual(400);
-        expect(err.message).toEqual(`forms API response results were undefined`);
-        expect(err.loc).toBeDefined();
+        const {error, response} = parse(input);
+        expect(error.code).toEqual(400);
+        expect(error.message).toEqual(`forms API data results were undefined`);
+        expect(error.loc).toBeDefined();
         expect(response).toBeNull();
       })
 
       test('returns an error when passed data missing roundDetails', () => {
         const input = {"results": {"data": "object"}}
-        const output = parse(input);
-        const [err, response] = output;
-        expect(err.code).toEqual(400);
-        expect(err.message).toEqual(`forms API response roundDetails were undefined`);
-        expect(err.loc).toBeDefined();
+        const {error, response} = parse(input);
+        expect(error.code).toEqual(400);
+        expect(error.message).toEqual(`forms API data roundDetails were undefined`);
+        expect(error.loc).toBeDefined();
         expect(response).toBeNull();
       })
 
       test('returns an error when passed data of incorrect types', () => {
         let input = {"roundDetails": "this is a string", "results": {"data": "object"}}
-        let output = parse(input);
-        let [err, response] = output;
-        expect(err.code).toEqual(400);
-        expect(err.message).toEqual(`forms API response roundDetails were ${JSON.stringify(input.roundDetails)}`);
-        expect(err.loc).toBeDefined();
+        let {error, response} = parse(input);
+        expect(error.code).toEqual(400);
+        expect(error.message).toEqual(`forms API data roundDetails were ${JSON.stringify(input.roundDetails)}`);
+        expect(error.loc).toBeDefined();
         expect(response).toBeNull();
 
         input = {"roundDetails": {"data": "object"}, "results": "this is a string"}
         output = parse(input);
-        [err, response] = output;
-        expect(err.code).toEqual(400);
-        expect(err.message).toEqual(`forms API response results were ${JSON.stringify(input.results)}`);
-        expect(err.loc).toBeDefined();
+        ({error, response} = parse(input));
+        expect(error.code).toEqual(400);
+        expect(error.message).toEqual(`forms API data results were ${JSON.stringify(input.results)}`);
+        expect(error.loc).toBeDefined();
         expect(response).toBeNull();
       })
 
       test('returns an error when results object is empty', () => {
         input = {"roundDetails": {"data": "object"}, "results": {}}
         output = parse(input);
-        [err, response] = output;
-        expect(err.code).toEqual(404);
-        expect(err.message).toEqual(`forms API response results ${JSON.stringify(input.results)} does not contain any teams`);
-        expect(err.loc).toBeDefined();
+        ({error, response} = parse(input));
+        expect(error.code).toEqual(404);
+        expect(error.message).toEqual(`forms API data results ${JSON.stringify(input.results)} does not contain any teams`);
+        expect(error.loc).toBeDefined();
         expect(response).toBeNull();
       })
     })
@@ -88,10 +83,9 @@ describe('parseFormResponses.js', () => {
         const input = mockData[0]
         const teams = Object.keys(input.results)
 
-        const output = parse(input, true);
-        const [err, response] = output;
+        const {error, response} = parse(input, true);
 
-        expect(err).toBeNull();
+        expect(error).toBeNull();
         expect(response).toEqual(`holding responses for ${teams.length} teams, round ${input.roundDetails.number}`)
         expect(holdSpy).toHaveBeenCalledTimes(1);
         expect(holdSpy).toHaveBeenCalledWith(input.roundDetails.number, expect.any(Array), teams)
@@ -101,10 +95,9 @@ describe('parseFormResponses.js', () => {
         const input = mockData[0]
         const teams = Object.keys(input.results)
 
-        const output = parse(input, false);
-        const [err, response] = output;
+        const {error, response} = parse(input, false);
 
-        expect(err).toBeNull();
+        expect(error).toBeNull();
         expect(holdSpy).not.toHaveBeenCalled();
         expect(response).toHaveLength(teams.length);
         response.forEach((teamEmbed, index) => {

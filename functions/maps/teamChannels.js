@@ -5,17 +5,18 @@ const teamsAliases = new Map();
 exports.registerTeamChannel = (teamName, channel) => {
 
   if(!teamName || !channel){
-    return [{"code": 400, "message": `Team Name was ${teamName}, Channel was ${channel}`}, null];
+    const error = {"code": 400, "message": `Team Name was ${teamName}, Channel was ${channel}`};
+    return {error, response: null};
   }
 
-  if(this.channelFromTeam(teamName)[0] === null){
-    // if error is null, teamName already associated with channel
-    return [{"code": 409, "message": `${teamName} already linked to a channel`}, null];
+  if(!this.channelFromTeam(teamName).error){
+    const error = {"code": 409, "message": `${teamName} already linked to a channel`};
+    return {error, response: null};
   }
 
-  if(this.teamFromChannel(channel)[0] === null){
-    // if error is null, channel already associated with team
-    return [{"code": 409, "message": `${channel.id} already linked to a team`}, null];
+  if(!this.teamFromChannel(channel).error){
+    const error = {"code": 409, "message": `${channel.id} already linked to a team`};
+    return {error, response: null};
   }
 
   teamsChannels[teamName.toLowerCase()] = channel;
@@ -23,7 +24,7 @@ exports.registerTeamChannel = (teamName, channel) => {
 
   if(teamsChannels[teamName.toLowerCase()] && channelsTeams[channel.id]){
     // if both are successfully listed in the respective Objects
-    return [null, `${teamName}::${channel.id}`]
+    return {error: null, response: `${teamName}::${channel.id}`}
   } else {
     // return error message with additional details to help debug error
     const details = {
@@ -38,30 +39,33 @@ exports.registerTeamChannel = (teamName, channel) => {
         channelsTeams
       ]
     }
-    return [{"code": 500, "message": `Error handling storage of name: ${teamName} or channel: ${channel.id}`, details}, null]
+    const error = {"code": 500, "message": `Error handling storage of name: ${teamName} or channel: ${channel.id}`, details};
+    return {error, response: null};
   }
 }
 
 exports.setAlias = (alias, teamName, overwrite = false) => {
+  console.log(teamsChannels)
   if(!alias || !teamName){
-    return [{"code": 400, "message": `Alias was ${alias}, Team Name was ${teamName}`}, null];
+    const error = {"code": 400, "message": `Alias was ${alias}, Team Name was ${teamName}`};
+    return {error, response: null};
   }
 
-  if(this.channelFromTeam(teamName)[0] !== null) {
-    // if error is returned, teamName hasn't been paired to a channel yet
-    return [{"code": 404, "message": `No team registered as ${teamName}`}, null]
+  if(this.channelFromTeam(teamName).error) {
+    const error = {"code": 404, "message": `No team registered as ${teamName}`};
+    return {error, response: null};
   }
 
   if(teamsAliases.has(alias) && !overwrite){
-    // if alias already exists, and the overwrite option hasn't been declared
-    return [{"code": 405, "message": `${alias} already links to a team name`}, null]
+    const error = {"code": 405, "message": `${alias} already links to a team name`};
+    return {error, response: null};
   }
 
   teamsAliases.set(alias, teamName.toLowerCase());
 
   if(teamsAliases.has(alias)){
     // if registered successfully in the Map
-    return [null, `${alias}::${teamName}::${this.channelFromTeam(teamName)[1].id}`]
+    return {error: null, response: `${alias}::${teamName}::${this.channelFromTeam(teamName).response.id}`}
   } else {
     // return error message with additional details to help debug error
     const details = {
@@ -69,55 +73,70 @@ exports.setAlias = (alias, teamName, overwrite = false) => {
         `attempted registration of ${alias} against ${teamName}`,
         teamsAliases
       ]
-    }
-    return [{"code": 500, "message": `Error handling alias: ${alias} or team name: ${teamName}`, details}, null]
+    };
+    const error = {"code": 500, "message": `Error handling alias: ${alias} or team name: ${teamName}`, details};
+    return {error, response: null};
+  }
+}
+
+exports.lookupAlias = (alias) => {
+  if(!alias){
+    const error = {"code": 400, "message": `Alias was ${alias}`, "loc": "teamChannels.js/lookupAlias()"};
+    return {error, response: null};
+  }
+  if(teamsAliases.has(alias)){
+    return {error: null, response: teamsAliases.get(alias)}
+  } else {
+    return {error: {"message": "not an alias", "code": 404, "loc": "teamChannels.js/lookupAlias()"}, response: null}
   }
 }
 
 exports.deleteTeam = (teamName) => {
   if(!teamName) {
-    return [{"code": 400, "message": `Team Name was ${teamName}`}, null];
+    const error = {"code": 400, "message": `Team Name was ${teamName}`};
+    return {error, response: null};
   }
 
-  if(this.channelFromTeam(teamName)[0] !== null) {
-    return [{"code": 404, "message": `${teamName} not found`}, null];
+  if(this.channelFromTeam(teamName).error) {
+    const error = {"code": 404, "message": `${teamName} not found`};
+    return {error, response: null};
   }
 
   const lookup = teamsChannels[teamName.toLowerCase()] ? teamName.toLowerCase() : teamsAliases.get(teamName);
 
-  if(teamsChannels[lookup]){
-    let response = lookup;
+  let response = lookup;
 
-    const channel = teamsChannels[lookup];
-    delete teamsChannels[lookup];
-    delete channelsTeams[channel];
+  const channel = teamsChannels[lookup];
+  delete teamsChannels[lookup];
+  delete channelsTeams[channel];
 
-    teamsAliases.forEach((team, alias) => {
-      if(team === lookup){
-        teamsAliases.delete(alias);
-        response += `, ${alias}`;
-      }
-    })
+  teamsAliases.forEach((team, alias) => {
+    if(team === lookup){
+      teamsAliases.delete(alias);
+      response += `, ${alias}`;
+    }
+  })
 
-    return [null, response]
-  }
+  return {error: null, response}
 }
 
 exports.channelFromTeam = (teamName) => {
   if(!teamName){
-    return [{"code": 400, "message": `Team Name was ${teamName}`}, null];
+    const error = {"code": 400, "message": `Team Name was ${teamName}`};
+    return {error, response: null}
   }
 
   const lookup = teamsChannels[teamName.toLowerCase()] ? teamName.toLowerCase() : teamsAliases.get(teamName);
   
-  return teamsChannels[lookup] ? [null, teamsChannels[lookup]] : [{"code": 404, "message": `${teamName} not found`}, null];
+  return teamsChannels[lookup] ? {error: null, response: teamsChannels[lookup]} : {error: {"code": 404, "message": `${teamName} not found`}, response: null};
 }
 
 exports.teamFromChannel = (channel) => {
   if(!channel || !channel.id){
-    return channel ? [{"code": 400, "message": `Channel ID was ${channel.id}`}, null] : [{"code": 400, "message": `Channel was ${channel}`}, null];
+    return channel ? {error: {"code": 400, "message": `Channel ID was ${channel.id}`}, response: null} : {error: {"code": 400, "message": `Channel was ${channel}`}, response: null};
   }
     
   const lookup = channel.id;
-  return channelsTeams[lookup] ? [null, channelsTeams[lookup]] : [{"code": 404, "message": `Channel ${channel.id} not found`}, null];
+  
+  return channelsTeams[lookup] ? {error: null, response: channelsTeams[lookup]} : {error: {"code": 404, "message": `Channel ${channel.id} not found`}, response: null};
 }

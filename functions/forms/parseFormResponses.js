@@ -1,29 +1,34 @@
 const { EmbedBuilder } = require("discord.js");
 const { hold } = require("./holdFormResponses");
 
-exports.parse = (response, isHeld = false) => {
-  if(!response) {
-    return [{"message": `forms API response is ${response}`, "code": 404, "loc": "parseFormResponses.js/parse()"}, null]
+exports.parse = (data, isHeld = false) => {
+  if(!data) {
+    const error = {"message": `forms API data is ${data}`, "code": 404, "loc": "parseFormdatas.js/parse()"};
+    return {error, response: null};
   }
 
-  if(!response.roundDetails && !response.results) {
-    const details = {...response, "loc": "parseFormResponses.js/parse()"}
-    return [{"message": `forms API response malformed`, "code": 400, details}, null];
+  if(!data.roundDetails && !data.results) {
+    const details = {...data, "loc": "parseFormdatas.js/parse()"};
+    const error = {"message": `forms API data malformed`, "code": 400, details};
+    return {error, response: null}
   } 
 
-  if(!response.roundDetails || typeof(response.roundDetails) !== "object") {
-    return [{"message": `forms API response roundDetails were ${JSON.stringify(response.roundDetails)}`, "code": 400, "loc": "parseFormResponses.js/parse()"}, null];
+  if(!data.roundDetails || typeof(data.roundDetails) !== "object") {
+    const error = {"message": `forms API data roundDetails were ${JSON.stringify(data.roundDetails)}`, "code": 400, "loc": "parseFormdatas.js/parse()"};
+    return {error, response: null};
   } 
   
-  if(!response.results || typeof(response.results) !== "object") {
-    return [{"message": `forms API response results were ${JSON.stringify(response.results)}`, "code": 400, "loc": "parseFormResponses.js/parse()"}, null];
+  if(!data.results || typeof(data.results) !== "object") {
+    const error = {"message": `forms API data results were ${JSON.stringify(data.results)}`, "code": 400, "loc": "parseFormdatas.js/parse()"};
+    return {error, response: null};
   }
 
-  const {roundDetails, results} = response;
+  const {roundDetails, results} = data;
   const teams = Object.keys(results);
   
   if(teams.length < 1) {
-    return [{"message": `forms API response results ${JSON.stringify(response.results)} does not contain any teams`, "code": 404, "loc": "parseFormResponses.js/parse()"}, null];
+    const error = {"message": `forms API data results ${JSON.stringify(data.results)} does not contain any teams`, "code": 404, "loc": "parseFormdatas.js/parse()"};
+    return {error, response: null};
   }
   
   const embedMessages = [];
@@ -39,7 +44,7 @@ exports.parse = (response, isHeld = false) => {
     const emoji = determineEmoji(Number(results[teamname].score / roundDetails.totalScore));
 
     teamEmbed.setThumbnail(emoji)
-    const answers = results[teamname].answers;  // an array of responses in the format "{ answerGiven: <string>, answerScore: <number>, correctAnswer: <boolean> }"
+    const answers = results[teamname].answers;  // an array of datas in the format "{ answerGiven: <string>, answerScore: <number>, correctAnswer: <boolean> }"
     answers.forEach((answer, number) => {
       const checkmark = answer.correct ? ":white_check_mark:" : ":x:";
       teamEmbed.addFields({
@@ -50,11 +55,9 @@ exports.parse = (response, isHeld = false) => {
     embedMessages.push(teamEmbed);
   })
   if(isHeld){
-    const output = hold(roundDetails.number, embedMessages, teams);
-    const [err, res] = output
-    return err ? [err, null] : [null, res]
+    return hold(roundDetails.number, embedMessages, teams);
   }
-  return [null, embedMessages];
+  return {error: null, response: embedMessages};
 }
 
 const determineEmoji = (percent) => {

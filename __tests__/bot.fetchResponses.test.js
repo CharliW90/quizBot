@@ -21,14 +21,13 @@ describe('fetch.js', () => {
     const {fetch} = require('../functions/forms/fetchFormResponses');
 
     axios.get.mockResolvedValueOnce({ data: [] });
-    const response = await fetch(1);
-    const [err, data] = response;
-    expect(err.code).toEqual(404);
-    expect(err.message).toEqual("forms API response was []");
-    expect(err.loc).toBeDefined();
-    expect(data).toBeNull();
+    const {error, response} = await fetch(1);
+    expect(error.code).toEqual(404);
+    expect(error.message).toEqual("forms API response was []");
+    expect(error.loc).toBeDefined();
+    expect(response).toBeNull();
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(err)
+    expect(consoleErrorSpy).toHaveBeenCalledWith(error)
     expect(parseSpy).not.toHaveBeenCalled();
     expect(holdSpy).not.toHaveBeenCalled();
     expect(heldResponsesSpy).not.toHaveBeenCalled();
@@ -38,12 +37,11 @@ describe('fetch.js', () => {
     const {fetch} = require('../functions/forms/fetchFormResponses');
 
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const error = new Error('API request failed');
-    axios.get.mockRejectedValueOnce(error);
+    const errorMsg = new Error('API request failed');
+    axios.get.mockRejectedValueOnce(errorMsg);
 
-    const output = await fetch(1);
-    const [err, response] = output;
-    expect(err).toEqual(error);
+    const {error, response} = await fetch(1);
+    expect(error).toEqual(errorMsg);
     expect(response).toBeNull();
     expect(consoleErrorSpy).toHaveBeenCalledWith(error);
 
@@ -58,10 +56,9 @@ describe('fetch.js', () => {
     const input = mockData[0]
     axios.get.mockResolvedValueOnce({ data: [input] });
 
-    const output = await fetch(1);
-    const [err, response] = output;
+    const {error, response} = await fetch(1);
 
-    expect(err).toBeNull();
+    expect(error).toBeNull();
     expect(response).toBeInstanceOf(EmbedBuilder);
     expect(response).toEqual(data.botSummaryEmbed);
 
@@ -82,8 +79,8 @@ describe('fetch.js', () => {
     const rounds = mockData.length
     axios.get.mockResolvedValueOnce({ data: [...input] });
 
-    const [err, response] = await fetch("all");
-    expect(err).toBeNull()
+    const {error, response} = await fetch("all");
+    expect(error).toBeNull()
     expect(response).toBeInstanceOf(EmbedBuilder);
     expect(response).toEqual(data.botSummaryEmbed);
 
@@ -119,18 +116,18 @@ describe('fetch.js', () => {
       const mockErrorMsg = {"message": "this would not be a useful error message", "code": 400, "loc": "parse()"}
       jest.mock('../functions/forms/parseFormResponses')
       const {parse} = require('../functions/forms/parseFormResponses');
-      parse.mockReturnValue([mockErrorMsg, null]);
+      parse.mockReturnValue({error: mockErrorMsg, response: null});
 
       const {fetch} = require('../functions/forms/fetchFormResponses');
       
       const input = mockData[0]
       axios.get.mockResolvedValueOnce({ data: [input] });
       const output = await fetch(1);
-      const [err, response] = output;
+      const {error, response} = output;
       expect(response).toBeNull();
-      expect(err.code).toEqual(mockErrorMsg.code);
-      expect(err.message).toEqual(mockErrorMsg.message);
-      expect(err.loc).toBeDefined();
+      expect(error.code).toEqual(mockErrorMsg.code);
+      expect(error.message).toEqual(mockErrorMsg.message);
+      expect(error.loc).toBeDefined();
       expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
     })
 
@@ -146,7 +143,7 @@ describe('fetch.js', () => {
         return {
           __esModule: true,
           ...originalFunctions,
-          hold: jest.fn(() => {return [mockErrorMsg, null]})
+          hold: jest.fn(() => {return {error: mockErrorMsg, response: null}})
         }
       });
 
@@ -155,12 +152,12 @@ describe('fetch.js', () => {
       const input = mockData[0];
       axios.get.mockResolvedValueOnce({ data: [input] });
       const output = await fetch(1);
-      const [err, response] = output;
+      const {error, response} = output;
 
       expect(response).toBeNull();
-      expect(err.code).toEqual(mockErrorMsg.code);
-      expect(err.message).toEqual(mockErrorMsg.message);
-      expect(err.loc).toBeDefined();
+      expect(error.code).toEqual(mockErrorMsg.code);
+      expect(error.message).toEqual(mockErrorMsg.message);
+      expect(error.loc).toBeDefined();
       expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
     })
 
@@ -169,14 +166,14 @@ describe('fetch.js', () => {
 
       const axios = require('axios');
 
-      const mockErrorMsg = {"message": "this could have been a useful error message", "code": 400}
+      const mockErrorMsg = {"message": "this could have been a useful error message", "code": 400, "loc": "heldResponses()"}
       jest.mock('../functions/forms/holdFormResponses', () => {
         const originalFunctions = jest.requireActual('../functions/forms/holdFormResponses');
 
         return {
           __esModule: true,
           ...originalFunctions,
-          heldResponses: jest.fn(() => {return [mockErrorMsg, null]})
+          heldResponses: jest.fn(() => {return {error: mockErrorMsg, response: null}})
         }
       });
 
@@ -184,14 +181,13 @@ describe('fetch.js', () => {
 
       const input = mockData[0];
       axios.get.mockResolvedValueOnce({ data: [input] });
-      const output = await fetch(1);
-      const [err, response] = output;
+      const {error, response} = await fetch(1);
 
       expect(response).toBeNull();
-      expect(err.code).toEqual(mockErrorMsg.code);
-      expect(err.message).toEqual(mockErrorMsg.message);
-      expect(err.loc).toBeDefined();
-      expect(consoleErrorSpy).toHaveBeenCalledWith({...mockErrorMsg, "loc": expect.any(String)});
+      expect(error.code).toEqual(mockErrorMsg.code);
+      expect(error.message).toEqual(mockErrorMsg.message);
+      expect(error.loc).toBeDefined();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
     })
   })
 });
