@@ -141,7 +141,7 @@ describe('holdFormResponses.js', () => {
         expect(error.loc).toBeDefined();
       })
 
-      test('returns an embed message if at least one round is stored', () => {
+      test('returns an embed message if one round is stored', () => {
         let {error, response} = hold(roundNums[0], [embeds[0]], [teamNames[0]]);
         expect(error).toBeNull();
         expect(response).toEqual(`holding responses for 1 teams, round ${roundNums[0]}`);
@@ -168,4 +168,6 @@ describe('holdFormResponses.js', () => {
       })
     })
   })
+
+  test.todo('how to test the discord follow up buttons?')
 })

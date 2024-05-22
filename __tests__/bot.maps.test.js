@@ -465,7 +465,7 @@ describe('teamChannels.js', () => {
       expect(response).toBeNull();
     })
 
-    test('returns an error if alias is not stored', () => {
+    test('returns an error if alias is not known', () => {
       const {lookupAlias} = require("../functions/maps/teamChannels");
       
       const {error, response} = lookupAlias('a-team-alias');
@@ -474,7 +474,7 @@ describe('teamChannels.js', () => {
       expect(response).toBeNull();
     })
 
-    test('returns the team name if the alias is recorded', () => {
+    test('returns the team name if the alias is known', () => {
       const {lookupAlias, setAlias} = require("../functions/maps/teamChannels");
       
       let {error, response} = setAlias('a-team-alias', teamName);

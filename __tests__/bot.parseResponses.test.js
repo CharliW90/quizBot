@@ -78,6 +78,7 @@ describe('parseFormResponses.js', () => {
         expect(response).toBeNull();
       })
     })
+
     describe('parses correct data', () => {
       test('parses a single round of data, and holds the team embeds when asked to', () => {
         const input = mockData[0]
@@ -89,6 +90,8 @@ describe('parseFormResponses.js', () => {
         expect(response).toEqual(`holding responses for ${teams.length} teams, round ${input.roundDetails.number}`)
         expect(holdSpy).toHaveBeenCalledTimes(1);
         expect(holdSpy).toHaveBeenCalledWith(input.roundDetails.number, expect.any(Array), teams)
+        expect(holdSpy).toHaveReturnedWith({error: null, response: `holding responses for ${teams.length} teams, round ${input.roundDetails.number}`})
+        //the result of hold() is passed through as the result of parse() when held, so these will in fact be the same outputs
       })
       
       test('parses a single round of data, and returns embeds for each team when not asked to hold them', () => {
@@ -111,5 +114,32 @@ describe('parseFormResponses.js', () => {
       })
     })
 
+    describe('handles errors from dependencies', () => {
+      beforeEach(() => {
+        jest.resetModules();
+        jest.clearAllMocks();
+        jest.unmock('../functions/maps/teamChannels');
+      });
+
+      test('handles errors from hold() function', () => {
+        const mockErrorMsg = {"message": "this would not be a useful error message", "code": 400, "loc": "parse()"}
+        const hold = jest.spyOn(require("../functions/forms/holdFormResponses"), 'hold').mockImplementation(() => {return {error: mockErrorMsg, response: null}})
+        const {parse} = require('../functions/forms/parseFormResponses');
+
+        const input = mockData[0];
+
+        const {error, response} = parse(input, true);
+
+        expect(error).toEqual(mockErrorMsg);
+        expect(response).toBeNull();
+        expect(hold).toHaveBeenCalledTimes(1);
+        expect(hold).toHaveBeenCalledWith(1, expect.any(Array), expect.any(Array));
+        expect(hold).toHaveReturnedWith({error: mockErrorMsg, response: null});
+        /*
+        since parse() returns hold() when isHeld is true this check is slightly redundant,
+        but does at least ensure it's the error from hold() that is being output by parse()
+        */
+      })
+    })
   })
 })
