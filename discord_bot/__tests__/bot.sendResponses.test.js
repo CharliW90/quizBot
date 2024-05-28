@@ -35,9 +35,9 @@ describe('sendFormResponses.js', () => {
     const {error, response} = sendResponses(data.botHeldEmbeds, "teamName");
 
     expect(error).toBeNull();
-    expect(response[0].successes).toHaveLength(1);
-    expect(...response[0].successes).toEqual("teamName".toLowerCase());
-    expect(response[0].failures).toHaveLength(0);
+    expect(response.successes).toHaveLength(1);
+    expect(...response.successes).toEqual("teamName".toLowerCase());
+    expect(response.failures).toHaveLength(0);
 
     expect(channelFromTeamSpy).toHaveBeenCalledTimes(1);
     expect(channelFromTeamSpy).toHaveBeenCalledWith("teamName".toLowerCase());
@@ -72,9 +72,9 @@ describe('sendFormResponses.js', () => {
     const {error, response} = sendResponses(data.botHeldEmbeds);
 
     expect(error).toBeNull();
-    expect(response[0].successes).toHaveLength(3);
-    expect(response[0].successes).toEqual([embedTeamNames[0].toLowerCase(), embedTeamNames[1].toLowerCase(), embedTeamNames[2].toLowerCase()]);
-    expect(response[0].failures).toHaveLength(0);
+    expect(response.successes).toHaveLength(3);
+    expect(response.successes).toEqual([embedTeamNames[0].toLowerCase(), embedTeamNames[1].toLowerCase(), embedTeamNames[2].toLowerCase()]);
+    expect(response.failures).toHaveLength(0);
 
     expect(channelFromTeamSpy).toHaveBeenCalledTimes(3);
 
@@ -114,12 +114,10 @@ describe('sendFormResponses.js', () => {
 
     const {error, response} = sendResponses(data.botHeldEmbeds);
     expect(error).toBeNull();
-    response.forEach((output) => {
-      expect(output.successes).toHaveLength(2);
-      expect(output.successes).toEqual([embedTeamNames[0].toLowerCase(), embedTeamNames[2].toLowerCase()]);
-      expect(output.failures).toHaveLength(1);
-      expect(output.failures).toEqual([embedTeamNames[1].toLowerCase()]);
-    })
+    expect(response.successes).toHaveLength(2);
+    expect(response.successes).toEqual([embedTeamNames[0].toLowerCase(), embedTeamNames[2].toLowerCase()]);
+    expect(response.failures).toHaveLength(1);
+    expect(response.failures).toEqual([embedTeamNames[1].toLowerCase()]);
 
     expect(channelFromTeamSpy).toHaveBeenCalledTimes(3);
 
