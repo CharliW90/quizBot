@@ -1,9 +1,9 @@
 const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder } = require('discord.js');
-const fetchForms = require('../../functions/forms/fetchFormResponses.js');
+const { fetch } = require('../../functions/forms/fetchFormResponses.js');
 const { followUp } = require('../../functions/forms/holdFormResponses.js');
 
 module.exports = {
-  category: 'utility',
+  category: 'quiz',
   data: new SlashCommandBuilder()
     .setName('responses')
     .setDescription('fetches the responses for a quiz round'),
@@ -54,18 +54,22 @@ module.exports = {
     const collectorFilter = i => i.user.id === interaction.user.id;
 
     try {
-      const fetch = await userResponse.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
-      if(fetch.values){
-        const roundNumberToFetch = fetch.values[0];
+      const fetcher = await userResponse.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
+      if(fetcher.values){
+        const roundNumberToFetch = fetcher.values[0];
         const message = isNaN(roundNumberToFetch) ? 'All rounds are' : `Round ${roundNumberToFetch} is`
-        await fetch.update({ content: `${message} being fetched now, please wait...`, components: [] });
-        fetchForms(roundNumberToFetch)
-        .then((response) => {
+        await fetcher.update({ content: `${message} being fetched now, please wait...`, components: [] });
+        fetch(roundNumberToFetch)
+        .then(({error, response}) => {
+          if(error){
+            throw error;
+          }
           if(response.length === 0){
             return Promise.reject(`No results found for ${roundNumberToFetch}`)
           }
-          interaction.channel.send({embeds: response});
-          fetch.editReply({ content: `${message} ready - see summary below:`, components: [] });
+          console.log(response)
+          interaction.channel.send({embeds: [response]});
+          fetcher.editReply({ content: `${message} ready - see summary below:`, components: [] });
           return followUp(interaction, roundNumberToFetch)
         })
         .then((confirmation) => {
