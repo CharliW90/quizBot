@@ -38,7 +38,7 @@ exports.hold = (roundNum, embeds, teamNames) => {
 }
 
 exports.heldResponses = (roundNum = 0) => {
-  if(roundNum === 0){
+  if(roundNum === 0 || roundNum === 'all'){
     const rounds = Object.keys(holding);
     if(rounds.length < 1) {
       const error = {"message": `did not find any stored rounds`, "code": 404, "loc": "holdFormResponses.js/heldResponses()"};
@@ -107,7 +107,7 @@ exports.followUp = async (interaction, roundNum) => {
     const toDo = await furtherResponse.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
     if(toDo.customId === 'store'){
       await toDo.update({ content: `Results for ${roundMsg} have been stored. :white_check_mark:`, components: [] });
-      const rounds = Object.keys(holding);
+      const rounds = this.rounds();
       const roundsMsg = rounds.length > 1 ? `Rounds ${rounds.join(', ')}` : `Round ${rounds[0]}`
       return `We now have stored results for ${roundsMsg} - to access these results use the command /results`
     } else if(toDo.customId === 'send') {
@@ -115,20 +115,25 @@ exports.followUp = async (interaction, roundNum) => {
       // handle sending results to individual channels here
       if(isNaN(roundNum)){
         // handle sending all rounds
-        return sendResponses(holding)
-        .then((response) => {
-          return `Results have been sent to each team - some teams did not work, see: ...`
+        const allRounds = this.rounds();
+
+        allRounds.forEach((roundNumber) => {
+          const {error, response} = sendResponses(holding[roundNumber]);
+          if(error){
+            throw error;
+          }
+          const {successes, failures} = response;
+          interaction.channel.send(`Round ${roundNumber}: succesfully posted to ${successes}, failed to post to ${failures}`)
         })
+        return `Results have been sent to each team - some teams did not work, see those messages above. `
       } else {
         // handle sending a single round
-        return sendResponses([holding[roundNum]])
-        .then((response) => {
-          const {successes, failures} = response;
-          return `Succesfully posted to ${successes}, failed to post to ${failures}`
-        })
-        .catch((error) => {
+        const {error, response} = sendResponses(holding[roundNum]);
+        if(error){
           throw error;
-        })
+        }
+        const {successes, failures} = response;
+        return `Succesfully posted to ${successes}, failed to post to ${failures}`
       }
       // include logic for handling failed teams sends
     } else if(toDo.customId === 'delete') {
@@ -141,10 +146,15 @@ exports.followUp = async (interaction, roundNum) => {
       }
       
       const rounds = Object.keys(holding);
-      const roundsMsg = rounds.length > 1 ? `${rounds.length} Quiz Rounds: Rounds ${rounds.join(', ')}` : `1 Quiz Round: Round ${rounds[0]}`
-      return `Deleted results for ${roundMsg} :: we now have data for ${roundsMsg}`
+      if(rounds.length > 0){
+        const roundsMsg = rounds.length > 1 ? `${rounds.length} Quiz Rounds: Rounds ${rounds.join(', ')}` : `1 Quiz Round: Round ${rounds[0]}`
+        return `Deleted results for ${roundMsg} :: we now have data for ${roundsMsg} :mailbox_with_mail:`
+      } else {
+        return `Deleted results for ${roundMsg} :: we now have no rounds stored :mailbox_with_no_mail:`
+      }
     }
   } catch(e) {
+    console.error(e);
     if(e.message === "Collector received no interactions before ending with reason: time"){
       // handles failure to reply to the followup response of 'what do you want to do with the responses?'
       await furtherResponse.edit({ content: 'Response not received within 1 minute, cancelling...', components: [] });
@@ -152,4 +162,8 @@ exports.followUp = async (interaction, roundNum) => {
       throw e;
     }
   }
+}
+
+exports.rounds = () => {
+  return Object.keys(holding).sort();
 }

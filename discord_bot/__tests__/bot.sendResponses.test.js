@@ -11,7 +11,7 @@ describe('sendFormResponses.js', () => {
   test('returns an error when passed no data', async () => {
     const { sendResponses } = require('../functions/forms/sendFormResponses');
 
-    const {error, response} = sendResponses([]);
+    const {error, response} = sendResponses({});
     expect(response).toBeNull();
     expect(error.code).toEqual(400)
   })
@@ -32,7 +32,7 @@ describe('sendFormResponses.js', () => {
     expect(channelFromTeamSpy).toHaveBeenCalledTimes(3);
     channelFromTeamSpy.mockClear();
 
-    const {error, response} = sendResponses([data.botHeldEmbeds], "teamName");
+    const {error, response} = sendResponses(data.botHeldEmbeds, "teamName");
 
     expect(error).toBeNull();
     expect(response[0].successes).toHaveLength(1);
@@ -69,7 +69,7 @@ describe('sendFormResponses.js', () => {
     expect(channelFromTeamSpy).toHaveBeenCalledTimes(3);
     channelFromTeamSpy.mockClear();
 
-    const {error, response} = sendResponses([data.botHeldEmbeds]);
+    const {error, response} = sendResponses(data.botHeldEmbeds);
 
     expect(error).toBeNull();
     expect(response[0].successes).toHaveLength(3);
@@ -95,75 +95,6 @@ describe('sendFormResponses.js', () => {
 
   })
 
-  test('sends multiple embeds to a channel matching the teamName, when passed multiple rounds of embeds and a teamname', () => {
-    const { channelFromTeamSpy } = require('../__mocks__/mapSpies');
-    const { registerTeamChannel } = require("../functions/maps/teamChannels");
-    const { sendResponses } = require('../functions/forms/sendFormResponses');
-
-    const embedTeamNames = data.botHeldEmbeds.embeds.map((embed) => {return embed.data.title})
-
-    const mockedChannelA = mockTextChannel(embedTeamNames[0], '123-456');
-    const mockedChannelB = mockTextChannel(embedTeamNames[1], '456-789');
-    const mockedChannelC = mockTextChannel(embedTeamNames[2], '789-123');
-
-    registerTeamChannel(embedTeamNames[0], mockedChannelA);
-    registerTeamChannel(embedTeamNames[1], mockedChannelB);
-    registerTeamChannel(embedTeamNames[2], mockedChannelC);
-
-    expect(channelFromTeamSpy).toHaveBeenCalledTimes(3);
-    channelFromTeamSpy.mockClear();
-
-    sendResponses([data.botHeldEmbeds, data.botHeldEmbeds, data.botHeldEmbeds], "teamName");
-    
-    expect(channelFromTeamSpy).toHaveBeenCalledTimes(1);
-
-    expect(mockedChannelA.send).toHaveBeenCalledTimes(3);
-    const correctEmbed = data.botHeldEmbeds.embeds.filter((embed) => {return embed.data.title === "teamName"});
-    expect(mockedChannelA.send).toHaveBeenCalledWith(correctEmbed);
-
-    expect(mockedChannelB.send).not.toHaveBeenCalled();
-    expect(mockedChannelC.send).not.toHaveBeenCalled();
-
-  })
-
-  test('sends multiple embeds to each team channel, when passed multiple rrounds of embeds and no teamname', () => {
-    const { channelFromTeamSpy } = require('../__mocks__/mapSpies');
-    const { registerTeamChannel } = require("../functions/maps/teamChannels");
-    const { sendResponses } = require('../functions/forms/sendFormResponses');
-
-    const embedTeamNames = data.botHeldEmbeds.embeds.map((embed) => {return embed.data.title})
-
-    const mockedChannelA = mockTextChannel(embedTeamNames[0], '123-456');
-    const mockedChannelB = mockTextChannel(embedTeamNames[1], '456-789');
-    const mockedChannelC = mockTextChannel(embedTeamNames[2], '789-123');
-
-    registerTeamChannel(embedTeamNames[0], mockedChannelA);
-    registerTeamChannel(embedTeamNames[1], mockedChannelB);
-    registerTeamChannel(embedTeamNames[2], mockedChannelC);
-
-    expect(channelFromTeamSpy).toHaveBeenCalledTimes(3);
-    channelFromTeamSpy.mockClear();
-
-    sendResponses([data.botHeldEmbeds, data.botHeldEmbeds, data.botHeldEmbeds]);
-
-    expect(channelFromTeamSpy).toHaveBeenCalledTimes(3);
-
-    expect(channelFromTeamSpy).toHaveBeenNthCalledWith(1, embedTeamNames[0].toLowerCase());
-    expect(channelFromTeamSpy).toHaveNthReturnedWith(1, {error: null, response: mockedChannelA});
-    expect(mockedChannelA.send).toHaveBeenCalledTimes(3);
-    expect(mockedChannelA.send.mock.calls).toEqual([[data.botHeldEmbeds.embeds[0]], [data.botHeldEmbeds.embeds[0]], [data.botHeldEmbeds.embeds[0]]]);
-    
-    expect(channelFromTeamSpy).toHaveBeenNthCalledWith(2, embedTeamNames[1].toLowerCase());
-    expect(channelFromTeamSpy).toHaveNthReturnedWith(2, {error: null, response: mockedChannelB});
-    expect(mockedChannelB.send).toHaveBeenCalledTimes(3);
-    expect(mockedChannelB.send.mock.calls).toEqual([[data.botHeldEmbeds.embeds[1]], [data.botHeldEmbeds.embeds[1]], [data.botHeldEmbeds.embeds[1]]]);
-    
-    expect(channelFromTeamSpy).toHaveBeenNthCalledWith(3, embedTeamNames[2].toLowerCase());
-    expect(channelFromTeamSpy).toHaveNthReturnedWith(3, {error: null, response: mockedChannelC});
-    expect(mockedChannelC.send).toHaveBeenCalledTimes(3);
-    expect(mockedChannelC.send.mock.calls).toEqual([[data.botHeldEmbeds.embeds[2]], [data.botHeldEmbeds.embeds[2]], [data.botHeldEmbeds.embeds[2]]]);
-  })
-
   test('returns accurate success and failure information about which teams can / cannot be found', () => {
     const { channelFromTeamSpy } = require('../__mocks__/mapSpies');
     const { registerTeamChannel } = require("../functions/maps/teamChannels");
@@ -181,7 +112,7 @@ describe('sendFormResponses.js', () => {
     expect(channelFromTeamSpy).toHaveBeenCalledTimes(2);
     channelFromTeamSpy.mockClear();
 
-    const {error, response} = sendResponses([data.botHeldEmbeds]);
+    const {error, response} = sendResponses(data.botHeldEmbeds);
     expect(error).toBeNull();
     response.forEach((output) => {
       expect(output.successes).toHaveLength(2);
@@ -234,7 +165,7 @@ describe('sendFormResponses.js', () => {
       expect(channelFromTeam).toHaveReturnedWith({error: mockErrorMsg, response: null})
       channelFromTeam.mockClear();
 
-      const {error, response} = sendResponses([data.botHeldEmbeds]);
+      const {error, response} = sendResponses(data.botHeldEmbeds);
       expect(response).toBeNull();
       expect(error.code).toEqual(500);
       expect(error.message).toEqual(`ERR: "${mockErrorMsg.code}:${mockErrorMsg.message}" from channelFromTeam()`);
@@ -259,7 +190,7 @@ describe('sendFormResponses.js', () => {
 
       expect(lookupAlias).not.toHaveBeenCalled();
 
-      const {error, response} = sendResponses([data.botHeldEmbeds]);
+      const {error, response} = sendResponses(data.botHeldEmbeds);
       expect(response).toBeNull();
       expect(error.code).toEqual(500);
       expect(error.message).toEqual(`ERR: "${mockErrorMsg.code}:${mockErrorMsg.message}" from channelFromTeam()`);

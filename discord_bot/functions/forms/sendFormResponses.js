@@ -2,14 +2,13 @@ const { channelFromTeam, lookupAlias } = require("../maps/teamChannels");
 
 const channelsCache = {}
 
-exports.sendResponses = (heldResponses, teamName = null) => {
+exports.sendResponses = (heldResponse, teamName = null) => {
   try{
-    if(!heldResponses || heldResponses.length < 1 || heldResponses.constructor !== Array){
-      const error = {"message": `held responses were ${JSON.stringify(heldResponses)}`, "code": 400, "loc": "sendFormResponses.js/sendResponses()"};
+    if(!heldResponse || !heldResponse.embeds || heldResponse.constructor !== Object){
+      const error = {"message": `held responses were ${JSON.stringify(heldResponse)}`, "code": 400, "loc": "sendFormResponses.js/sendResponses()"};
       return {error, response: null};
     }
-    const outputs = [];
-    heldResponses.forEach((heldResponse) => {
+      // if we are trying to only send one team's responses
       if(teamName){
         let lookup = teamName.toLowerCase();
         ({error, response} = lookupAlias(teamName))
@@ -24,16 +23,15 @@ exports.sendResponses = (heldResponses, teamName = null) => {
         if(error){
           return {error, response};
         }
-        outputs.push(response)
+        return {error: null, response};
       } else {
+        // we are trying to send all teams responses
         ({error, response} = parseAllTeams(heldResponse));
         if(error){
           return {error, response};
         }
-        outputs.push(response);
+        return {error: null, response};
       }
-    })
-    return {error: null, response: outputs};
   } catch(e) {
     return e;
   }
