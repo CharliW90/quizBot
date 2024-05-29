@@ -2,15 +2,19 @@ const {ChannelType } = require('discord.js');
 const findCategoryChannel = require('./findCategoryChannel');
 
 module.exports = async (interaction, categoryChannel) => {
-  const channelExists = findCategoryChannel(interaction, categoryChannel.name);
-  if(channelExists){
-    return {error: "Channel already exists", channel: channelExists};
-  } else {
-    const newCategoryChannel = await interaction.guild.channels.create({
-      name: categoryChannel.name,
-      type: ChannelType.GuildCategory,
-    });
-    return {error: null, channel: newCategoryChannel};
+  const {error, response} = findCategoryChannel(interaction, categoryChannel.name);
+  try{
+    if(response){
+      return {error: null, response};
+    } else {
+      const newCategoryChannel = await interaction.guild.channels.create({
+        name: categoryChannel.name,
+        type: ChannelType.GuildCategory,
+      });
+      return {error: null, channel: newCategoryChannel};
+    }
+  } catch(error){
+    return {error, response: null};
   }
 }
 

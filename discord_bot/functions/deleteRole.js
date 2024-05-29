@@ -1,12 +1,12 @@
 const findRole = require("./findRole")
 
 module.exports = async (interaction, role, reason) => {
-  const roleExists = findRole(interaction, role.name);
-  if(roleExists){
-    const deletedRole = await roleExists.delete(reason)
-    return {error: null, role: deletedRole}
+  const {error, response} = findRole(interaction, role.name);
+  if(response){
+    const deletedRole = await response.delete(reason);
+    return {error: null, response: deletedRole};
   } else {
-    return {error: `Cannot find a role with the name ${role.name}`};
+    return {error, response: null};
   }
   
 }

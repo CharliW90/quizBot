@@ -1,4 +1,5 @@
 const { Events } = require('discord.js');
+const prepQuizEnvironment = require('../functions/quiz/prepQuizEnvironment');
 
 module.exports = {
 	name: Events.InteractionCreate,
@@ -13,6 +14,7 @@ module.exports = {
 		}
 
 		try {
+      await prepQuizEnvironment(null, interaction.guild);
 			await command.execute(interaction);
 		} catch (error) {
 			console.error(error);

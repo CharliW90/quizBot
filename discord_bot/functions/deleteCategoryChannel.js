@@ -1,12 +1,12 @@
 const findCategoryChannel = require('./findCategoryChannel');
 
 module.exports = async (interaction, categoryChannel, reason) => {
-  const channelExists = findCategoryChannel(interaction, categoryChannel.name);
-  if(channelExists){
-    const deletedChannel = await channelExists.delete(reason)
-    return {error: null, channel: deletedChannel};
+  const {error, response} = findCategoryChannel(interaction, categoryChannel.name);
+  if(response){
+    const deletedChannel = await response.delete(reason);
+    return {error: null, response: deletedChannel};
   } else {
-    return {error: `Cannot find a channel with the name ${categoryChannel.name}`};
+    return {error, response: null};
   }
 }
 

@@ -1,12 +1,12 @@
 const findVoiceChannel = require('./findVoiceChannel');
 
 module.exports = async (interaction, voiceChannel, reason) => {
-  const channelExists = findVoiceChannel(interaction, voiceChannel.name);
-  if(channelExists){
-    const deletedVoiceChannel = await channelExists.delete(reason)
-    return {error: null, channel: deletedVoiceChannel};
+  const {error, response} = findVoiceChannel(interaction, voiceChannel.name);
+  if(response){
+    const deletedVoiceChannel = await response.delete(reason);
+    return {error: null, response: deletedVoiceChannel};
   } else {
-    return {error: `Cannot find a channel with the name ${voiceChannel.name}`};
+    return {error, response: null};
   }
 }
 

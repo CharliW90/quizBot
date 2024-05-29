@@ -1,16 +1,29 @@
 const findRole = require("./findRole")
 
 module.exports = async (interaction, role) => {
-  const roleExists = findRole(interaction, role.name);
-  if(roleExists){
-    return {error: "Role already exists", role: roleExists};
-  } else {
-    if(role.name) {
+  const {error, response} = findRole(interaction, role.name);
+  try{
+    if(response){
+      return {error: {message: `Role already exists with name ${role.name}`, code: 400}, response: null};
+    } else if(role.name === "Team Captain") {
       const newRole = await interaction.guild.roles.create(role);
-      return {error: null, role: newRole}
+      return {error: null, response: newRole};
     } else {
-      return {error: "Role needs at least a name"}
+      if(role.name) {
+        const {error, response} = findRole(interaction, "Team Captain");
+        if(error){
+          return {error, response: null}
+        }
+        const teamCaptain = response;
+        role.position = teamCaptain.position;
+        const newRole = await interaction.guild.roles.create(role);
+        return {error: null, response: newRole};
+      } else {
+        return {error: "Role needs at least a name", response: null};
+      }
     }
+  } catch(error){
+    return {error, response: null};
   }
 }
 
