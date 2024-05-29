@@ -1,4 +1,4 @@
-const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder } = require('discord.js');
+const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
 const { fetch } = require('../../functions/forms/fetchFormResponses.js');
 const { followUp } = require('../../functions/forms/holdFormResponses.js');
 
@@ -8,7 +8,9 @@ module.exports = {
   category: 'quiz',
   data: new SlashCommandBuilder()
     .setName('fetch-responses')
-    .setDescription('fetches the responses for a quiz round'),
+    .setDescription('fetches the responses for a quiz round')
+    .setDMPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),  // admin only command
   async execute(interaction) {
     const dropdown = new StringSelectMenuBuilder()  // ask the user which round number they want results for
       .setCustomId('roundNumberToFetch')

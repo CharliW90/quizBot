@@ -1,4 +1,4 @@
-const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder } = require('discord.js');
+const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
 const { fetch } = require('../../functions/forms/fetchFormResponses.js');
 const { followUp, rounds, heldResponses } = require('../../functions/forms/holdFormResponses.js');
 
@@ -8,7 +8,9 @@ module.exports = {
   category: 'quiz',
   data: new SlashCommandBuilder()
     .setName('results')
-    .setDescription('handles stored responses'),
+    .setDescription('handles stored responses')
+    .setDMPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),  // admin only command
   async execute(interaction) {
     const storedRounds = rounds();
     if(storedRounds.length === 0){
