@@ -1,4 +1,4 @@
-const {createCategoryChannel, createRole, findCategoryChannel, findRole} = require('../discord/index')
+const {createCategoryChannel, createRole, findCategoryChannel, findRole} = require('../discord')
 
 module.exports = (client, guild = null) => {
   if(!guild){
