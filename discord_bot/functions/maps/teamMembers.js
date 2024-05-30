@@ -4,7 +4,6 @@ const teamsMembers = new Map();
 const membersTeams = new Map();
 
 exports.registerTeamMembers = (teamName, members) => {
-  console.log("registering in map");
   if(!teamName || !members || members.length < 1){
     const error = {"code": 400, "message": `Team Name was ${teamName}, Members were ${members}`};
     return {error, response: null};
@@ -74,8 +73,6 @@ exports.deleteTeamMembers = (teamName) => {
   teamsMembers.delete(teamName)
 
   if(teamsMembers.has(teamName) || Object.keys(membersTeams).some(member => members.includes(member))){
-    console.log(teamsMembers.has(teamName), "teamsMembers.has(teamName)")
-    console.log(Object.keys(membersTeams).some(member => members.includes(member)), "(membersTeams).some(member => members.includes(member))");
     return {error: {message: "something went wrong deleting team and members from the maps", code: 500}, response: null}
   }
 
