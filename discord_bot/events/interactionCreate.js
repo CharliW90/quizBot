@@ -4,20 +4,29 @@ const prepQuizEnvironment = require('../functions/quiz/prepQuizEnvironment');
 module.exports = {
 	name: Events.InteractionCreate,
 	async execute(interaction) {
-		if (!interaction.isChatInputCommand()) return;
+		if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()){
+      return;
+    }  
 
 		const command = interaction.client.commands.get(interaction.commandName);
 
 		if (!command) {
-			console.error(`No command matching ${interaction.commandName} was found.`);
+      console.error(`No command matching ${interaction.commandName} was found.`);
 			return;
 		}
 
 		try {
-      await prepQuizEnvironment(null, interaction.guild);
-			await command.execute(interaction);
+      prepQuizEnvironment(null, interaction.guild);
+      if(interaction.isAutocomplete()){
+        await command.autocomplete(interaction);
+      } else {
+        await command.execute(interaction);
+      }
 		} catch (error) {
 			console.error(error);
+      if(!interaction){
+        return;
+      }
 			if (interaction.replied || interaction.deferred) {
 				await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
 			} else {

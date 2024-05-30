@@ -30,7 +30,7 @@ const prepGuild = (guild) => {
       name: "Team Captain",
       color: "Purple",
       hoist: true,
-      position: self.position,
+      position: self.response.position,
       mentionable: true,
     }
     createRole(guild, roleDetails)

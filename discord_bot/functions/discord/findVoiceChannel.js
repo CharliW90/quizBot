@@ -10,4 +10,3 @@ module.exports = (guild, voiceChannelName) => {
 }
 
 // Searches for a channel of type 'voice' with the name provided
-// only returns either a channelObject or null

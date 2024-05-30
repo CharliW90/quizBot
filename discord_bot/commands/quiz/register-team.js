@@ -1,7 +1,8 @@
-const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, GuildMember, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
-const registerTeam = require('../../functions/quiz/registerTeam');
+const { ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
 const { lookupAlias } = require('../../functions/maps/teamChannels');
 const { checkMembers } = require('../../functions/maps/teamMembers');
+
+const registerTeam = require('../../functions/quiz/registerTeam');
 
 // A command to register a quiz team, including creating a role, and role-restricted channels, for the team members
 
@@ -34,7 +35,7 @@ module.exports = {
       option.setName('colour')
         .setDescription('Team Colour')
         .addChoices(
-          {name: 'Random', value: 'Random'},
+          {name: 'Random (default)', value: 'Random'},
           {name: 'Green', value: 'Green'},
           {name: 'Aqua', value: 'Aqua'},
           {name: 'Blue', value: 'Blue'},
@@ -68,18 +69,19 @@ module.exports = {
     }
 
     const teamColour = interaction.options.getString('colour') ?? 'Random';
+
     const confirmation_screen = new EmbedBuilder()
       .setColor(teamColour)
       .setTitle("Draft Quiz Team to Register")
       .setAuthor({name: `QuizBot 2.0`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
       .addFields(
         {name: "Team Name", value: teamName},
-        {name: "Captain", value: captain.user.globalName}
+        {name: "Captain", value: `${captain}`}
       )
 
     members.forEach((member) => {
       confirmation_screen.addFields(
-        {name: "Team Member", value: member.user.globalName}
+        {name: "Team Member", value: `${member}`}
       )
     })
 
@@ -98,10 +100,11 @@ module.exports = {
 
     const popup = await interaction.channel.send({embeds: [confirmation_screen]});
 
-    const confirmation = await interaction.reply({
-      content: 'Please review your draft team registration, and confirm the details for me',
-      components: [row]
+    await interaction.reply({
+      content: 'Please review your draft team registration, and confirm the details for me'
     });
+
+    const confirmation = await interaction.channel.send({components: [row]})
 
     const collectorFilter = i => i.user.id === interaction.user.id;
 
@@ -109,11 +112,13 @@ module.exports = {
       const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
       if(reply.customId === 'cancel'){
         interaction.channel.messages.delete(popup);
+        interaction.deleteReply()
         reply.update({ content: `Action cancelled.`, components: [] })
         return;
       } else if(reply.customId === 'register'){
         const settledColour = confirmation_screen.data.color;
         interaction.channel.messages.delete(popup);
+        interaction.deleteReply()
         reply.update({ content: `Registering your team...`, components: [] })
         .then(() => {
           return registerTeam(interaction, {teamName, captain, members, settledColour})
@@ -123,13 +128,19 @@ module.exports = {
             throw error;
           }
           interaction.channel.send({embeds: [response]});
+          reply.message.delete();
         })
         .catch((error) => {
           console.error(error)
         })
       }
     } catch(e) {
-      throw e;
+      if(e.message === "Collector received no interactions before ending with reason: time"){
+        // handles failure to reply to the initial response of 'which round do you want to fetch?'
+        await confirmation.edit({ content: 'Response not received within 1 minute, cancelling...', components: [] });
+      } else {
+        throw e;
+      }
     }
   }
 }

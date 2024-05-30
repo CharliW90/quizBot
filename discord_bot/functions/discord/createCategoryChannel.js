@@ -19,5 +19,4 @@ module.exports = async (guild, categoryChannel) => {
 }
 
 // checks if the requested channel name already exists, and creates one if it does not
-// returns either the existing channelObject, or the newly created channelObject
-// always returns a channelObject
+// returns the new channelObject or an error

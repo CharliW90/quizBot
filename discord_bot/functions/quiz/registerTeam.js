@@ -127,10 +127,10 @@ module.exports = (interaction, team) => {
       successfulRegistration.addFields({name: "Team Name", value: teamName});
     }
 
-    successfulRegistration.addFields({name: "Team Captain", value: captain.user.globalName});
+    successfulRegistration.addFields({name: "Team Captain", value: `${captain}`});
     
     if(members.length > 0){
-      successfulRegistration.addFields({name: "Team Members", value: `${members.join('\n')}`});
+      successfulRegistration.addFields({name: "Team Members", value: members.join('\n')});
     }
 
     return {error: null, response: successfulRegistration};
