@@ -8,6 +8,8 @@ const findCategoryChannel = require("../findCategoryChannel");
 const { registerTeamChannel, setAlias, deleteTeam } = require("../maps/teamChannels");
 const { registerTeamMembers, deleteTeamMembers } = require("../maps/teamMembers");
 
+// keep a history of the roles and channels created as we go along,
+// so that if a step fails we can undo the completed actions before returning the error message to the end-user
 const history = [];
 
 module.exports = (interaction, team) => {
@@ -16,7 +18,7 @@ module.exports = (interaction, team) => {
   const textChannelName = textifyTeamName(teamName.toLowerCase());
 
   const roleDetails = {
-    name: teamName,
+    name: `Team: ${teamName}`,
     color: settledColour,
     hoist: true,
     mentionable: true,
@@ -30,12 +32,15 @@ module.exports = (interaction, team) => {
     }
     const teamRole = response;
     history.push(teamRole);
+    
     ({error, response} = findRole(interaction, "Team Captain"));
     if(error){
       undo();
       throw error;
     }
     const captainRole = response;
+    // don't push to history - this isn't something we've created, and we wouldn't want to undo it if something fails
+
     const promises = [];
     promises.push(assignRole(teamRole, [captain, ...members]), assignRole(captainRole, [captain]));
     return Promise.all(promises);
