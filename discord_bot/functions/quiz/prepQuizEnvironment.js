@@ -18,14 +18,14 @@ module.exports = (client, guild = null) => {
 
 const prepGuild = (guild) => {
   const actions = [];
-  let {error, response} = findCategoryChannel({guild}, "QUIZ TEAMS");
+  let {error, response} = findCategoryChannel(guild, "QUIZ TEAMS");
   if(error){
-    createCategoryChannel({guild}, {name: "QUIZ TEAMS"});
+    createCategoryChannel(guild, {name: "QUIZ TEAMS"});
     actions.push(`Created category channel 'QUIZ TEAMS' for Server: ${guild.name}`);
   }
-  ({error, response} = findRole({guild}, "Team Captain"));
+  ({error, response} = findRole(guild, "Team Captain"));
   if(error){
-    const self = findRole({guild}, "Quizzy");
+    const self = findRole(guild, "Quizzy");
     const roleDetails = {
       name: "Team Captain",
       color: "Purple",
@@ -33,7 +33,7 @@ const prepGuild = (guild) => {
       position: self.position,
       mentionable: true,
     }
-    createRole({guild}, roleDetails)
+    createRole(guild, roleDetails)
     actions.push(`Created 'Team Captain' role for Server: ${guild.name}`)
   }
   return actions;

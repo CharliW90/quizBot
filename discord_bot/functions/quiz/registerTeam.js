@@ -8,7 +8,8 @@ const { registerTeamMembers, deleteTeamMembers } = require("../maps/teamMembers"
 const history = [];
 
 module.exports = (interaction, team) => {
-  const self = findRole(interaction, "Quizzy");
+  const guild = interaction.guild;
+  const self = findRole(guild, "Quizzy");
   const {teamName, captain, members, settledColour} = team;
   const textChannelName = textifyTeamName(teamName.toLowerCase());
 
@@ -19,7 +20,7 @@ module.exports = (interaction, team) => {
     mentionable: true,
   };
   
-  return createRole(interaction, roleDetails)
+  return createRole(guild, roleDetails)
   .then(({error, response}) => {
     if(error){
       undo();
@@ -28,7 +29,7 @@ module.exports = (interaction, team) => {
     const teamRole = response;
     history.push(teamRole);
     
-    ({error, response} = findRole(interaction, "Team Captain"));
+    ({error, response} = findRole(guild, "Team Captain"));
     if(error){
       undo();
       throw error;
@@ -37,65 +38,83 @@ module.exports = (interaction, team) => {
     // don't push to history - this isn't something we've created, and we wouldn't want to undo it if something fails
 
     const promises = [];
-    promises.push(assignRole(teamRole, [captain, ...members]), assignRole(captainRole, [captain]));
+
+    promises.push(
+      assignRole(teamRole, [captain, ...members]),
+      assignRole(captainRole, [captain])
+    );
+
     return Promise.all(promises);
   })
   .then(([teamRole, captainRole]) => {
-    const {error, response} = findCategoryChannel(interaction, "QUIZ TEAMS");
+    const {error, response} = findCategoryChannel(guild, "QUIZ TEAMS");
     if(error){
       undo();
       throw error;
     }
+
     const quizTeamsCategory = response;
-
-    const promises = [teamRole.response];
-
+    const promises = [];
+    // we want to make the channels viewable only to those with the teamRole, and ourself (the bot)
     const permissions = [
-      {id: interaction.guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel],},
-      {id: teamRole.response.id, allow: [PermissionFlagsBits.ViewChannel]},
-      {id: self.response.id, allow: [PermissionFlagsBits.ViewChannel]}
+      {id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel],},
+      {id: self.response.id, allow: [PermissionFlagsBits.ViewChannel]},
+      {id: teamRole.response.id, allow: [PermissionFlagsBits.ViewChannel]}
     ]
+
     const textChannel = {
       name: textChannelName,
       parent: quizTeamsCategory,
       permissionOverwrites: permissions,
     }
+
     const voiceChannel = {
       name: teamName,
       parent: quizTeamsCategory,
       permissionOverwrites: permissions,
     }
-    promises.push(createTextChannel(interaction, textChannel), createVoiceChannel(interaction, voiceChannel));
+
+    promises.push(createTextChannel(guild, textChannel), createVoiceChannel(guild, voiceChannel));
+
     return Promise.all(promises);
   })
-  .then(([role, textChannel, voiceChannel]) => {
+  .then(([textChannel, voiceChannel]) => {
     if(textChannel.error || voiceChannel.error){
       undo();
-      throw textChannel.error ?? voiceChannel.error;
+      const message = `Text Channel error: ${textChannel.error.message}\nVoice Channel error: ${voiceChannel.error.message}`
+      throw {message, code: 500};
     }
     history.push(textChannel.response, voiceChannel.response);
+
     return registerTeamChannel(teamName, textChannel.response);
   })
   .then(({error, response}) => {
     if(error){
+      // this is a non-fatal error, it can be corrected later on when handling scores/results
       console.warn(error);
     } else {
       history.push(response);
     }
+
     if(textChannelName !== teamName){
+      // this catches when we have created a different version of the teamname for the text channel
       ({error, response} = setAlias(textChannelName, teamName));
       if(error){
+        // this is a non-fatal error, and is just a 'nice to have' if it works
         console.warn(error);
       }
     }
+
     return registerTeamMembers(teamName, [...members, captain]);
   })
   .then(({error, response}) => {
     if(error){
+      // this is a non-fatal error, however it will cause incorrect pre-registration checks against team members
       console.warn(error);
     } else {
       history.push(response);
     }
+
     const successfulRegistration = new EmbedBuilder()
       .setColor(settledColour)
       .setTitle(`Registration Successful`)
@@ -142,12 +161,15 @@ const undo = () => {
   history.forEach((actionTaken) => {
     try{
       if(actionTaken.includes('::')){
+        // this is our team registration, where a teamName is mapped to its text channel
         const registration = actionTaken.split('::')[0];
         deleteTeam(registration).then((deletion) => console.log(deletion.response));
       } else if(actionTaken.includes('<=>')){
+        // this is our team members registration, where teams and members are mapped to one another
         const registration = actionTaken.split('<=>')[0];
         deleteTeamMembers(registration).then((deletion) => console.log(deletion.response));
       } else {
+        // this is a discord action (e.g. Role creation or Channel Creation)
         actionTaken.delete().then((deletion) => console.log(`Deleted ${deletion.constructor.name} ${deletion.name}`));
       }
     } catch(e){

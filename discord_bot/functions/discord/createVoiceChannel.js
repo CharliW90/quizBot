@@ -1,14 +1,14 @@
 const {ChannelType } = require('discord.js');
 const findVoiceChannel = require('./findVoiceChannel');
 
-module.exports = async (interaction, voiceChannel) => {
-  const {error, response} = findVoiceChannel(interaction, voiceChannel.name);
+module.exports = async (guild, voiceChannel) => {
+  const {error, response} = findVoiceChannel(guild, voiceChannel.name);
   try{
     if(response){
       return {error: {message: `Voice Channel already exists with name ${textChannel.name}`, code: 400}, response: null};
     } else {
       voiceChannel.type = ChannelType.GuildVoice;
-      const newVoiceChannel = await interaction.guild.channels.create(voiceChannel);
+      const newVoiceChannel = await guild.channels.create(voiceChannel);
       return {error: null, response: newVoiceChannel};
     }
   } catch(error){

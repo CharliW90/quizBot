@@ -1,7 +1,7 @@
 const findVoiceChannel = require('./findVoiceChannel');
 
-module.exports = async (interaction, voiceChannel, reason) => {
-  const {error, response} = findVoiceChannel(interaction, voiceChannel.name);
+module.exports = async (guild, voiceChannel, reason) => {
+  const {error, response} = findVoiceChannel(guild, voiceChannel.name);
   if(response){
     const deletedVoiceChannel = await response.delete(reason);
     return {error: null, response: deletedVoiceChannel};

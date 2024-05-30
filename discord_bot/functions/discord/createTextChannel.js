@@ -1,14 +1,14 @@
 const {ChannelType } = require('discord.js');
 const findTextChannel = require('./findTextChannel');
 
-module.exports = async (interaction, textChannel) => {
-  const {error, response} = findTextChannel(interaction, textChannel.name);
+module.exports = async (guild, textChannel) => {
+  const {error, response} = findTextChannel(guild, textChannel.name);
   try{
     if(response){
       return {error: {message: `Text Channel already exists with name ${textChannel.name}`, code: 400}, response: null};
     } else {
       textChannel.type = ChannelType.GuildText
-      const newTextChannel = await interaction.guild.channels.create(textChannel);
+      const newTextChannel = await guild.channels.create(textChannel);
       return {error: null, response: newTextChannel};
     }
   } catch(error){

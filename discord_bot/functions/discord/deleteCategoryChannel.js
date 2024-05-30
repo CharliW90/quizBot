@@ -1,7 +1,7 @@
 const findCategoryChannel = require('./findCategoryChannel');
 
-module.exports = async (interaction, categoryChannel, reason) => {
-  const {error, response} = findCategoryChannel(interaction, categoryChannel.name);
+module.exports = async (guild, categoryChannel, reason) => {
+  const {error, response} = findCategoryChannel(guild, categoryChannel.name);
   if(response){
     const deletedChannel = await response.delete(reason);
     return {error: null, response: deletedChannel};

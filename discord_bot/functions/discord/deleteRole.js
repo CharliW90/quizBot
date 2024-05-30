@@ -1,7 +1,7 @@
 const findRole = require("./findRole")
 
-module.exports = async (interaction, role, reason) => {
-  const {error, response} = findRole(interaction, role.name);
+module.exports = async (guild, role, reason) => {
+  const {error, response} = findRole(guild, role.name);
   if(response){
     const deletedRole = await response.delete(reason);
     return {error: null, response: deletedRole};

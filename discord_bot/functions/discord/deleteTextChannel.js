@@ -1,7 +1,7 @@
 const findTextChannel = require('./findTextChannel');
 
-module.exports = async (interaction, textChannel, reason) => {
-  const {error, response} = findTextChannel(interaction, textChannel.name);
+module.exports = async (guild, textChannel, reason) => {
+  const {error, response} = findTextChannel(guild, textChannel.name);
   if(response){
     const deletedTextChannel = await response.delete(reason);
     return {error: null, response: deletedTextChannel};

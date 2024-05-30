@@ -1,10 +1,10 @@
-module.exports = (interaction) => {
-  if(interaction.guild.members.cache){
-    const adminRoles = interaction.guild.roles.cache.filter(role => role.permissions.has("Administrator"));
-    const admins = interaction.guild.members.cache.filter(member => member.permissions.has("Administrator"));
+module.exports = (guild) => {
+  if(guild.members.cache){
+    const adminRoles = guild.roles.cache.filter(role => role.permissions.has("Administrator"));
+    const admins = guild.members.cache.filter(member => member.permissions.has("Administrator"));
     return {error: null, response: {adminRoles, admins}}
   } else {
-    return {error: {message: `Interaction did not contain guild.roles.cache`, code: 400, details: interaction}, response: null};
+    return {error: {message: `Guild object did not contain .roles.cache`, code: 400, details: interaction}, response: null};
   }
 }
 

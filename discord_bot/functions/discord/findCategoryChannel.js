@@ -1,11 +1,11 @@
 const {ChannelType} = require('discord.js');
 
-module.exports = (interaction, categoryName) => {
-  if(interaction.guild.channels.cache){
-    const category = interaction.guild.channels.cache.find(channel => channel.type === ChannelType.GuildCategory && channel.name === categoryName);
+module.exports = (guild, categoryName) => {
+  if(guild.channels.cache){
+    const category = guild.channels.cache.find(channel => channel.type === ChannelType.GuildCategory && channel.name === categoryName);
     return category ? {error: null, response: category} : {error: {message: `Could not find category channel called ${categoryName}`, code: 404}, response: null};
   } else {
-    return {error: {message: `Interaction did not contain guild.channels.cache`, code: 400, details: interaction}, response: null};
+    return {error: {message: `Guild object did not contain .channels.cache`, code: 400, details: interaction}, response: null};
   }
 }
 
