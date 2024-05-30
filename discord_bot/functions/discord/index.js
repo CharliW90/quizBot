@@ -8,9 +8,9 @@ const deleteTextChannel = require("./deleteTextChannel");
 const deleteVoiceChannel = require("./deleteVoiceChannel");
 const findAdmins = require("./findAdmins");
 const findCategoryChannel = require("./findCategoryChannel");
+const findRole = require("./findRole");
 const findTextChannel = require("./findTextChannel");
 const findVoiceChannel = require("./findVoiceChannel");
-
 
 module.exports = {
   assignRole,
@@ -23,6 +23,7 @@ module.exports = {
   deleteVoiceChannel,
   findAdmins,
   findCategoryChannel,
+  findRole,
   findTextChannel,
   findVoiceChannel
 }

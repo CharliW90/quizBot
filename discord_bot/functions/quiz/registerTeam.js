@@ -1,10 +1,5 @@
 const { Guild, PermissionFlagsBits, Role, TextChannel, VoiceChannel, EmbedBuilder } = require("discord.js");
-const findRole = require("../findRole");
-const createRole = require("../createRole");
-const assignRole = require("../assignRole");
-const createTextChannel = require("../createTextChannel");
-const createVoiceChannel = require("../createVoiceChannel");
-const findCategoryChannel = require("../findCategoryChannel");
+const {findRole, createRole, assignRole, createTextChannel, createVoiceChannel, findCategoryChannel} = require('../discord/index')
 const { registerTeamChannel, setAlias, deleteTeam } = require("../maps/teamChannels");
 const { registerTeamMembers, deleteTeamMembers } = require("../maps/teamMembers");
 
