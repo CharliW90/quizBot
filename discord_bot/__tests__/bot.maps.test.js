@@ -51,7 +51,7 @@ describe('teamChannels.js', () => {
 
       const {error, response} = registerTeamChannel(teamName, textChannel);
       expect(error).toBeNull();
-      expect(response).toEqual(`${teamName}::${textChannel.id}`)
+      expect(response).toEqual(`${teamName}::${textChannel}`)
     })
 
     test('returns error message with details of linked team name and channel id if link already exists', () => {
@@ -59,7 +59,7 @@ describe('teamChannels.js', () => {
 
       let {error, response} = registerTeamChannel(teamName, textChannel);
       expect(error).toBeNull();
-      expect(response).toEqual(`${teamName}::${textChannel.id}`);
+      expect(response).toEqual(`${teamName}::${textChannel}`);
       ({error, response} = registerTeamChannel(teamName, textChannel));
       expect(error.code).toBe(409);
       expect(error.message).toEqual(`${teamName} already linked to a channel`);
@@ -283,7 +283,16 @@ describe('teamChannels.js', () => {
 
       const {error, response} = teamFromChannel({name: 'fake channel'});
       expect(error.code).toBe(400);
-      expect(error.message).toEqual(`Channel ID was undefined`);
+      expect(error.message).toEqual(`Bad Channel id: undefined, or name: fake channel`);
+      expect(response).toBeNull();
+    })
+
+    test('returns error message and null response if channel given has no name property', () => {
+      const {teamFromChannel} = require("../functions/maps/teamChannels");
+
+      const {error, response} = teamFromChannel({id: '1254-9856'});
+      expect(error.code).toBe(400);
+      expect(error.message).toEqual(`Bad Channel id: 1254-9856, or name: undefined`);
       expect(response).toBeNull();
     })
 
@@ -300,7 +309,7 @@ describe('teamChannels.js', () => {
 
       const {error, response} = teamFromChannel(unstoredTextChannel);
       expect(error.code).toBe(404);
-      expect(error.message).toEqual(`Channel ${unstoredTextChannel.id} not found`);
+      expect(error.message).toEqual(`Channel ${unstoredTextChannel.name} not found`);
       expect(response).toBeNull();
     })
   })
@@ -485,4 +494,8 @@ describe('teamChannels.js', () => {
       expect(response).toEqual(teamName);
     })
   })
+})
+
+describe('teamMembers.js', () => {
+  test.todo('same tests as above, for these functions')
 })
