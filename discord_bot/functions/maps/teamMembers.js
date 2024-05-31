@@ -78,3 +78,8 @@ exports.deleteTeamMembers = (teamName) => {
 
   return {error: null, response: `Deleted ${teamName} registration, and members association for ${deletedMembers.join('\n')}`}
 }
+
+exports.resetTeamMembers = () => {
+  teamsMembers.clear();
+  membersTeams.clear();
+}

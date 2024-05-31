@@ -97,10 +97,10 @@ module.exports = {
 
     const row = new ActionRowBuilder()
       .addComponents(confirm, cancel)
-
-    const popup = await interaction.channel.send({embeds: [confirmation_screen]});
-
-    await interaction.reply({
+      
+    await interaction.reply({embeds: [confirmation_screen]});
+    
+    const popup = await interaction.channel.send({
       content: 'Please review your draft team registration, and confirm the details for me'
     });
 
@@ -111,15 +111,13 @@ module.exports = {
     try{
       const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
       if(reply.customId === 'cancel'){
+        interaction.editReply({ content: `Action cancelled.`, embeds: [] });
         interaction.channel.messages.delete(popup);
-        interaction.deleteReply()
-        reply.update({ content: `Action cancelled.`, components: [] })
+        confirmation.delete();
         return;
       } else if(reply.customId === 'register'){
         const settledColour = confirmation_screen.data.color;
-        interaction.channel.messages.delete(popup);
-        interaction.deleteReply()
-        reply.update({ content: `Registering your team...`, components: [] })
+        popup.edit({ content: `Registering your team...` })
         .then(() => {
           return registerTeam(interaction, {teamName, captain, members, settledColour})
         })
@@ -127,8 +125,9 @@ module.exports = {
           if(error){
             throw error;
           }
-          interaction.channel.send({embeds: [response]});
-          reply.message.delete();
+          interaction.editReply({embeds: [response]});
+          interaction.channel.messages.delete(popup);
+          confirmation.delete();
         })
         .catch((error) => {
           console.error(error)
@@ -148,8 +147,8 @@ module.exports = {
 const validateTeamDetails = (interaction, teamName, teamMembers) => {
   const roles = interaction.guild.roles.cache.map(role => role.name);
   const dupedRole = roles.filter((role) => {return role.toLowerCase() === teamName.toLowerCase()});
-  const channels = interaction.guild.channels.cache.map(channel => channel.name);
-  const dupedChannel = channels.filter((channel) => {return channel.toLowerCase() === teamName.toLowerCase()});
+  const channels = interaction.guild.channels.cache.map((channel) => {return `${channel.constructor.name}: ${channel.name}`});
+  const dupedChannel = channels.filter((channel) => {return channel.split(': ')[1].toLowerCase() === teamName.toLowerCase()});
   const aliasCheck = lookupAlias(teamName);
   const {error, response} = checkMembers(teamMembers)
   
@@ -165,23 +164,23 @@ const validateTeamDetails = (interaction, teamName, teamMembers) => {
       )
     if(dupedRole.length > 0){
       refusal.addFields(
-        {name: "Role already exists", value: `${dupedRole.join('\n')}`},
+        {name: ":warning: Role already exists", value: `${dupedRole.join('\n')}`},
       )
     }
     if(dupedChannel.length > 0){
       refusal.addFields(
-        {name: "Channel(s) already exist", value: `${dupedChannel.join('\n')}`},
+        {name: ":warning: Channel(s) already exist", value: `${dupedChannel.join('\n')}`},
       )
     }
     if(aliasCheck.response){
       refusal.addFields(
-        {name: "Team already exists", value: `${teamName} is ${aliasCheck.response}`},
+        {name: ":warning: Team already exists", value: `${teamName} is ${aliasCheck.response}`},
       )
     }
     if(!error){
       response.forEach((err) => {
         refusal.addFields(
-        {name: "Member(s) already in a team", value: `${err.user} is in team ${err.team}`},
+        {name: ":warning: Member(s) already in a team", value: `${err.user} is in team ${err.team}`},
       )
       })
     }

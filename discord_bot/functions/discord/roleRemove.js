@@ -1,7 +1,7 @@
-module.exports = (role, users) => {
+module.exports = async (role, members) => {
   try{
-    users.forEach((user) => {
-      user.roles.add(role)
+    members.forEach((member) => {
+      member.roles.remove(role)
     })
     return {error: null, response: role};
   } catch(error){

@@ -1,4 +1,6 @@
 const { findCategoryChannel } = require("../../functions/discord");
+const { reset, resetTeamChannels } = require("../maps/teamChannels");
+const { resetTeamMembers } = require("../maps/teamMembers");
 
 module.exports = (guild) => {
   const deletions = {};
@@ -33,7 +35,9 @@ module.exports = (guild) => {
       }
       deletions[role.constructor.name].push(role.name.replace("Team: ", ""));
     })
-
+    return Promise.all([resetTeamChannels, resetTeamMembers])
+  })
+  .then(() => {
     return {error: null, response: deletions};
   })
   .catch((error) => {

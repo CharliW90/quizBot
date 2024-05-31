@@ -1,5 +1,5 @@
 const { Guild, PermissionFlagsBits, Role, TextChannel, VoiceChannel, EmbedBuilder } = require("discord.js");
-const {findRole, createRole, assignRole, createTextChannel, createVoiceChannel, findCategoryChannel} = require('../discord')
+const {findRole, createRole, roleAssign, createTextChannel, createVoiceChannel, findCategoryChannel} = require('../discord')
 const { registerTeamChannel, setAlias, deleteTeam } = require("../maps/teamChannels");
 const { registerTeamMembers, deleteTeamMembers } = require("../maps/teamMembers");
 
@@ -40,8 +40,8 @@ module.exports = (interaction, team) => {
     const promises = [];
 
     promises.push(
-      assignRole(teamRole, [captain, ...members]),
-      assignRole(captainRole, [captain])
+      roleAssign(teamRole, [captain, ...members]),
+      roleAssign(captainRole, [captain])
     );
 
     return Promise.all(promises);
@@ -160,11 +160,11 @@ const textifyTeamName = (string) => {
 const undo = () => {
   history.forEach((actionTaken) => {
     try{
-      if(actionTaken.includes('::')){
+      if(String(actionTaken).includes('::')){
         // this is our team registration, where a teamName is mapped to its text channel
         const registration = actionTaken.split('::')[0];
         deleteTeam(registration).then((deletion) => console.log(deletion.response));
-      } else if(actionTaken.includes('<=>')){
+      } else if(String(actionTaken).includes('<=>')){
         // this is our team members registration, where teams and members are mapped to one another
         const registration = actionTaken.split('<=>')[0];
         deleteTeamMembers(registration).then((deletion) => console.log(deletion.response));

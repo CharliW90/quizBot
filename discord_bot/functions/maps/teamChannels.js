@@ -1,5 +1,5 @@
-const teamsChannels = {};
-const channelsTeams ={};
+const teamsChannels = new Map();
+const channelsTeams = new Map();
 const teamsAliases = new Map();
 
 exports.registerTeamChannel = (teamName, channel) => {
@@ -15,27 +15,29 @@ exports.registerTeamChannel = (teamName, channel) => {
   }
 
   if(!this.teamFromChannel(channel).error){
-    const error = {"code": 409, "message": `${channel.id} already linked to a team`};
+    const error = {"code": 409, "message": `${channel.name} already linked to a team`};
     return {error, response: null};
   }
 
-  teamsChannels[teamName.toLowerCase()] = channel;
-  channelsTeams[channel.id] = teamName.toLowerCase();
+  teamsChannels.set(teamName.toLowerCase(), channel);
+  channelsTeams.set(channel, teamName.toLowerCase());
 
-  if(teamsChannels[teamName.toLowerCase()] && channelsTeams[channel.id]){
+  if(teamsChannels.has(teamName.toLowerCase()) && channelsTeams.has(channel)){
     // if both are successfully listed in the respective Objects
-    return {error: null, response: `${teamName}::${channel.id}`}
+    return {error: null, response: `${teamName}::${channel}`}
   } else {
     // return error message with additional details to help debug error
     const details = {
       "teamsChannels": [
         `attempted registration of ${teamName.toLowerCase()}`,
-        teamsChannels[teamName.toLowerCase()],
+        teamsChannels.has(teamName.toLowerCase()),
+        teamsChannels.get(teamName.toLowerCase()),
         teamsChannels
       ],
       "channelsTeams": [
-        `attempted registration of ${channel.id}`,
-        channelsTeams[channel.id],
+        `attempted registration of ${channel.name}`,
+        channelsTeams.has(channel),
+        channelsTeams.get(channel),
         channelsTeams
       ]
     }
@@ -101,13 +103,13 @@ exports.deleteTeam = (teamName) => {
     return {error, response: null};
   }
 
-  const lookup = teamsChannels[teamName.toLowerCase()] ? teamName.toLowerCase() : teamsAliases.get(teamName);
+  const lookup = teamsChannels.has(teamName.toLowerCase()) ? teamName.toLowerCase() : teamsAliases.get(teamName);
 
+  const channel = teamsChannels.get(lookup);
+  teamsChannels.delete(lookup);
+  channelsTeams.delete(channel);
+  
   let response = lookup;
-
-  const channel = teamsChannels[lookup];
-  delete teamsChannels[lookup];
-  delete channelsTeams[channel];
 
   teamsAliases.forEach((team, alias) => {
     if(team === lookup){
@@ -125,17 +127,21 @@ exports.channelFromTeam = (teamName) => {
     return {error, response: null}
   }
 
-  const lookup = teamsChannels[teamName.toLowerCase()] ? teamName.toLowerCase() : teamsAliases.get(teamName);
+  const lookup = teamsChannels.has(teamName.toLowerCase()) ? teamName.toLowerCase() : teamsAliases.get(teamName);
   
-  return teamsChannels[lookup] ? {error: null, response: teamsChannels[lookup]} : {error: {"code": 404, "message": `${teamName} not found`}, response: null};
+  return teamsChannels.has(lookup) ? {error: null, response: teamsChannels.get(lookup)} : {error: {"code": 404, "message": `${teamName} not found`}, response: null};
 }
 
 exports.teamFromChannel = (channel) => {
-  if(!channel || !channel.id){
-    return channel ? {error: {"code": 400, "message": `Channel ID was ${channel.id}`}, response: null} : {error: {"code": 400, "message": `Channel was ${channel}`}, response: null};
+  if(!channel || !channel.id || !channel.name){
+    return channel ? {error: {"code": 400, "message": `Bad Channel id: ${channel.id}, or name: ${channel.name}`}, response: null} : {error: {"code": 400, "message": `Channel was ${channel}`}, response: null};
   }
-    
-  const lookup = channel.id;
   
-  return channelsTeams[lookup] ? {error: null, response: channelsTeams[lookup]} : {error: {"code": 404, "message": `Channel ${channel.id} not found`}, response: null};
+  return channelsTeams.has(channel) ? {error: null, response: channelsTeams.get(channel)} : {error: {"code": 404, "message": `Channel ${channel.name} not found`}, response: null};
+}
+
+exports.resetTeamChannels = () => {
+  teamsChannels.clear();
+  channelsTeams.clear();
+  teamsAliases.clear();  
 }

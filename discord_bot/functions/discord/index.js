@@ -1,4 +1,3 @@
-const assignRole = require("./assignRole");
 const createCategoryChannel = require("./createCategoryChannel");
 const createRole = require("./createRole");
 const createTextChannel = require("./createTextChannel");
@@ -11,9 +10,10 @@ const findCategoryChannel = require("./findCategoryChannel");
 const findRole = require("./findRole");
 const findTextChannel = require("./findTextChannel");
 const findVoiceChannel = require("./findVoiceChannel");
+const roleAssign = require("./roleAssign");
+const roleRemove = require("./roleRemove");
 
 module.exports = {
-  assignRole,
   createCategoryChannel,
   createRole,
   createTextChannel,
@@ -25,5 +25,7 @@ module.exports = {
   findCategoryChannel,
   findRole,
   findTextChannel,
-  findVoiceChannel
+  findVoiceChannel,
+  roleAssign,
+  roleRemove
 }

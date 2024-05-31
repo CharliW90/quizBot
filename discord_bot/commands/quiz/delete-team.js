@@ -58,8 +58,8 @@ module.exports = {
     try{
       const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
       if(reply.customId === 'cancel'){
-        interaction.deleteReply()
-        reply.update({ content: `Action cancelled.`, components: [] })
+        interaction.editReply({ content: `Action cancelled.` });
+        confirmation.delete();
         return;
       }else if(reply.customId === 'delete'){
         interaction.deleteReply()
