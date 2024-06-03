@@ -1,8 +1,4 @@
 const { ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
-const { lookupAlias } = require('../../functions/maps/teamChannels');
-const { checkMembers } = require('../../functions/maps/teamMembers');
-
-const registerTeam = require('../../functions/quiz/registerTeam');
 
 // A command to register a quiz team, including creating a role, and role-restricted channels, for the team members
 
@@ -54,8 +50,11 @@ module.exports = {
         )
     ),
   async execute(interaction) {
+    const registerTeam = require('../../functions/quiz/registerTeam');
+
     const teamName = interaction.options.getString('team-name');
     const captain = interaction.options.getMember('team-captain');
+    
     const members = [];
     interaction.options.getMember('team-member-1') ? members.push(interaction.options.getMember('team-member-1')) : ""
     interaction.options.getMember('team-member-2') ? members.push(interaction.options.getMember('team-member-2')) : ""
@@ -98,26 +97,18 @@ module.exports = {
     const row = new ActionRowBuilder()
       .addComponents(confirm, cancel)
       
-    await interaction.reply({embeds: [confirmation_screen]});
-    
-    const popup = await interaction.channel.send({
-      content: 'Please review your draft team registration, and confirm the details for me'
-    });
+    const confirmation = await interaction.reply({content: 'Please review your draft team registration, and confirm the details for me',embeds: [confirmation_screen], components: [row], ephemeral: true});
 
-    const confirmation = await interaction.channel.send({components: [row]})
-
-    const collectorFilter = i => i.user.id === interaction.user.id;
+    const collectorFilter = i => i.user.id === interaction.user.id || captain.user.id;
 
     try{
       const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
       if(reply.customId === 'cancel'){
-        interaction.editReply({ content: `Action cancelled.`, embeds: [] });
-        interaction.channel.messages.delete(popup);
-        confirmation.delete();
+        interaction.editReply({ content: `Action cancelled.`, embeds: [], components: [] });
         return;
       } else if(reply.customId === 'register'){
         const settledColour = confirmation_screen.data.color;
-        popup.edit({ content: `Registering your team...` })
+        interaction.editReply({ content: `Registering your team...`, components: [] })
         .then(() => {
           return registerTeam(interaction, {teamName, captain, members, settledColour})
         })
@@ -125,9 +116,16 @@ module.exports = {
           if(error){
             throw error;
           }
-          interaction.editReply({embeds: [response]});
-          interaction.channel.messages.delete(popup);
-          confirmation.delete();
+          interaction.channel.send({embeds: [response]});
+          interaction.deleteReply()
+          if(interaction.user !== captain.user){
+            captain.send(`Hey there - you've just been registered as the team captain for Team: ${teamName}`)
+          }
+          members.forEach((member) => {
+            if(interaction.user !== member.user){
+              member.send(`Hey there - you've just been registered as being a member of Team: ${teamName}\nThink this is incorrect?   You can leave the team with the /leave command.\n\nGood luck, have fun!`);
+            };
+          })
         })
         .catch((error) => {
           console.error(error)
@@ -145,23 +143,42 @@ module.exports = {
 }
 
 const validateTeamDetails = (interaction, teamName, teamMembers) => {
-  const roles = interaction.guild.roles.cache.map(role => role.name);
-  const dupedRole = roles.filter((role) => {return role.toLowerCase() === teamName.toLowerCase()});
-  const channels = interaction.guild.channels.cache.map((channel) => {return `${channel.constructor.name}: ${channel.name}`});
-  const dupedChannel = channels.filter((channel) => {return channel.split(': ')[1].toLowerCase() === teamName.toLowerCase()});
-  const aliasCheck = lookupAlias(teamName);
-  const {error, response} = checkMembers(teamMembers)
-  
-  if(dupedRole.length > 0 || dupedChannel.length > 0 || aliasCheck.response || !error){
-    const refusal = new EmbedBuilder()
-      .setColor('Red')
-      .setTitle("Registration request not valid!")
-      .setAuthor({name: `QuizBot 2.0`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
-      .setThumbnail('https://discord.com/assets/4ffa4ee231208ea704a2.svg')
-      .addFields(
-        {name: "Team Name requested", value: teamName},
-        {name: "Team Members requested", value: teamMembers.join('\n')}
-      )
+  const { lookupAlias } = require('../../functions/maps/teamChannels');
+  const { checkMembers } = require('../../functions/maps/teamMembers');
+  const { findAdmins } = require('../../functions/discord');
+
+  const refusal = new EmbedBuilder()
+    .setColor('Red')
+    .setTitle("Registration request not valid!")
+    .setAuthor({name: `QuizBot 2.0`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
+    .setThumbnail('https://discord.com/assets/4ffa4ee231208ea704a2.svg')
+    .addFields(
+      {name: "Team Name requested", value: teamName},
+      {name: "Team Members requested", value: teamMembers.join('\n')}
+    )
+
+    
+    const roles = interaction.guild.roles.cache.map(role => role.name);
+    const dupedRole = roles.filter((role) => {return role.toLowerCase() === teamName.toLowerCase()});
+    const channels = interaction.guild.channels.cache.map((channel) => {return `${channel.constructor.name}: ${channel.name}`});
+    const dupedChannel = channels.filter((channel) => {return channel.split(': ')[1].toLowerCase() === teamName.toLowerCase()});
+    const aliasCheck = lookupAlias(teamName).response;
+    const membersCheck = checkMembers(teamMembers).response;
+    const admins = findAdmins(interaction.guild).response.admins;
+    let hasAdmins = false;
+    let hasBots = false;
+    teamMembers.forEach((member) => {
+      if(admins.has(member.id)){
+        hasAdmins = true;
+        refusal.addFields({name: "Admin Member not allowed",  value: `${member}`});
+      }
+      if(member.user.bot){
+        hasBots = true;
+        refusal.addFields({name: "Bot Member not allowed",  value: `${member}`});
+      }
+    })
+    
+  if(dupedRole.length > 0 || dupedChannel.length > 0 || aliasCheck || membersCheck || hasAdmins || hasBots){
     if(dupedRole.length > 0){
       refusal.addFields(
         {name: ":warning: Role already exists", value: `${dupedRole.join('\n')}`},
@@ -172,13 +189,13 @@ const validateTeamDetails = (interaction, teamName, teamMembers) => {
         {name: ":warning: Channel(s) already exist", value: `${dupedChannel.join('\n')}`},
       )
     }
-    if(aliasCheck.response){
+    if(aliasCheck){
       refusal.addFields(
-        {name: ":warning: Team already exists", value: `${teamName} is ${aliasCheck.response}`},
+        {name: ":warning: Team already exists", value: `${teamName} is ${aliasCheck}`},
       )
     }
-    if(!error){
-      response.forEach((err) => {
+    if(membersCheck){
+      membersCheck.forEach((err) => {
         refusal.addFields(
         {name: ":warning: Member(s) already in a team", value: `${err.user} is in team ${err.team}`},
       )

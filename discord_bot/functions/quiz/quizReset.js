@@ -1,8 +1,14 @@
 const { findCategoryChannel } = require("../../functions/discord");
-const { reset, resetTeamChannels } = require("../maps/teamChannels");
+const { resetTeamChannels } = require("../maps/teamChannels");
 const { resetTeamMembers } = require("../maps/teamMembers");
+const clearTeamCaptains = require("./clearTeamCaptains");
 
 module.exports = (guild) => {
+  if(!guild){
+    const error = {"code": 400, "message": `Guild was ${guild}`};
+    console.error(error);
+    return {error, response: null};
+  }
   const deletions = {};
   const teamChannels = findCategoryChannel(guild, 'QUIZ TEAMS');
 
@@ -35,9 +41,24 @@ module.exports = (guild) => {
       }
       deletions[role.constructor.name].push(role.name.replace("Team: ", ""));
     })
-    return Promise.all([resetTeamChannels, resetTeamMembers])
+    return Promise.all([resetTeamChannels(), resetTeamMembers()])
   })
-  .then(() => {
+  .then(([channelResets, memberResets]) => {
+    const resets = [...channelResets, ...memberResets];
+    if(resets.length > 0){
+      deletions["Internal Mapping"] = resets;
+    }
+    return clearTeamCaptains(guild);
+  })
+  .then(({error, response}) => {
+    if(error){
+      deletions["Reset Team Captain Role Failed"] = [true];
+    } else {
+      if(response.length > 0){
+        deletions["Removed Captain Role from member"] = response;
+      }
+    }
+    
     return {error: null, response: deletions};
   })
   .catch((error) => {

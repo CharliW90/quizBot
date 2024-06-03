@@ -8,6 +8,11 @@ const { registerTeamMembers, deleteTeamMembers } = require("../maps/teamMembers"
 const history = [];
 
 module.exports = (interaction, team) => {
+  if(!interaction || !team){
+    const error = {"code": 400, "message": `Interaction was ${interaction}, Team was ${team}`};
+    console.error(error);
+    return {error, response: null};
+  }
   const guild = interaction.guild;
   const self = findRole(guild, "Quizzy");
   const {teamName, captain, members, settledColour} = team;

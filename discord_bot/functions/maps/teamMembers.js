@@ -26,7 +26,7 @@ exports.registerTeamMembers = (teamName, members) => {
   teamsMembers.set(teamName, members.map((member) => {return {name: member.user.globalName, id: member.user.id}}))
   
   members.forEach((member) => {
-    membersTeams.set(member.user.id, {user: member.user.globalName, team: teamName})
+    membersTeams.set(member.user.id, teamName)
   })
   return {error: null, response: `${teamName}<=>${members}`}
 }
@@ -79,7 +79,42 @@ exports.deleteTeamMembers = (teamName) => {
   return {error: null, response: `Deleted ${teamName} registration, and members association for ${deletedMembers.join('\n')}`}
 }
 
+exports.removeTeamMember = (teamMember) => {
+  if(!teamMember){
+    const error = {"code": 400, "message": `Team member was ${teamMember}`};
+    return {error, response: null};
+  }
+
+  if(!membersTeams.has(teamMember.user.id)){
+    const error = {"code": 404, "message": `${teamMember.user.globalName} not found`};
+    return {error, response: null};
+  }
+
+  const team = membersTeams.get(teamMember.user.id);
+  const members = [...teamsMembers.get(team)];
+  if(!members.some(member => member.id === teamMember.user.id)){
+    const error = {"code": 404, "message": `${teamMember.user.globalName} not found in team ${team}\n${members.join('\n')}`};
+    return {error, response: null};
+  }
+  
+  const filtered = members.filter(member => member.id !== teamMember.user.id);
+
+  membersTeams.delete(teamMember.user.id);
+  teamsMembers.set(team, filtered);
+
+  if(membersTeams.has(teamMember.user.id) || teamsMembers.get(team).some(element => element.id === teamMember.user.id)){
+    return {error: {message: "something went wrong deleting team and members from the maps", code: 500}, response: null}
+  }
+
+  return {error: null, response: `Removed ${teamMember.user.globalName} from ${team} registration, and removed association.`}
+}
+
 exports.resetTeamMembers = () => {
+  const resets = [...teamsMembers.keys(), ...membersTeams.keys()];
   teamsMembers.clear();
   membersTeams.clear();
+  if(teamsMembers.size + membersTeams.size === 0){
+    return resets;
+  }
+  return []
 }

@@ -122,14 +122,15 @@ exports.deleteTeam = (teamName) => {
 }
 
 exports.channelFromTeam = (teamName) => {
+  
   if(!teamName){
     const error = {"code": 400, "message": `Team Name was ${teamName}`};
     return {error, response: null}
   }
 
-  const lookup = teamsChannels.has(teamName.toLowerCase()) ? teamName.toLowerCase() : teamsAliases.get(teamName);
+  const lookup = teamsChannels.has(teamName.replace("Team: ", "").toLowerCase()) ? teamName.replace("Team: ", "").toLowerCase() : teamsAliases.get(teamName.replace("Team: ", ""));
   
-  return teamsChannels.has(lookup) ? {error: null, response: teamsChannels.get(lookup)} : {error: {"code": 404, "message": `${teamName} not found`}, response: null};
+  return teamsChannels.has(lookup) ? {error: null, response: teamsChannels.get(lookup)} : {error: {"code": 404, "message": `${teamName} not found when looking up channelFromTeam()`}, response: null};
 }
 
 exports.teamFromChannel = (channel) => {
@@ -137,11 +138,16 @@ exports.teamFromChannel = (channel) => {
     return channel ? {error: {"code": 400, "message": `Bad Channel id: ${channel.id}, or name: ${channel.name}`}, response: null} : {error: {"code": 400, "message": `Channel was ${channel}`}, response: null};
   }
   
-  return channelsTeams.has(channel) ? {error: null, response: channelsTeams.get(channel)} : {error: {"code": 404, "message": `Channel ${channel.name} not found`}, response: null};
+  return channelsTeams.has(channel) ? {error: null, response: channelsTeams.get(channel)} : {error: {"code": 404, "message": `Channel ${channel.name} not found when looking up teamFromChannel()`}, response: null};
 }
 
 exports.resetTeamChannels = () => {
+  const resets = [...teamsChannels.keys(), ...channelsTeams.keys(), ...teamsAliases.keys()];
   teamsChannels.clear();
   channelsTeams.clear();
-  teamsAliases.clear();  
+  teamsAliases.clear();
+  if(teamsChannels.size + channelsTeams.size + teamsAliases.size === 0){
+    return resets;
+  }
+  return []
 }

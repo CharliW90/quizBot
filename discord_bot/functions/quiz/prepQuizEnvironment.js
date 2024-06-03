@@ -1,6 +1,11 @@
 const {createCategoryChannel, createRole, findCategoryChannel, findRole} = require('../discord')
 
 module.exports = (client, guild = null) => {
+  if(!client && !guild){
+    const error = {"code": 400, "message": `No client or guild provided for preparation`};
+    console.error(error);
+    return {error, response: null};
+  }
   if(!guild){
     const guilds = client.guilds.cache;
     const actions = []

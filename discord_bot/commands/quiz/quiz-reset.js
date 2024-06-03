@@ -49,16 +49,14 @@ module.exports = {
     const row = new ActionRowBuilder()
       .addComponents(confirm, cancel)
 
-    await interaction.reply({embeds: [confirmation_screen]});
-    const confirmation = await interaction.channel.send({components: [row]});
+    const confirmation = await interaction.reply({embeds: [confirmation_screen], components: [row], ephemeral: true});
 
     const collectorFilter = i => i.user.id === interaction.user.id;
 
     try{
       const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
       if(reply.customId === 'cancel'){
-        interaction.editReply({ content: `Action cancelled.`, embeds: [] })
-        confirmation.delete();
+        interaction.editReply({ content: `Action cancelled.`, embeds: [], components: [] })
         return;
       } else if(reply.customId === 'reset'){
         const {error, response} = await quizReset(interaction.guild);
@@ -66,13 +64,13 @@ module.exports = {
           throw error
         }
         const deletions = Object.keys(response)
-        let message = `Deleted`
+        let message = `Deleted:`
         deletions.forEach((element) => {
           let msg = ` ${response[element].length} ${element}`;
           if(response[element].length > 1 || response[element].length === 0){
             msg += 's';
           }
-          message += msg;
+          message += `\n${msg}`;
         })
 
         const success_message = new EmbedBuilder()
@@ -81,13 +79,12 @@ module.exports = {
           .setAuthor({name: `QuizBot 2.0`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
           .addFields({name: "Reset Complete", value: message})
 
-        reply.update({ embeds: [success_message], components: [] });
-        interaction.deleteReply();
+        interaction.editReply({ embeds: [success_message], components: [] });
       }
     } catch(e) {
       if(e.message === "Collector received no interactions before ending with reason: time"){
         // handles failure to reply to the confirmation popup
-        await confirmation.edit({ content: 'Response not received within 1 minute, cancelling...', components: [] });
+        await interaction.editReply({ content: 'Response not received within 1 minute, cancelling...', embeds: [], components: [] });
       } else {
         throw e;
       }
