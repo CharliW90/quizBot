@@ -13,9 +13,13 @@ exports.fetchResponse = (req, res, next) => {
 
     fetchFormResponses(`${scriptUrl}?formId=${roundNumber}&passkey=${password}`)
     .then((data) => {
-      // no need to JSON.parse the data thanks to app.use(express.json()) in our app.js file
-      // responses endpoint should always return response as an array
-      res.status(200).send([data]);
+      if(data.startsWith("<!DOCTYPE html>")){
+        res.status(403).send({appsScript: false, reAuth: `${scriptUrl}`});
+      } else {
+        // no need to JSON.parse the data thanks to app.use(express.json()) in our app.js file
+        // responses endpoint should always return response as an array
+        res.status(200).send([data]);
+      }
     })
     .catch((err) => {
       if(err.status === 403){
