@@ -1,7 +1,8 @@
 const { newPassword } = require("../../utility/hotPass.js");
 const { fetchFormResponses } = require("../models/formResponses.model.js");
 
-const scriptUrl = `https://script.google.com/macros/s/${process.env.scriptId}/exec`
+const scriptUrl = `https://script.google.com/macros/s/${process.env.webAppUrl}/exec`
+const reAuth = `https://script.google.com/home/projects/${process.env.scriptId}/edit`
 
 exports.fetchResponse = (req, res, next) => {
   const {roundNumber} = req.params;
@@ -14,7 +15,7 @@ exports.fetchResponse = (req, res, next) => {
     fetchFormResponses(`${scriptUrl}?formId=${roundNumber}&passkey=${password}`)
     .then((data) => {
       if(data.startsWith("<!DOCTYPE html>")){
-        res.status(403).send({appsScript: false, reAuth: `${scriptUrl}`});
+        res.status(403).send({appsScript: true, reAuth});
       } else {
         // no need to JSON.parse the data thanks to app.use(express.json()) in our app.js file
         // responses endpoint should always return response as an array
@@ -22,9 +23,6 @@ exports.fetchResponse = (req, res, next) => {
       }
     })
     .catch((err) => {
-      if(err.status === 403){
-        res.status(500).send("This error likely originated from the google Apps Script requiring permissions to be re-applied - contact Arcadius to fix this.")
-      }
       next(err);
     })
   };
