@@ -2,11 +2,11 @@ const { newPassword } = require("../../utility/hotPass.js");
 const { fetchFormResponses } = require("../models/formResponses.model.js");
 
 const scriptUrl = `https://script.google.com/macros/s/${process.env.webAppUrl}/exec`
-const reAuth = `https://script.google.com/home/projects/${process.env.scriptId}/edit`
+const reAuth = `https://script.google.com/d/${process.env.scriptId}/edit?usp=sharing`
 
 exports.fetchResponse = (req, res, next) => {
   const {roundNumber} = req.params;
-  if(Number(roundNumber) === NaN){
+  if(isNaN(roundNumber)){
     next({status: 404, msg: "Invalid roundnumber parameter"})
   } else {
     // Create a new temporary password so that the apps script can check that the response came from this app
@@ -14,16 +14,16 @@ exports.fetchResponse = (req, res, next) => {
 
     fetchFormResponses(`${scriptUrl}?formId=${roundNumber}&passkey=${password}`)
     .then((data) => {
-      if(data.startsWith("<!DOCTYPE html>")){
-        res.status(403).send({appsScript: true, reAuth});
-      } else {
-        // no need to JSON.parse the data thanks to app.use(express.json()) in our app.js file
-        // responses endpoint should always return response as an array
-        res.status(200).send([data]);
-      }
+      // no need to JSON.parse the data thanks to app.use(express.json()) in our app.js file
+      // responses endpoint should always return response as an array
+      res.status(200).send([data]);
     })
     .catch((err) => {
-      next(err);
+      if(err.response.status === 403 && String(err.response.data).startsWith("<!DOCTYPE html>")){
+        res.status(403).send({appsScript: true, reAuth});
+      } else {
+        next(err);
+      }
     })
   };
 };
