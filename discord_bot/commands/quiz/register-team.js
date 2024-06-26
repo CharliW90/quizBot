@@ -25,7 +25,7 @@ module.exports = {
     .addUserOption(option =>
       option.setName('team-member-2')
         .setDescription('Team Member'))
-    .addMentionableOption(option =>
+    .addUserOption(option =>
       option.setName('team-member-3')
         .setDescription('Team Member'))
     .addStringOption(option =>
