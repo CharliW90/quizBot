@@ -1,5 +1,5 @@
 const { ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
-const { recordTeam, checkMembers, lookupAlias } = require('../../functions/firestore');
+const { recordTeam, checkMembers, lookupAlias, getUserTeamNames } = require('../../functions/firestore');
 
 // A command to register a quiz team, including creating a role, and role-restricted channels, for the team members
 
@@ -14,7 +14,8 @@ module.exports = {
         .setDescription('The name of the team to register')
         .setMinLength(4)
         .setMaxLength(32)
-        .setRequired(true))
+        .setRequired(true)
+        .setAutocomplete(true))
     .addUserOption(option =>
       option.setName('team-captain')
         .setDescription('Team Captain')
@@ -50,6 +51,15 @@ module.exports = {
           {name: 'White', value: 'White'}
         )
     ),
+  async autocomplete(interaction) {
+    const focusedOption = interaction.options.getFocused();
+    const {response} = await getUserTeamNames(interaction.user.id, interaction.guildId);
+    const usersFormerTeamNames = response ?? [];
+    const filtered = usersFormerTeamNames.filter(choice => choice.name.startsWith(focusedOption));
+    await interaction.respond(
+      filtered.map(choice => ({ name: choice.name, value: choice.name}))
+    )
+  },
   async execute(interaction) {
     const registerTeam = require('../../functions/quiz/registerTeam');
 
