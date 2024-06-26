@@ -16,10 +16,10 @@ module.exports = {
 		}
 
 		try {
-      prepQuizEnvironment(null, interaction.guild);
       if(interaction.isAutocomplete()){
         await command.autocomplete(interaction);
       } else {
+        prepQuizEnvironment(null, interaction.guild);
         await command.execute(interaction);
       }
 		} catch (error) {
