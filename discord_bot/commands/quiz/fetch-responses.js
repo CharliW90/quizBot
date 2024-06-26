@@ -1,5 +1,5 @@
 const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
-const { fetch } = require('../../functions/forms/fetchFormResponses.js');
+const { fetch, summarise } = require('../../functions/forms/fetchFormResponses.js');
 const { followUp } = require('../../functions/forms/holdFormResponses.js');
 
 // A command to fetch results from our API, store them, and then confirm to the user that they have been stored
@@ -53,49 +53,54 @@ module.exports = {
     const userResponse = await interaction.reply({  // reply to the user asking which round they want
       content: 'Choose which round of answers to fetch',
       components: [row1, row2],
+      ephemeral: true,
     });
 
     const collectorFilter = i => i.user.id === interaction.user.id;
 
     try {
-      const fetcher = await userResponse.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
+      const fetcher = await userResponse.awaitMessageComponent({ filter: collectorFilter, time: 10_000 });
       // if the user clicks cancel
       if(fetcher.customId === 'cancel'){
         await fetcher.update({ content: `Action cancelled.`, components: [] });
       } else if(fetcher.values){
         //else, what value from the dropdown did they pick?
-        const roundNumberToFetch = fetcher.values[0];
-        // if it's not a number, it must be 'All rounds' - build a grammatically correct message on this basis
-        const message = isNaN(roundNumberToFetch) ? 'All rounds are' : `Round ${roundNumberToFetch} is`
+        const roundNum = fetcher.values[0];
+        // if it's 0 it is 'All rounds' - build a grammatically correct message on this basis
+        const message = isNaN(roundNum) ? 'All rounds are' : `Round ${roundNum} is`
         await fetcher.update({ content: `${message} being fetched now, please wait...`, components: [] });
-        fetch(roundNumberToFetch)   // fetch these results from the API
+        fetch(roundNum)   // fetch these results from the API
         .then(({error, response}) => {
           if(error){
+            if(error.code === 403){
+              interaction.editReply({ content: error.message, components: [] });
+              throw `${error.code}: ${error.message}`;
+            }
             throw error;
           }
-          if(response.length === 0){
-            return Promise.reject(`No results found for ${roundNumberToFetch}`)
-          }
-          // a successful response will be a single embed from 'heldResponses()' detailing what has been stored
+          return summarise(response);
+        })
+        .then(({error, response}) => {
+          if(error){throw error;}
+          // a successful response will be a single embed summarising what has been fetched
           interaction.channel.send({embeds: [response]});
           fetcher.editReply({ content: `${message} ready - see summary below:`, components: [] });
-          // finally, we have a follow up question of 'What do you want to do with these results?'
-          return followUp(interaction, roundNumberToFetch);
+          // finally, we have a follow up question of 'What do you want to do with the results stored in working memory?'
+          return followUp(interaction, roundNum);
         })
         .then((followUpMessage) => {
           if(followUpMessage){
-            interaction.channel.send(followUpMessage)
+            interaction.channel.send(followUpMessage);
           }
         })
-        .catch((err) => {
-          // handles errors thrown by 'followUp' in '../../functions/forms/holdFormResponses.js'
-          interaction.channel.send({ content: err.message.substring(0, 1999), components: [] });
+        .catch((error) => {
+          console.error(error);
         })
       }
     } catch(e) {
       if(e.message === "Collector received no interactions before ending with reason: time"){
         // handles failure to reply to the initial response of 'which round do you want to fetch?'
-        await userResponse.edit({ content: 'Response not received within 1 minute, cancelling...', components: [] });
+        await interaction.editReply({ content: 'Response not received within 10 seconds, cancelling...', components: [] });
       } else {
         throw e;
       }

@@ -1,25 +1,24 @@
 const { EmbedBuilder } = require("discord.js");
-const { hold } = require("./holdFormResponses");
 
-exports.parse = (data, isHeld = false) => {
+exports.parse = (data) => {
   if(!data) {
-    const error = {"message": `forms API data is ${data}`, "code": 404, "loc": "parseFormdatas.js/parse()"};
+    const error = {message: `forms API data is ${data}`, code: 404, loc: "parseFormdatas.js/parse()"};
     return {error, response: null};
   }
 
   if(!data.roundDetails && !data.results) {
-    const details = {...data, "loc": "parseFormdatas.js/parse()"};
-    const error = {"message": `forms API data malformed`, "code": 400, details};
+    const details = {...data, loc: "parseFormdatas.js/parse()"};
+    const error = {message: `forms API data malformed`, code: 400, details};
     return {error, response: null}
   } 
 
   if(!data.roundDetails || typeof(data.roundDetails) !== "object") {
-    const error = {"message": `forms API data roundDetails were ${JSON.stringify(data.roundDetails)}`, "code": 400, "loc": "parseFormdatas.js/parse()"};
+    const error = {message: `forms API data roundDetails were ${JSON.stringify(data.roundDetails)}`, code: 400, loc: "parseFormdatas.js/parse()"};
     return {error, response: null};
   } 
   
   if(!data.results || typeof(data.results) !== "object") {
-    const error = {"message": `forms API data results were ${JSON.stringify(data.results)}`, "code": 400, "loc": "parseFormdatas.js/parse()"};
+    const error = {message: `forms API data results were ${JSON.stringify(data.results)}`, code: 400, loc: "parseFormdatas.js/parse()"};
     return {error, response: null};
   }
 
@@ -27,7 +26,7 @@ exports.parse = (data, isHeld = false) => {
   const teams = Object.keys(results);
   
   if(teams.length < 1) {
-    const error = {"message": `forms API data results ${JSON.stringify(data.results)} does not contain any teams`, "code": 404, "loc": "parseFormdatas.js/parse()"};
+    const error = {message: `forms API data results ${JSON.stringify(data.results)} does not contain any teams`, code: 404, loc: "parseFormdatas.js/parse()"};
     return {error, response: null};
   }
   
@@ -42,8 +41,8 @@ exports.parse = (data, isHeld = false) => {
       .addFields({name: "Total Score", value: `${results[teamname].score} / ${roundDetails.totalScore}`})
 
     const emoji = determineEmoji(Number(results[teamname].score / roundDetails.totalScore));
+    teamEmbed.setThumbnail(emoji);
 
-    teamEmbed.setThumbnail(emoji)
     const answers = results[teamname].answers;  // an array of datas in the format "{ answerGiven: <string>, answerScore: <number>, correctAnswer: <boolean> }"
     answers.forEach((answer, number) => {
       const checkmark = answer.correct ? ":white_check_mark:" : ":x:";
@@ -52,25 +51,22 @@ exports.parse = (data, isHeld = false) => {
         value: `${answer.answer} ${checkmark}`
       })
     })
+
     embedMessages.push(teamEmbed);
   })
-  if(isHeld){
-    return hold(roundDetails.number, embedMessages, teams);
-  }
-  return {error: null, response: embedMessages};
+  return {error: null, response: {roundNum: roundDetails.number, teams, embedMessages}};
 }
 
 const determineEmoji = (percent) => {
-  const base = 'https://cdn.discordapp.com/attachments/633012685902053397/1239615740919808000'
   if(percent = 1){
-    return `https://discord.com/assets/6a4c929e8ed005e20d14.svg`
+    return "https://cdn.discordapp.com/attachments/1250390976829067268/1250467682663272601/top.png"
   } else if(percent >= 0.75) {
-    return `https://discord.com/assets/0eefd3bb4579ab4794a1.svg`
+    return "https://cdn.discordapp.com/attachments/1250390976829067268/1250467682986496192/first.png"
   } else if(percent >= 0.5) {
-    return `https://discord.com/assets/a1e33ef9c7ca6f453015.svg`
+    return "https://cdn.discordapp.com/attachments/1250390976829067268/1250467683288223864/second.png"
   } else if(percent >= 0.25) {
-    return `https://discord.com/assets/1cd66500a74ac81cb169.svg`
+    return "https://cdn.discordapp.com/attachments/633268964662968320/1250470326694055957/third.png"
   } else {
-    return `${base}/poop.png`
+    return "https://cdn.discordapp.com/attachments/1250390976829067268/1250467506779586660/poop.png"
   }
 }

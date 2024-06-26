@@ -75,7 +75,7 @@ describe('holdFormResponses.js', () => {
         const output = hold(roundNum, embeds, teamNames);
         const {error, response} = output;
         expect(error).toBeNull();
-        expect(response).toEqual(`holding responses for ${teamNames.length} teams, round ${roundNum}`);
+        expect(response).toEqual({roundNum, teams: teamNames.map(name => name.toLowerCase())});
       })
 
       test('returns success for storing single embed and team', () => {
@@ -87,87 +87,22 @@ describe('holdFormResponses.js', () => {
         const {error, response} = output;
         expect(error).toBeNull();
         expect(response).not.toBeNull();
-        expect(response).toEqual(`holding responses for ${teamNames.length} teams, round ${roundNum}`);
+        expect(response).toEqual({roundNum, teams: teamNames.map(name => name.toLowerCase())});
+      })
+    })
+
+    describe('handles errors from dependencies', () => {
+      test('handles errors from the sendResponses() function', () => {
+
+      })
+
+      test('handles errors from the addResponseToFirestore() function', () => {
+
       })
     })
   })
 
-  describe('heldResponses()', () => {
-    describe('handles single round responses', () => {
-      jest.resetModules();
-      const { EmbedBuilder } = require("discord.js");
-      const data = require('../__data__');
-      const { hold, heldResponses } = require('../functions/forms/holdFormResponses')
-
-      const roundNum = 3;
-      const embeds = data.botHeldEmbeds.embeds;
-      const teamNames = data.botHeldEmbeds.teams;
-
-      test('returns an error if round number is not stored', () => {
-        const output = heldResponses(roundNum);
-        const {error, response} = output;
-        expect(response).toBeNull();
-        expect(error.code).toEqual(404);
-        expect(error.message).toEqual(`could not find a stored round for round number ${roundNum}`);
-        expect(error.loc).toBeDefined();
-      })
-
-      test('returns an embed message if round number is stored', () => {
-        let {error, response} = hold(roundNum, embeds, teamNames);
-        expect(error).toBeNull();
-        ({error, response} = heldResponses(roundNum));
-        expect(error).toBeNull();
-        expect(response).toBeInstanceOf(EmbedBuilder);
-        expect(response.data.title).toEqual(`Embeds held for retrieval - Round ${roundNum}`);
-      })
-    })
-
-    describe('handles all round responses', () => {
-      jest.resetModules();
-      const { EmbedBuilder } = require("discord.js");
-      const data = require('../__data__');
-      const { hold, heldResponses } = require('../functions/forms/holdFormResponses')
-
-      const roundNums = [1, 2, 3]
-      const embeds = data.botHeldEmbeds.embeds
-      const teamNames = data.botHeldEmbeds.teams
-
-      test('returns an error if no rounds have been stored', () => {
-        const output = heldResponses();
-        const {error, response} = output;
-        expect(response).toBeNull();
-        expect(error.code).toEqual(404);
-        expect(error.message).toEqual(`did not find any stored rounds`)
-        expect(error.loc).toBeDefined();
-      })
-
-      test('returns an embed message if one round is stored', () => {
-        let {error, response} = hold(roundNums[0], [embeds[0]], [teamNames[0]]);
-        expect(error).toBeNull();
-        expect(response).toEqual(`holding responses for 1 teams, round ${roundNums[0]}`);
-        ({error, response} = heldResponses());
-        expect(error).toBeNull();
-        expect(response).toBeInstanceOf(EmbedBuilder);
-        expect(response).toEqual(data.botSummaryEmbed);
-      })
-
-      test('returns an embed message if multiple rounds are stored', () => {
-        roundNums.forEach((num) => {
-          const {error, response} = hold(num, embeds, teamNames);
-          expect(error).toBeNull();
-          expect(response).toEqual(`holding responses for ${teamNames.length} teams, round ${num}`)
-        })
-        const {error, response} = heldResponses();
-        expect(error).toBeNull();
-        expect(response).toBeInstanceOf(EmbedBuilder);
-        expect(response).toEqual(data.botSummaryEmbed);
-        const rounds = [...response.data.fields];
-        const totals = rounds.shift();
-        expect(totals).toEqual({"name": "Rounds Completed", "value": String(roundNums.length)});
-        expect(rounds).toHaveLength(roundNums.length);
-      })
-    })
+  describe('followUp()', () => {
+    test.todo('testing for followUp()')
   })
-
-  test.todo('how to test the discord follow up buttons?')
 })

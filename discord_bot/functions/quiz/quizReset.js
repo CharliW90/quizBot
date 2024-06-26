@@ -1,11 +1,10 @@
 const { findCategoryChannel } = require("../../functions/discord");
-const { resetTeamChannels } = require("../maps/teamChannels");
-const { resetTeamMembers } = require("../maps/teamMembers");
+const { reset } = require("../firestore");
 const clearTeamCaptains = require("./clearTeamCaptains");
 
 module.exports = (guild) => {
   if(!guild){
-    const error = {"code": 400, "message": `Guild was ${guild}`};
+    const error = {code: 400, message: `Guild was ${guild}`};
     console.error(error);
     return {error, response: null};
   }
@@ -41,13 +40,18 @@ module.exports = (guild) => {
       }
       deletions[role.constructor.name].push(role.name.replace("Team: ", ""));
     })
-    return Promise.all([resetTeamChannels(), resetTeamMembers()])
+    return reset(guild.id)
   })
-  .then(([channelResets, memberResets]) => {
-    const resets = [...channelResets, ...memberResets];
-    if(resets.length > 0){
-      deletions["Internal Mapping"] = resets;
+  .then(({error, response}) => {
+    if(error){
+      console.info("Firestore reset returned error:\n", error)
+    } else  {
+      const resets = response;
+      if(resets.length > 0){
+        deletions["Firestore Mapping"] = resets;
+      }
     }
+    
     return clearTeamCaptains(guild);
   })
   .then(({error, response}) => {

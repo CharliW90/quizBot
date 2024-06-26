@@ -49,21 +49,17 @@ module.exports = {
     const row = new ActionRowBuilder()
       .addComponents(confirm, cancel)
 
-    await interaction.reply({content: `Are you sure you want to delete ${response}??`});
+    const confirmation = await interaction.reply({content: `Are you sure you want to delete ${response}??`, components: [row], ephemeral: true});
     
-    const confirmation = await interaction.channel.send({components: [row]});
-
     const collectorFilter = i => i.user.id === interaction.user.id;
 
     try{
       const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
       if(reply.customId === 'cancel'){
-        interaction.editReply({ content: `Action cancelled.` });
-        confirmation.delete();
+        interaction.editReply({ content: `Action cancelled.`, components: []});
         return;
       }else if(reply.customId === 'delete'){
-        interaction.deleteReply()
-        reply.update({ content: `Deleting the team...`, components: [] })
+        interaction.editReply({ content: `Deleting the team...`, components: [] })
         .then(() => {
           return teamDelete(interaction.guild, response)
         })

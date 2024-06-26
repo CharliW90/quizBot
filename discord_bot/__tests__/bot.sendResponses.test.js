@@ -1,198 +1,280 @@
-const { EmbedBuilder } = require('discord.js');
 const data = require('../__data__');
-const {mockTextChannel} = require("../__mocks__/textChannels");
+const { mockInteraction } = require('../__mocks__/interaction');
+const { mockTextChannel } = require("../__mocks__/channelText");
+const { recordTeam, deleteTeam } = require('../functions/firestore');
+const { mockTeam } = require('../__mocks__/team');
+
+let interaction = mockInteraction('test-database');
+
+const embedTeamNames = data.botHeldEmbeds.embeds.map((embed) => {return embed.title});
+
+/*    !!! <WARNING> !!!
+these tests connect to, and store data in, the live firebase firestore - 
+they do so under a server called 'test-database' thanks to the guildId in
+interaction (above); this stored data does not need to be cleared after
+it is created, but it also does no harm if it is cleared.
+*/
 
 describe('sendFormResponses.js', () => {
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
+    interaction = mockInteraction('test-database');
   })
 
-  test('returns an error when passed no data', async () => {
+  test('returns an error when passed no interaction to work from', async () => {
     const { sendResponses } = require('../functions/forms/sendFormResponses');
 
-    const {error, response} = sendResponses({});
+    const {error, response} = await sendResponses(undefined, {embeds: []});
     expect(response).toBeNull();
+    expect(error.code).toEqual(400)
+    expect(error.message).toEqual(`requires valid interaction: \n${undefined}`)
+  })
+
+  test('returns an error when passed no embeds to work from', async () => {
+    const { sendResponses } = require('../functions/forms/sendFormResponses');
+    const {error, response} = await sendResponses(interaction, undefined);
+    expect(response).toBeNull();
+    expect(error.message).toEqual(`held responses were ${undefined}`)
     expect(error.code).toEqual(400)
   })
 
-  test('sends an embed to a channel matching the teamName, when passed a single round of embeds and a teamname', () => {
-    const { channelFromTeamSpy } = require('../__mocks__/mapSpies');
-    const { registerTeamChannel } = require("../functions/maps/teamChannels");
+  test('sends an embed to a channel matching the teamName, when passed a single round of embeds and a teamname', async () => {
+    const { EmbedBuilder } = require('discord.js');
     const { sendResponses } = require('../functions/forms/sendFormResponses');
 
-    const mockedChannelA = mockTextChannel(data.botHeldEmbeds.embeds[0].data.title, '123-456');
-    const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].data.title, '456-789');
-    const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].data.title, '789-123');
+    const mockedChannelA = mockTextChannel(data.botHeldEmbeds.embeds[0].title, '123-456');
+    const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
+    const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
 
-    registerTeamChannel(data.botHeldEmbeds.embeds[0].data.title, mockedChannelA);
-    registerTeamChannel(data.botHeldEmbeds.embeds[1].data.title, mockedChannelB);
-    registerTeamChannel(data.botHeldEmbeds.embeds[2].data.title, mockedChannelC);
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}), 'date');
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
 
-    expect(channelFromTeamSpy).toHaveBeenCalledTimes(3);
-    channelFromTeamSpy.mockClear();
+    interaction.guild.channels.set(mockedChannelA);
+    interaction.guild.channels.set(mockedChannelB);
+    interaction.guild.channels.set(mockedChannelC);
 
-    const {error, response} = sendResponses(data.botHeldEmbeds, "teamName");
+    const {error, response} = await sendResponses(interaction, data.botHeldEmbeds, "teamName");
 
     expect(error).toBeNull();
-    expect(response.successes).toHaveLength(1);
-    expect(...response.successes).toEqual("teamName".toLowerCase());
-    expect(response.failures).toHaveLength(0);
-
-    expect(channelFromTeamSpy).toHaveBeenCalledTimes(1);
-    expect(channelFromTeamSpy).toHaveBeenCalledWith("teamName".toLowerCase());
-    expect(channelFromTeamSpy).toHaveReturnedWith({error: null, response: mockedChannelA});
+    expect(response).toBeInstanceOf(EmbedBuilder);
+    expect(response.data.fields).toHaveLength(1);
+    expect(response.data.fields[0]).toHaveProperty("name")
+    expect(response.data.fields[0]).toHaveProperty("value")
+    expect(response.data.fields[0].name).toEqual(":white_check_mark: Successfully posted results for:")
+    expect(response.data.fields[0].value).toEqual("teamName")
 
     expect(mockedChannelA.send).toHaveBeenCalledTimes(1);
-    const correctEmbed = data.botHeldEmbeds.embeds.filter((embed) => {return embed.data.title === "teamName"});
-    expect(mockedChannelA.send).toHaveBeenCalledWith(correctEmbed);
-
+    const correctEmbed = data.botHeldEmbeds.embeds.filter((embed) => {return embed.title === "teamName"});
+    expect(mockedChannelA.send).toHaveBeenCalledWith({embeds: correctEmbed});
     expect(mockedChannelB.send).not.toHaveBeenCalled();
     expect(mockedChannelC.send).not.toHaveBeenCalled();
   })
 
-  test('sends an embed to each team channel, when passed a single round of embeds and no teamname', () => {
-    const { channelFromTeamSpy } = require('../__mocks__/mapSpies');
-    const { registerTeamChannel } = require("../functions/maps/teamChannels");
-    const { sendResponses } = require('../functions/forms/sendFormResponses');
+  test('sends an embed to each team channel, when passed a single round of embeds and no teamname', async () => {
+    const { EmbedBuilder } = require('discord.js');
+    const { sendResponses } = require('../functions/forms/sendFormResponses')
 
-    const embedTeamNames = data.botHeldEmbeds.embeds.map((embed) => {return embed.data.title})
+    const mockedChannelA = mockTextChannel(data.botHeldEmbeds.embeds[0].title, '123-456');
+    const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
+    const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
 
-    const mockedChannelA = mockTextChannel(embedTeamNames[0], '123-456');
-    const mockedChannelB = mockTextChannel(embedTeamNames[1], '456-789');
-    const mockedChannelC = mockTextChannel(embedTeamNames[2], '789-123');
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}), 'date');
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
 
-    registerTeamChannel(embedTeamNames[0], mockedChannelA);
-    registerTeamChannel(embedTeamNames[1], mockedChannelB);
-    registerTeamChannel(embedTeamNames[2], mockedChannelC);
+    interaction.guild.channels.set(mockedChannelA);
+    interaction.guild.channels.set(mockedChannelB);
+    interaction.guild.channels.set(mockedChannelC);
 
-    expect(channelFromTeamSpy).toHaveBeenCalledTimes(3);
-    channelFromTeamSpy.mockClear();
-
-    const {error, response} = sendResponses(data.botHeldEmbeds);
+    const {error, response} = await sendResponses(interaction, data.botHeldEmbeds);
 
     expect(error).toBeNull();
-    expect(response.successes).toHaveLength(3);
-    expect(response.successes).toEqual([embedTeamNames[0].toLowerCase(), embedTeamNames[1].toLowerCase(), embedTeamNames[2].toLowerCase()]);
-    expect(response.failures).toHaveLength(0);
+    expect(response).toBeInstanceOf(EmbedBuilder);
+    expect(response.data.fields).toHaveLength(1);
+    expect(response.data.fields[0]).toHaveProperty("name")
+    expect(response.data.fields[0]).toHaveProperty("value")
+    expect(response.data.fields[0].name).toEqual(":white_check_mark: Successfully posted results for:")
+    expect(response.data.fields[0].value).toEqual(`${embedTeamNames.join('\n')}`)
 
-    expect(channelFromTeamSpy).toHaveBeenCalledTimes(3);
-
-    expect(channelFromTeamSpy).toHaveBeenNthCalledWith(1, embedTeamNames[0].toLowerCase());
-    expect(channelFromTeamSpy).toHaveNthReturnedWith(1, {error: null, response: mockedChannelA});
     expect(mockedChannelA.send).toHaveBeenCalledTimes(1);
-    expect(mockedChannelA.send).toHaveBeenCalledWith(data.botHeldEmbeds.embeds[0]);
+    expect(mockedChannelA.send).toHaveBeenCalledWith({embeds: [data.botHeldEmbeds.embeds[0]]});
 
-    expect(channelFromTeamSpy).toHaveBeenNthCalledWith(2, embedTeamNames[1].toLowerCase());
-    expect(channelFromTeamSpy).toHaveNthReturnedWith(2, {error: null, response: mockedChannelB});
     expect(mockedChannelB.send).toHaveBeenCalledTimes(1);
-    expect(mockedChannelB.send).toHaveBeenCalledWith(data.botHeldEmbeds.embeds[1]);
+    expect(mockedChannelB.send).toHaveBeenCalledWith({embeds: [data.botHeldEmbeds.embeds[1]]});
 
-    expect(channelFromTeamSpy).toHaveBeenNthCalledWith(3, embedTeamNames[2].toLowerCase());
-    expect(channelFromTeamSpy).toHaveNthReturnedWith(3, {error: null, response: mockedChannelC});
     expect(mockedChannelC.send).toHaveBeenCalledTimes(1);
-    expect(mockedChannelC.send).toHaveBeenCalledWith(data.botHeldEmbeds.embeds[2]);
-
+    expect(mockedChannelC.send).toHaveBeenCalledWith({embeds: [data.botHeldEmbeds.embeds[2]]});
   })
 
-  test('returns accurate success and failure information about which teams can / cannot be found', () => {
-    const { channelFromTeamSpy } = require('../__mocks__/mapSpies');
-    const { registerTeamChannel } = require("../functions/maps/teamChannels");
+  test('returns accurate success and failure information about which teams can / cannot be found', async () => {
+    const { EmbedBuilder } = require('discord.js');
     const { sendResponses } = require('../functions/forms/sendFormResponses');
+    
+    const mockedChannelA = mockTextChannel(data.botHeldEmbeds.embeds[0].title, '123-456');
+    const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
+    const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
+    
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
+    await deleteTeam(interaction.guildId,data.botHeldEmbeds.embeds[1].title, 'date');
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
+    
+    interaction.guild.channels.set(mockedChannelA);
+    interaction.guild.channels.set(mockedChannelB); // no registered team for this (see deleteTeam above) but we want channel to exist (see additional error fields below)
+    interaction.guild.channels.set(mockedChannelC);
 
-    const embedTeamNames = data.botHeldEmbeds.embeds.map((embed) => {return embed.data.title})
-
-    const mockedChannelA = mockTextChannel(embedTeamNames[0], '123-456');
-    const mockedChannelB = mockTextChannel(embedTeamNames[1], '456-789');
-    const mockedChannelC = mockTextChannel(embedTeamNames[2], '789-123');
-
-    registerTeamChannel(embedTeamNames[0], mockedChannelA);
-    registerTeamChannel(embedTeamNames[2], mockedChannelC);
-
-    expect(channelFromTeamSpy).toHaveBeenCalledTimes(2);
-    channelFromTeamSpy.mockClear();
-
-    const {error, response} = sendResponses(data.botHeldEmbeds);
+    const {error, response} = await sendResponses(interaction, data.botHeldEmbeds);
     expect(error).toBeNull();
-    expect(response.successes).toHaveLength(2);
-    expect(response.successes).toEqual([embedTeamNames[0].toLowerCase(), embedTeamNames[2].toLowerCase()]);
-    expect(response.failures).toHaveLength(1);
-    expect(response.failures).toEqual([embedTeamNames[1].toLowerCase()]);
+    expect(response).toBeInstanceOf(EmbedBuilder);
+    expect(response.data.fields).toHaveLength(3);
+    response.data.fields.forEach((field) => {
+      expect(field).toHaveProperty("name")
+      expect(field).toHaveProperty("value")
 
-    expect(channelFromTeamSpy).toHaveBeenCalledTimes(3);
+    })
+    expect(response.data.fields[0].name).toEqual(":white_check_mark: Successfully posted results for:");
+    expect(response.data.fields[0].value).toEqual(`${embedTeamNames[0]}\n${embedTeamNames[2]}`);
+    expect(response.data.fields[1].name).toEqual(":x: Failed to post results for:");
+    expect(response.data.fields[1].value).toEqual(`${embedTeamNames[1]}`);
+    expect(response.data.fields[2].name).toEqual(":warning: Registered teams did not receive results:");
+    expect(response.data.fields[2].value).toEqual(mockedChannelB.toString());
 
-    expect(channelFromTeamSpy).toHaveBeenNthCalledWith(1, embedTeamNames[0].toLowerCase())
-    expect(channelFromTeamSpy).toHaveNthReturnedWith(1, {error: null, response: mockedChannelA})
     expect(mockedChannelA.send).toHaveBeenCalledTimes(1);
-    expect(mockedChannelA.send).toHaveBeenCalledWith(data.botHeldEmbeds.embeds[0]);
+    expect(mockedChannelA.send).toHaveBeenCalledWith({embeds: [data.botHeldEmbeds.embeds[0]]});
 
-    expect(channelFromTeamSpy).toHaveBeenNthCalledWith(2, embedTeamNames[1].toLowerCase())
-    expect(channelFromTeamSpy).toHaveNthReturnedWith(2, {error: {"code": 404, "message": `${embedTeamNames[1].toLowerCase()} not found`}, response: null})
     expect(mockedChannelB.send).not.toHaveBeenCalled();
 
-    expect(channelFromTeamSpy).toHaveBeenNthCalledWith(3, embedTeamNames[2].toLowerCase())
-    expect(channelFromTeamSpy).toHaveNthReturnedWith(3, {error: null, response: mockedChannelC})
     expect(mockedChannelC.send).toHaveBeenCalledTimes(1);
-    expect(mockedChannelC.send).toHaveBeenCalledWith(data.botHeldEmbeds.embeds[2]);
+    expect(mockedChannelC.send).toHaveBeenCalledWith({embeds: [data.botHeldEmbeds.embeds[2]]});
   })
 
   describe('handles errors from dependencies', () => {
     beforeEach(() => {
       jest.resetModules();
       jest.clearAllMocks();
-      jest.unmock('../functions/maps/teamChannels');
+      interaction = mockInteraction('test-database');
     });
 
-    test('handles errors from the channelFromTeam() function', () => {
-      const mockErrorMsg = {"message": "this would not be a useful error message", "code": 400, "loc": "parse()"}
-      const channelFromTeam = jest.spyOn(require("../functions/maps/teamChannels"), 'channelFromTeam').mockImplementation(() => {return {error: mockErrorMsg, response: null}})
-      const { registerTeamChannel } = require("../functions/maps/teamChannels");
+    test('handles errors from the findChildrenOfCategory() function', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const mockErrorMsg = {message: "this would be an unhelpful error message", code: 500, guild: {}}
+      const findChildrenOfCategory = jest.spyOn(require('../functions/discord'), 'findChildrenOfCategory').mockImplementation(() => {return {error: mockErrorMsg, response: null}})
+      const { EmbedBuilder } = require('discord.js');
       const { sendResponses } = require('../functions/forms/sendFormResponses');
+      
+      const mockedChannelA = mockTextChannel(data.botHeldEmbeds.embeds[0].title, '123-456');
+      const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
+      const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
+      
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}), 'date');
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
+      
+      interaction.guild.channels.set(mockedChannelA);
+      interaction.guild.channels.set(mockedChannelB);
+      interaction.guild.channels.set(mockedChannelC);
 
-      const embedTeamNames = data.botHeldEmbeds.embeds.map((embed) => {return embed.data.title})
+      expect(findChildrenOfCategory).not.toHaveBeenCalled();
+      /* not used in earlier tasks of registering teams - if this fails, acts as a canary that
+      the test fail is due to a change in how we register teams, not how this function works */
 
-      const mockedChannelA = mockTextChannel(embedTeamNames[0], '123-456');
-      const mockedChannelB = mockTextChannel(embedTeamNames[1], '456-789');
-      const mockedChannelC = mockTextChannel(embedTeamNames[2], '789-123');
+      const {error, response} = await sendResponses(interaction, data.botHeldEmbeds);
 
-      registerTeamChannel(embedTeamNames[0], mockedChannelA);
-      registerTeamChannel(embedTeamNames[1], mockedChannelB);
-      registerTeamChannel(embedTeamNames[2], mockedChannelC);
+      expect(error).toBeNull();
+      expect(findChildrenOfCategory).toHaveBeenCalledTimes(1);
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
 
-      expect(channelFromTeam).toHaveBeenCalledTimes(3);
-      expect(channelFromTeam).toHaveReturnedWith({error: mockErrorMsg, response: null})
-      channelFromTeam.mockClear();
-
-      const {error, response} = sendResponses(data.botHeldEmbeds);
-      expect(response).toBeNull();
-      expect(error.code).toEqual(500);
-      expect(error.message).toEqual(`ERR: "${mockErrorMsg.code}:${mockErrorMsg.message}" from channelFromTeam()`);
-      expect(error.loc).toBeDefined();
+      expect(response).toBeInstanceOf(EmbedBuilder);
+      expect(response.data.fields).toHaveLength(2);
+      expect(response.data.fields[0]).toHaveProperty("name");
+      expect(response.data.fields[0]).toHaveProperty("value");
+      expect(response.data.fields[0].name).toEqual(":white_check_mark: Successfully posted results for:");
+      expect(response.data.fields[0].value).toEqual(`${embedTeamNames.join('\n')}`);
+      expect(response.data.fields[1]).toHaveProperty("name");
+      expect(response.data.fields[1]).toHaveProperty("value");
+      expect(response.data.fields[1].name).toEqual(":warning: Failed to find category for Quiz Teams channels");
+      expect(response.data.fields[1].value).toEqual(mockErrorMsg.message);
     })
 
-    test('handles errors from the lookupAlias() function', () => {
-      const mockErrorMsg = {"message": "this would also be an unhelpful error message", "code": 500, "loc": "parse()"}
-      const lookupAlias = jest.spyOn(require("../functions/maps/teamChannels"), 'lookupAlias').mockImplementation(() => {return {error: mockErrorMsg, response: null}})
-      const { registerTeamChannel } = require("../functions/maps/teamChannels");
+    test('handles errors from the getTeam() function', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const mockErrorMsg = {message: "this would not be a useful error message either", loc: "firestore/quiz.js", code: 500}
+      const getTeam = jest.spyOn(require('../functions/firestore'), 'getTeam').mockImplementation(() => {return {error: mockErrorMsg, response: null}})
+      const { EmbedBuilder } = require('discord.js');
+      const { sendResponses } = require('../functions/forms/sendFormResponses');
+      
+      const mockedChannelA = mockTextChannel(data.botHeldEmbeds.embeds[0].title, '123-456');
+      const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
+      const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
+      
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}), 'date');
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
+      
+      interaction.guild.channels.set(mockedChannelA);
+      interaction.guild.channels.set(mockedChannelB);
+      interaction.guild.channels.set(mockedChannelC);
+
+      expect(getTeam).not.toHaveBeenCalled();
+      /* not used in earlier tasks of registering teams - if this fails, acts as a canary that
+      the test fail is due to a change in how we register teams, not how this function works */
+
+      const {error, response} = await sendResponses(interaction, data.botHeldEmbeds);
+
+      expect(error).toBeNull();
+      expect(getTeam).toHaveBeenCalledTimes(3);
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(3);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
+
+      expect(response).toBeInstanceOf(EmbedBuilder);
+      expect(response.data.fields).toHaveLength(2);
+      expect(response.data.fields[0]).toHaveProperty("name");
+      expect(response.data.fields[0]).toHaveProperty("value");
+      expect(response.data.fields[0].name).toEqual(":x: Failed to post results for:");
+      expect(response.data.fields[0].value).toEqual(`${embedTeamNames.join('\n')}`);
+      expect(response.data.fields[1]).toHaveProperty("name");
+      expect(response.data.fields[1]).toHaveProperty("value");
+      expect(response.data.fields[1].name).toEqual(":warning: Registered teams did not receive results:");
+      expect(response.data.fields[1].value).toEqual(`#${mockedChannelA.name}\n#${mockedChannelB.name}\n#${mockedChannelC.name}`);
+    })
+
+    test('handles errors from the lookupAlias() function', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const mockErrorMsg = {message: "this would also be a terrible error message", code: 500}
+      const lookupAlias = jest.spyOn(require('../functions/firestore'), 'lookupAlias').mockImplementation(() => {return Promise.resolve({error: mockErrorMsg, response: null})})
+      const { EmbedBuilder } = require('discord.js');
       const { sendResponses } = require('../functions/forms/sendFormResponses');
 
-      const embedTeamNames = data.botHeldEmbeds.embeds.map((embed) => {return embed.data.title})
-
-      const mockedChannelA = mockTextChannel(embedTeamNames[0], '123-456');
-      const mockedChannelB = mockTextChannel(embedTeamNames[1], '456-789');
-      const mockedChannelC = mockTextChannel(embedTeamNames[2], '789-123');
-
-      registerTeamChannel(embedTeamNames[0], mockedChannelA);
-      registerTeamChannel(embedTeamNames[1], mockedChannelB);
-      registerTeamChannel(embedTeamNames[2], mockedChannelC);
+      const mockedChannelA = mockTextChannel(data.botHeldEmbeds.embeds[0].title, '123-456');
+      const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
+      const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
+      
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}), 'date');
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
+      
+      interaction.guild.channels.set(mockedChannelA);
+      interaction.guild.channels.set(mockedChannelB);
+      interaction.guild.channels.set(mockedChannelC);
 
       expect(lookupAlias).not.toHaveBeenCalled();
+      /* not used in earlier tasks of registering teams - if this fails, acts as a canary that
+      the test fail is due to a change in how we register teams, not how this function works */
 
-      const {error, response} = sendResponses(data.botHeldEmbeds);
-      expect(response).toBeNull();
-      expect(error.code).toEqual(500);
-      expect(error.message).toEqual(`ERR: "${mockErrorMsg.code}:${mockErrorMsg.message}" from channelFromTeam()`);
-      expect(error.loc).toBeDefined();
+      const {error, response} = await sendResponses(interaction, data.botHeldEmbeds);
+      expect(error).toBeNull();
+      expect(lookupAlias).toHaveBeenCalledTimes(3);
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(3);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
+
+      expect(response).toBeInstanceOf(EmbedBuilder);
+      expect(response.data.fields).toHaveLength(1);
+      expect(response.data.fields[0]).toHaveProperty("name");
+      expect(response.data.fields[0]).toHaveProperty("value");
+      expect(response.data.fields[0].name).toEqual(":white_check_mark: Successfully posted results for:");
+      expect(response.data.fields[0].value).toEqual(`${embedTeamNames.join('\n')}`);
     })
   })
 })

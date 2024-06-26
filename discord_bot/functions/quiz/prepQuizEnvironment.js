@@ -2,7 +2,7 @@ const {createCategoryChannel, createRole, findCategoryChannel, findRole} = requi
 
 module.exports = (client, guild = null) => {
   if(!client && !guild){
-    const error = {"code": 400, "message": `No client or guild provided for preparation`};
+    const error = {code: 400, message: `No client or guild provided for preparation`};
     console.error(error);
     return {error, response: null};
   }

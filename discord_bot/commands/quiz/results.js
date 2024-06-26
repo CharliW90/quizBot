@@ -1,6 +1,8 @@
 const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
-const { fetch } = require('../../functions/forms/fetchFormResponses.js');
-const { followUp, rounds, heldResponses } = require('../../functions/forms/holdFormResponses.js');
+const { summarise } = require('../../functions/forms/fetchFormResponses.js');
+const { followUp, hold } = require('../../functions/forms/holdFormResponses.js');
+const { indexRounds, getResponseFromFirestore, indexQuizzes } = require('../../functions/firestore');
+const { quizDate } = require('../../database.js');
 
 // A command to fetch embed messages for teams from storage, and send them to the teams
 
@@ -10,10 +12,34 @@ module.exports = {
     .setName('results')
     .setDescription('handles stored responses')
     .setDMPermission(false)
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),  // admin only command
-  async execute(interaction) {
-    const storedRounds = rounds();
-    if(storedRounds.length === 0){
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)  // admin only command
+    .addStringOption(option => 
+      option
+        .setName('date')
+        .setDescription('Which past quiz session to look at')
+        .setAutocomplete(true)
+    ),
+    async autocomplete(interaction) {
+      const focusedOption = interaction.options.getFocused();
+
+      const {error, response} = await indexQuizzes(interaction.guildId);
+
+      const quizSessions = response ?? error.message;
+
+      const today = quizDate();
+      const pastQuizzes = quizSessions.filter(date => date !== today);
+
+      const filtered = pastQuizzes.filter(choice => choice.startsWith(focusedOption));
+      await interaction.respond(
+        filtered.map(choice => ({ name: choice, value: choice}))
+      )
+    },
+    async execute(interaction) {
+    const {error, response} = await indexRounds(interaction.guildId, interaction.options.getString('date'));
+    if(error){
+      throw error;
+    }
+    if(response.length === 0){
       await interaction.reply({content: 'There are no stored rounds to handle - use /fetch-responses first to load team responses from Google Forms',components: []});
       return;
     }
@@ -21,18 +47,14 @@ module.exports = {
       .setCustomId('roundNumberToFetch')
       .setPlaceholder('Choose which round number to handle')
     
-    storedRounds.forEach((roundNumber) => {
+    response.forEach((round) => {
+      const roundNumber = round.split(' ')[1];
       dropdown.addOptions(
         new StringSelectMenuOptionBuilder()
-          .setLabel(`Round ${roundNumber}`)
-          .setValue(`${roundNumber}`),
+          .setLabel(round)
+          .setValue(roundNumber),
       )
     });
-    dropdown.addOptions(
-      new StringSelectMenuOptionBuilder()
-          .setLabel('All Rounds')
-          .setValue('all'),
-    );
 
     const cancel = new ButtonBuilder()  // allow user to cancel the command
       .setCustomId('cancel')
@@ -48,6 +70,7 @@ module.exports = {
     const userResponse = await interaction.reply({  // reply to the user asking which round they want
       content: 'Choose which round of answers to handle',
       components: [row1, row2],
+      ephemeral: true,
     });
 
     const collectorFilter = i => i.user.id === interaction.user.id;
@@ -55,33 +78,31 @@ module.exports = {
     try {
       const fetcher = await userResponse.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
       // if the user clicks cancel
-      if(fetch.customId === 'cancel'){
-        await fetch.update({ content: `Action cancelled.`, components: [] });
+      if(fetcher.customId === 'cancel'){
+        await fetcher.update({ content: `Action cancelled.`, components: [] });
       } else if(fetcher.values){
         //else, what value from the dropdown did they pick?
         const roundNumberToFetch = fetcher.values[0];
-        // if it's not a number, it must be 'All rounds' - build a grammatically correct message on this basis
-        const message = isNaN(roundNumberToFetch) ? 'all rounds are' : `Round ${roundNumberToFetch} is`
-        await fetcher.update({ content: `${message} being fetched now, please wait...`, components: [] });
-        // finally, we have a follow up question of 'What do you want to do with these results?'
-        const {error, response} = heldResponses(roundNumberToFetch);
-        if(error){
-          throw error;
-        }
-        if(response.length === 0){
-          return Promise.reject(`No results found for ${roundNumberToFetch}`)
-        }
-        interaction.channel.send({embeds: [response]});
-        fetcher.editReply({ content: `${message} retrieved - see details below:`, components: [] });
-        return followUp(interaction, roundNumberToFetch)
+        await fetcher.update({ content: `Round ${roundNumberToFetch} is being fetched now, please wait...`, components: [] });
+        getResponseFromFirestore(interaction.guildId, roundNumberToFetch, interaction.options.getString('date'))
+        .then(({error, response}) => {
+          if(error){throw error};
+          const {current} = response;
+          return Promise.all([hold(roundNumberToFetch, current.embeds, current.teams), summarise([{...current, roundNum: roundNumberToFetch}])])
+        })
+        .then(([holding, summary]) => {
+          if(holding.error){throw holding.error};
+          if(summary.error){throw summary.error};
+          interaction.channel.send({embeds: [summary.response]});
+          return followUp(interaction, roundNumberToFetch, true);
+        })
         .then((followUpMessage) => {
           if(followUpMessage){
-            interaction.channel.send(followUpMessage)
+            interaction.channel.send(followUpMessage);
           }
         })
-        .catch((err) => {
-          // handles errors thrown by 'followUp' in '../../functions/forms/holdFormResponses.js'
-          interaction.channel.send({ content: err.message.substring(0, 1999), components: [] });
+        .catch((error) => {
+          throw error;
         })
       }
     } catch(e) {

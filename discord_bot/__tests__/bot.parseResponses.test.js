@@ -1,7 +1,5 @@
 const { EmbedBuilder, embedLength } = require('discord.js');
 const data = require('../__data__');
-const {holdSpy} = require('../__mocks__/functionSpies'); // note: spies must be called before declaring the function they will be called by
-
 const {parse} = require('../functions/forms/parseFormResponses');
 
 const mockData = data.apiResponses;
@@ -29,7 +27,7 @@ describe('parseFormResponses.js', () => {
         const {error, response} = parse(input);
         expect(error.code).toEqual(400);
         expect(error.message).toEqual(`forms API data malformed`);
-        expect(error.details).toEqual({...input, "loc": expect.any(String)});
+        expect(error.details).toEqual({...input, loc: expect.any(String)});
         expect(response).toBeNull();
       })
 
@@ -80,65 +78,20 @@ describe('parseFormResponses.js', () => {
     })
 
     describe('parses correct data', () => {
-      test('parses a single round of data, and holds the team embeds when asked to', () => {
+      test('parses a single round of data into embeds for each team', () => {
         const input = mockData[0]
-        const teams = Object.keys(input.results)
 
-        const {error, response} = parse(input, true);
+        const {error, response} = parse(input);
 
         expect(error).toBeNull();
-        expect(response).toEqual(`holding responses for ${teams.length} teams, round ${input.roundDetails.number}`)
-        expect(holdSpy).toHaveBeenCalledTimes(1);
-        expect(holdSpy).toHaveBeenCalledWith(input.roundDetails.number, expect.any(Array), teams)
-        expect(holdSpy).toHaveReturnedWith({error: null, response: `holding responses for ${teams.length} teams, round ${input.roundDetails.number}`})
-        //the result of hold() is passed through as the result of parse() when held, so these will in fact be the same outputs
-      })
-      
-      test('parses a single round of data, and returns embeds for each team when not asked to hold them', () => {
-        const input = mockData[0]
-        const teams = Object.keys(input.results)
-
-        const {error, response} = parse(input, false);
-
-        expect(error).toBeNull();
-        expect(holdSpy).not.toHaveBeenCalled();
-        expect(response).toHaveLength(teams.length);
-        response.forEach((teamEmbed, index) => {
-          expect(teamEmbed).toBeInstanceOf(EmbedBuilder);
-          expect(teamEmbed).toEqual(data.botRoundEmbed(input.roundDetails.number, teams[index]));
-          const rounds = [...teamEmbed.data.fields];
-          const totals = rounds.shift();
-          expect(totals).toEqual({"name": "Total Score", "value": expect.stringMatching(/(^\d+\ \/\ \d+$)/)});
-          expect(rounds).toHaveLength(input.roundDetails.questions);
-        })
-      })
-    })
-
-    describe('handles errors from dependencies', () => {
-      beforeEach(() => {
-        jest.resetModules();
-        jest.clearAllMocks();
-        jest.unmock('../functions/maps/teamChannels');
-      });
-
-      test('handles errors from hold() function', () => {
-        const mockErrorMsg = {"message": "this would not be a useful error message", "code": 400, "loc": "parse()"}
-        const hold = jest.spyOn(require("../functions/forms/holdFormResponses"), 'hold').mockImplementation(() => {return {error: mockErrorMsg, response: null}})
-        const {parse} = require('../functions/forms/parseFormResponses');
-
-        const input = mockData[0];
-
-        const {error, response} = parse(input, true);
-
-        expect(error).toEqual(mockErrorMsg);
-        expect(response).toBeNull();
-        expect(hold).toHaveBeenCalledTimes(1);
-        expect(hold).toHaveBeenCalledWith(1, expect.any(Array), expect.any(Array));
-        expect(hold).toHaveReturnedWith({error: mockErrorMsg, response: null});
-        /*
-        since parse() returns hold() when isHeld is true this check is slightly redundant,
-        but does at least ensure it's the error from hold() that is being output by parse()
-        */
+        expect(response).toBeInstanceOf(Object);
+        expect(response).toHaveProperty('embedMessages')
+        expect(response).toHaveProperty('roundNum')
+        expect(response).toHaveProperty('teams')
+        const {embedMessages, roundNum, teams} = response;
+        expect(embedMessages).toHaveLength(Object.keys(input.results).length);
+        expect(roundNum).toEqual(input.roundDetails.number)
+        expect(teams).toEqual(Object.keys(input.results))
       })
     })
   })

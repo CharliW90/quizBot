@@ -1,7 +1,6 @@
-const { Guild, PermissionFlagsBits, Role, TextChannel, VoiceChannel, EmbedBuilder } = require("discord.js");
-const {findRole, createRole, roleAssign, createTextChannel, createVoiceChannel, findCategoryChannel} = require('../discord')
-const { registerTeamChannel, setAlias, deleteTeam } = require("../maps/teamChannels");
-const { registerTeamMembers, deleteTeamMembers } = require("../maps/teamMembers");
+const { PermissionFlagsBits, EmbedBuilder } = require("discord.js");
+const { findRole, createRole, roleAssign, createTextChannel, createVoiceChannel, findCategoryChannel } = require('../discord')
+const { setTeamsAliases, setTeamsMembers, deleteTeamsMembers } = require("../firestore");
 
 // keep a history of the roles and channels created as we go along,
 // so that if a step fails we can undo the completed actions before returning the error message to the end-user
@@ -9,13 +8,14 @@ const history = [];
 
 module.exports = (interaction, team) => {
   if(!interaction || !team){
-    const error = {"code": 400, "message": `Interaction was ${interaction}, Team was ${team}`};
+    const error = {code: 400, message: `Interaction was ${interaction}, Team was ${team}`};
     console.error(error);
     return {error, response: null};
   }
   const guild = interaction.guild;
   const self = findRole(guild, "Quizzy");
   const {teamName, captain, members, settledColour} = team;
+  const data = {...team};
   const textChannelName = textifyTeamName(teamName.toLowerCase());
 
   const roleDetails = {
@@ -58,6 +58,7 @@ module.exports = (interaction, team) => {
       throw error;
     }
 
+    data.roles = {teamRole, captainRole};
     const quizTeamsCategory = response;
     const promises = [];
     // we want to make the channels viewable only to those with the teamRole, and ourself (the bot)
@@ -90,27 +91,21 @@ module.exports = (interaction, team) => {
       throw {message, code: 500};
     }
     history.push(textChannel.response, voiceChannel.response);
-
-    return registerTeamChannel(teamName, textChannel.response);
-  })
-  .then(({error, response}) => {
-    if(error){
-      // this is a non-fatal error, it can be corrected later on when handling scores/results
-      console.warn(error);
-    } else {
-      history.push(response);
-    }
+    data.channels = {textChannel: textChannel.response, voiceChannel: voiceChannel.response};
 
     if(textChannelName !== teamName){
       // this catches when we have created a different version of the teamname for the text channel
-      ({error, response} = setAlias(textChannelName, teamName));
+      
+      const {error, response} = setTeamsAliases(interaction.guildId, teamName.toLowerCase(), textChannelName.toLowerCase());
       if(error){
         // this is a non-fatal error, and is just a 'nice to have' if it works
         console.warn(error);
+      } else {
+        history.push(response)
       }
     }
-
-    return registerTeamMembers(teamName, [...members, captain]);
+    const teamMembers = [...members, captain];
+    return setTeamsMembers(interaction.guildId, teamName.toLowerCase(), teamMembers);
   })
   .then(({error, response}) => {
     if(error){
@@ -138,41 +133,41 @@ module.exports = (interaction, team) => {
       successfulRegistration.addFields({name: "Team Members", value: members.join('\n')});
     }
 
-    return {error: null, response: successfulRegistration};
+    return {error: null, response: {embed: successfulRegistration, data}};
   })
   .catch((error) => {
-    undo();
+    undo(interaction);
     throw error;
   })
   
 }
 
 const textifyTeamName = (string) => {
-  string = string.replace("+", "＋");
-  string = string.replace("-", "–");
-  string = string.replace("'", "´");
-  string = string.replace("$", "S");
-  string = string.replace(" & ", " and ");
-  string = string.replace("&", " and ");
-  string = string.replace(" = ", " is ");
-  string = string.replace("=", " is ");
-  string = string.replace(!/[\w\＋\–\´\ ]/, " ")
+  string = string.replaceAll("+", "＋");
+  string = string.replaceAll("-", "–");
+  string = string.replaceAll("'", "´");
+  string = string.replaceAll("$", "S");
+  string = string.replaceAll(" & ", " and ");
+  string = string.replaceAll("&", " and ");
+  string = string.replaceAll(" = ", " is ");
+  string = string.replaceAll("=", " is ");
+  string = string.replaceAll(!/[\w\＋\–\´\ ]/, " ")
   const chars = string.split('');
   const textified = chars.filter((char) => {return /[\w\＋\–\´\ ]/.test(char)});
   return textified.join('');
 }
 
-const undo = () => {
+const undo = (interaction) => {
   history.forEach((actionTaken) => {
     try{
-      if(String(actionTaken).includes('::')){
-        // this is our team registration, where a teamName is mapped to its text channel
-        const registration = actionTaken.split('::')[0];
-        deleteTeam(registration).then((deletion) => console.log(deletion.response));
-      } else if(String(actionTaken).includes('<=>')){
+      if(String(actionTaken).includes('<=>')){
         // this is our team members registration, where teams and members are mapped to one another
-        const registration = actionTaken.split('<=>')[0];
-        deleteTeamMembers(registration).then((deletion) => console.log(deletion.response));
+        const registration = actionTaken.split('<=>');
+        deleteTeamsMembers(interaction.guildId, registration).then((deletion) => console.log(deletion.response));
+      } else if(String(actionTaken).includes('<?>')){
+        // this is our team aliases registration, where teamname and textchannelname are mapped to one another
+        const registration = actionTaken.split('<?>');
+        deleteTeamsMembers(interaction.guildId, registration).then((deletion) => console.log(deletion.response));
       } else {
         // this is a discord action (e.g. Role creation or Channel Creation)
         actionTaken.delete().then((deletion) => console.log(`Deleted ${deletion.constructor.name} ${deletion.name}`));

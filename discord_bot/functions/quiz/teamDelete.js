@@ -1,10 +1,9 @@
 const { EmbedBuilder } = require("discord.js")
-const { channelFromTeam, lookupAlias } = require("../maps/teamChannels")
 const { findVoiceChannel } = require("../discord")
 
 module.exports = (guild, teamRole) => {
   if(!guild || !teamRole){
-    const error = {"code": 400, "message": `guild was ${guild}, teamRole was ${teamRole}`};
+    const error = {code: 400, message: `guild was ${guild}, teamRole was ${teamRole}`};
     console.error(error);
     return {error, response: null};
   }

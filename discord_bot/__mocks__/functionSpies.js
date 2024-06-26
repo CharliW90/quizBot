@@ -8,8 +8,9 @@ so must be spied on after those have been spied on - similarly parse calls hold,
 exports.sendSpy = jest.spyOn(require('../functions/forms/sendFormResponses'), 'sendResponses');
 
 exports.holdSpy = jest.spyOn(require('../functions/forms/holdFormResponses'), 'hold');
-exports.heldResponsesSpy = jest.spyOn(require('../functions/forms/holdFormResponses'), 'heldResponses');
+exports.followUpSpy = jest.spyOn(require('../functions/forms/holdFormResponses'), 'followUp');
 
 exports.parseSpy = jest.spyOn(require('../functions/forms/parseFormResponses'), 'parse');
 
 exports.fetchSpy = jest.spyOn(require('../functions/forms/fetchFormResponses'), 'fetch')
+exports.summariseSpy = jest.spyOn(require('../functions/forms/fetchFormResponses'), 'summarise')

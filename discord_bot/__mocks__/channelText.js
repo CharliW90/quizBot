@@ -2,7 +2,11 @@ exports.mockTextChannel = (name, id) => {
   return {
     name,
     id,
-    send: jest.fn()
+    send: jest.fn(),
+    constructor: {
+      name: 'TextChannel'
+    },
+    toString: () => {return `#${name}`}
   }
 }
 

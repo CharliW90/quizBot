@@ -1,7 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require("discord.js");
 const { findAdmins, findRole, roleRemove } = require("../../functions/discord");
-const { channelFromTeam } = require("../../functions/maps/teamChannels");
-const { removeTeamMember } = require("../../functions/maps/teamMembers");
 
 module.exports = {
   category: 'quiz',

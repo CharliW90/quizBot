@@ -1,7 +1,7 @@
 module.exports = {
-  "teams": ["teamname", "another", "a_third"],
+  "teams": ["teamName", "another", "a_third"],
   "embeds": [
-    {data: {
+    {
       "author": {
         "icon_url": expect.any(String),
         "name": expect.any(String),
@@ -12,8 +12,8 @@ module.exports = {
       "image": {"url": expect.any(String)},
       "thumbnail": {"url": expect.any(String)},
       "title": "teamName",
-    }},
-    {data: {
+    },
+    {
       "author": {
         "icon_url": expect.any(String),
         "name": expect.any(String),
@@ -24,8 +24,8 @@ module.exports = {
       "image": {"url": expect.any(String)},
       "thumbnail": {"url": expect.any(String)},
       "title": "another",
-    }},
-    {data: {
+    },
+    {
       "author": {
         "icon_url": expect.any(String),
         "name": expect.any(String),
@@ -36,6 +36,6 @@ module.exports = {
       "image": {"url": expect.any(String)},
       "thumbnail": {"url": expect.any(String)},
       "title": "a_third",
-    }}
+    }
   ]
 }
