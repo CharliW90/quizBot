@@ -6,7 +6,7 @@ const path = require('node:path');
 const commands = [];
 // fetch all the command folders from the commands directory
 const foldersPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(foldersPath);
+const commandFolders = fs.readdirSync(foldersPath).filter(folder => !folder.match(/^.*\..+$/));
 
 for (const folder of commandFolders) {
 	// fetch all the command files from the commands directory

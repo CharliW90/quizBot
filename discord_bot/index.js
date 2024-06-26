@@ -11,7 +11,7 @@ client.commands = new Collection();
 
 // dynamically retrieve command files
 const foldersPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(foldersPath);
+const commandFolders = fs.readdirSync(foldersPath).filter(folder => !folder.match(/^.*\..+$/));
 
 for (const folder of commandFolders) {
 	const commandsPath = path.join(foldersPath, folder);
