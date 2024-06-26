@@ -18,7 +18,7 @@ exports.addResponseToFirestore = async (serverId, roundNum, quizRoundObject) => 
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    await thisQuiz.set({});
+    await thisQuiz.set({ended: false});
   }
 
   let thisRoundScores = await thisRound.get();

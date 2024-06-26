@@ -24,7 +24,7 @@ exports.recordTeam = async (serverId, data, session = null) => {
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    await thisQuiz.set({});
+    await thisQuiz.set({ended: false});
   }
 
   let thisTeamRecord = await thisTeam.get();
@@ -141,3 +141,32 @@ exports.indexTeams = async (serverId, session = null) => {
   return {error: null, response: teams}
 }
 
+exports.endQuiz = async (serverId, session = null) => {
+  if(!serverId){
+    return {error: {code: 400, loc: "firestore/quiz.js", message: `Missing parameters - expected serverId`}, response: null};
+  }
+    
+  const quiz = session ?? quizDate();
+  const thisGuild = firestore.collection('Servers').doc(serverId);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz);
+
+  const thisGuildStorage = await thisGuild.get();
+  if(!thisGuildStorage.exists){
+    return {error: {code: 404, loc: "firestore/quiz.js", message: `No firestore document for ${serverId}`}, response: null};
+  }
+
+  const thisQuizStore = await thisQuiz.get();
+  if(!thisQuizStore.exists){
+    return {error: {code: 404, loc: "firestore/quiz.js", message: `No firestore document for a Quiz Session on ${quiz} for ${serverId}`}, response: null};
+  }
+
+  const quizSession = await thisQuizStore.data();
+
+  if(quizSession.ended){
+    return {error: {code: 400, loc: "firestore/quiz.js", message: `Quiz Session ${quiz} for ${serverId} is already ended`}, response: null};
+  }
+
+  thisQuiz.update({ended: true})
+
+  return {error: null, response: write};
+}

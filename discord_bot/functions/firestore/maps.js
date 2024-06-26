@@ -18,7 +18,7 @@ exports.setTeamsAliases = async (serverId, team, alias) => {
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    await thisQuiz.set({});
+    await thisQuiz.set({ended: false});
   }
 
   let teamsAliasesRecord = await teamsAliases.get();
@@ -126,7 +126,7 @@ exports.setTeamsMembers = async (serverId, team, members) => {
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    await thisQuiz.set({});
+    await thisQuiz.set({ended: false});
   }
 
   let teamsMembersRecord = await teamsMembers.get();

@@ -25,7 +25,7 @@ exports.addUserToFirestore = async (userId, serverId, serverName, roundNum, scor
 
   let thisQuizRecord = await thisQuiz.get();
   if(!thisQuizRecord.exists) {
-    await thisQuiz.set({});
+    await thisQuiz.set({ended: false});
     thisQuizRecord = await thisQuiz.get();
   }
 
@@ -42,22 +42,22 @@ exports.addUserToFirestore = async (userId, serverId, serverName, roundNum, scor
   }
 
   const currentScores = await thisQuizRecord.data();
-  let total = 0;
+  let total = score;
   for(round in currentScores){
     total += round.score;
   }
-  currentScores[round] = {teamName, score};
+  currentScores[roundNum] = {teamName, score};
   currentScores.total = total;
   const write = thisQuizRecord.set(currentScores);
   return {error: null, response: write};
 }
 
-exports.getUserFromFirestore = async (userId, serverId) => {
+exports.getUserFromFirestore = async (userId, serverId, session = null) => {
   if(!userId || !serverId){
     return {error: {code: 400, loc: "firestore/users.js", message: `Missing parameters - expected userId and serverId`}, response: null}
   }
 
-  const quiz = quizDate();
+  const quiz = session ?? quizDate();
 
   const thisUser = firestore.collection('Users').doc(userId)
   const thisGuild = thisUser.collection('Servers').doc(serverId);
