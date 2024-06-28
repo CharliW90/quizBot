@@ -3,7 +3,7 @@ const { recordTeam, getTeam, deleteTeam, indexQuizzes, indexTeams } = require(".
 const { addResponseToFirestore, getResponseFromFirestore, checkHistory, revertHistory, indexRounds } = require("./responses");
 const { addScoreboardToFirestore, getScoreboardFromFirestore } = require("./scoreboard");
 const { addScoreToFirestoreTeam } = require("./scores");
-const { addUserToFirestore, getUserFromFirestore, getUserTeamNames } = require("./users");
+const { addTeamMemberToFirestore, postScoreToUser, getUserFromFirestore, getUserTeamNames } = require("./users");
 
 module.exports = {
   setTeamsAliases,
@@ -28,7 +28,8 @@ module.exports = {
   addScoreboardToFirestore,
   getScoreboardFromFirestore,
   addScoreToFirestoreTeam,
-  addUserToFirestore,
+  addTeamMemberToFirestore,
+  postScoreToUser,
   getUserFromFirestore,
   getUserTeamNames
 }

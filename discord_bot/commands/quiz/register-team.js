@@ -55,9 +55,9 @@ module.exports = {
     const focusedOption = interaction.options.getFocused();
     const {response} = await getUserTeamNames(interaction.user.id, interaction.guildId);
     const usersFormerTeamNames = response ?? [];
-    const filtered = usersFormerTeamNames.filter(choice => choice.name.startsWith(focusedOption));
+    const filtered = usersFormerTeamNames.filter(choice => choice.startsWith(focusedOption));
     await interaction.respond(
-      filtered.map(choice => ({ name: choice.name, value: choice.name}))
+      filtered.map(choice => ({ name: choice, value: choice}))
     )
   },
   async execute(interaction) {

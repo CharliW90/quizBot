@@ -19,6 +19,11 @@ exports.setTeamsAliases = async (serverId, team, alias) => {
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
     await thisQuiz.set({ended: false});
+  } else {
+    const check = await thisQuizStore.data();
+    if(check.ended){
+      return {error: {code: 403, message: `The quiz for ${quiz} has ended - no further updates allowed`}, response: null}
+    }
   }
 
   let teamsAliasesRecord = await teamsAliases.get();
@@ -72,6 +77,11 @@ exports.deleteTeamsAliases = async (serverId, registration) => {
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
     return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz} for ${serverId}`}, response: null};
+  } else {
+    const check = await thisQuizStore.data();
+    if(check.ended){
+      return {error: {code: 403, message: `The quiz for ${quiz} has ended - no further updates allowed`}, response: null}
+    }
   }
 
   const teamsAliasesRecord = await teamsAliases.get();
@@ -127,6 +137,11 @@ exports.setTeamsMembers = async (serverId, team, members) => {
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
     await thisQuiz.set({ended: false});
+  } else {
+    const check = await thisQuizStore.data();
+    if(check.ended){
+      return {error: {code: 403, message: `The quiz for ${quiz} has ended - no further updates allowed`}, response: null}
+    }
   }
 
   let teamsMembersRecord = await teamsMembers.get();
@@ -181,6 +196,11 @@ exports.deleteTeamsMembers = async (serverId, registration) => {
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
     return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz} for ${serverId}`}, response: null};
+  } else {
+    const check = await thisQuizStore.data();
+    if(check.ended){
+      return {error: {code: 403, message: `The quiz for ${quiz} has ended - no further updates allowed`}, response: null}
+    }
   }
 
   const teamsMembersRecord = await teamsMembers.get();
@@ -214,7 +234,7 @@ exports.checkMembers = async (serverId, members) => {
 
 }
 
-exports.reset = async (serverId) => {
+exports.reset = async (serverId, blame) => {
   if(!serverId){
     const error = {code: 400, loc: "firestore/maps.js", message: `serverId was ${serverId}`};
     return {error, response: null};
@@ -223,6 +243,7 @@ exports.reset = async (serverId) => {
   const quiz = quizDate();
   const thisGuild = firestore.collection('Servers').doc(serverId);
   const thisQuiz = thisGuild.collection('Quizzes').doc(quiz);
+  const thisTeams = thisQuiz.collection('Teams')
   const thisAliases = thisQuiz.collection('Maps').doc('Teams Aliases');
   const thisMembers = thisQuiz.collection('Maps').doc('Teams Members');
   
@@ -234,18 +255,31 @@ exports.reset = async (serverId) => {
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
     return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz} for ${serverId}`}, response: null};
-  };
+  } else {
+    const check = await thisQuizStore.data();
+    if(check.ended){
+      return {error: {code: 403, message: `The quiz for ${quiz} has ended - reset is not allowed`}, response: null}
+    }
+  }
       
-  console.warn(`${quiz}: Firestore reset called on Server: ${serverId}`)
-
-  const deletions = []
-
+  console.warn(`${quiz}: Firestore reset called on Server: ${serverId} by ${blame}`)
+  
+  const deletions = {mappings: [], teams: []}
+  
+  const teams = await thisTeams.get();
+  const teamDocs = []
+  teams.forEach(doc => teamDocs.push(doc.id))
+  for(const doc of teamDocs){
+    const deletion = await thisTeams.doc(doc).delete();
+    deletions.teams.push(deletion)
+  }
+  
   const storedAliases = await thisAliases.get();
   if(storedAliases.exists){
     const store = await storedAliases.data();
     await thisAliases.delete();
     const deleted = Object.keys(store)
-    deletions.push(...deleted)
+    deletions.mappings.push(...deleted)
   }
 
   const storedMembers = await thisMembers.get();
@@ -253,7 +287,7 @@ exports.reset = async (serverId) => {
     const store = await storedMembers.data();
     await thisMembers.delete();
     const deleted = Object.keys(store)
-    deletions.push(...deleted)
+    deletions.mappings.push(...deleted)
   }
   return {error: null, response: deletions};
 }

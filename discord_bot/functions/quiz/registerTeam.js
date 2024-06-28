@@ -1,6 +1,6 @@
 const { PermissionFlagsBits, EmbedBuilder } = require("discord.js");
 const { findRole, createRole, roleAssign, createTextChannel, createVoiceChannel, findCategoryChannel } = require('../discord')
-const { setTeamsAliases, setTeamsMembers, deleteTeamsMembers } = require("../firestore");
+const { setTeamsAliases, setTeamsMembers, deleteTeamsMembers, addTeamMemberToFirestore } = require("../firestore");
 
 // keep a history of the roles and channels created as we go along,
 // so that if a step fails we can undo the completed actions before returning the error message to the end-user
@@ -15,7 +15,7 @@ module.exports = (interaction, team) => {
   const guild = interaction.guild;
   const self = findRole(guild, "Quizzy");
   const {teamName, captain, members, settledColour} = team;
-  const data = {...team};
+  const data = JSON.parse(JSON.stringify(team));
   const textChannelName = textifyTeamName(teamName.toLowerCase());
 
   const roleDetails = {
@@ -114,6 +114,18 @@ module.exports = (interaction, team) => {
     } else {
       history.push(response);
     }
+    const promises = [...members, captain].map((member) => {return addTeamMemberToFirestore(member, interaction.guild, teamName)});
+    return Promise.all(promises);
+  })
+  .then((responses) => {
+    responses.forEach(({error, response}) => {
+      if(error){
+        // this is a non-fatal error, we just haven't recorded the user in firestore
+        console.warn(error);
+      } else {
+        history.push(response);
+      }
+    })
 
     const successfulRegistration = new EmbedBuilder()
       .setColor(settledColour)

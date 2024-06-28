@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { lookupAlias, getTeam } = require('../firestore');
+const { lookupAlias, getTeam, addUserToFirestore } = require('../firestore');
 const { findChildrenOfCategory } = require('../discord');
 
 const channelCache = new Map()

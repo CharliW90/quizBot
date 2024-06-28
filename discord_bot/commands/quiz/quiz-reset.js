@@ -59,7 +59,7 @@ module.exports = {
         interaction.editReply({ content: `Action cancelled.`, embeds: [], components: [] })
         return;
       } else if(reply.customId === 'reset'){
-        const {error, response} = await quizReset(interaction.guild);
+        const {error, response} = await quizReset(interaction.guild, interaction.user.globalName);
         if(error){
           throw error
         }
@@ -75,7 +75,7 @@ module.exports = {
 
         const success_message = new EmbedBuilder()
           .setColor('Yellow')
-          .setTitle("Quiz Reset")
+          .setTitle(`Quiz Reset by ${interaction.user.globalName}`)
           .setAuthor({name: `QuizBot 2.0`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
           .addFields({name: "Reset Complete", value: message})
 

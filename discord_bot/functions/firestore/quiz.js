@@ -25,6 +25,12 @@ exports.recordTeam = async (serverId, data, session = null) => {
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
     await thisQuiz.set({ended: false});
+  } else {
+    const check = await thisQuizStore.data();
+    if(check.ended){
+      const error = {code: 403, message: `The quiz for ${quiz} has ended - no further updates allowed`}
+      return {error, response: null}
+    }
   }
 
   let thisTeamRecord = await thisTeam.get();
