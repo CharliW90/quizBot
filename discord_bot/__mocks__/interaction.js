@@ -30,7 +30,11 @@ exports.mockInteraction = (id) => {
       _group: null,
       _subcommand: null,
       _hoistedOptions: [],
-      getString: (input) => {return String(input)}
+      getString: (input) => {
+        if(input === 'date'){
+          return String("1990-01-12")
+        }
+      }
     }
   }
 }

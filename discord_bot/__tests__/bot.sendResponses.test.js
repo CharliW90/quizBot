@@ -1,4 +1,6 @@
 const data = require('../__data__');
+const quizDateSpy = jest.spyOn(require('../database'), 'quizDate').mockImplementation(() => {return {code: '1990-01-12', name: 'test-data'}})
+// Note: any change to quizDate() output for testing needs to be reflected in the mocked interaction method: getString()
 const { mockInteraction } = require('../__mocks__/interaction');
 const { mockTextChannel } = require("../__mocks__/channelText");
 const { recordTeam, deleteTeam } = require('../functions/firestore');
@@ -47,9 +49,11 @@ describe('sendFormResponses.js', () => {
     const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
     const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
 
-    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
-    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}), 'date');
-    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}));
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}));
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}));
+
+    expect(quizDateSpy).toHaveBeenCalledTimes(3);
 
     interaction.guild.channels.set(mockedChannelA);
     interaction.guild.channels.set(mockedChannelB);
@@ -64,6 +68,9 @@ describe('sendFormResponses.js', () => {
     expect(response.data.fields[0]).toHaveProperty("value")
     expect(response.data.fields[0].name).toEqual(":white_check_mark: Successfully posted results for:")
     expect(response.data.fields[0].value).toEqual("teamName")
+
+    expect(quizDateSpy).toHaveBeenCalledTimes(3);
+    // shouldn't be being called again, since our interaction does include a getString('date') and therefore session !== null
 
     expect(mockedChannelA.send).toHaveBeenCalledTimes(1);
     const correctEmbed = data.botHeldEmbeds.embeds.filter((embed) => {return embed.title === "teamName"});
@@ -80,9 +87,11 @@ describe('sendFormResponses.js', () => {
     const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
     const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
 
-    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
-    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}), 'date');
-    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}));
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}));
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}));
+
+    expect(quizDateSpy).toHaveBeenCalledTimes(3);
 
     interaction.guild.channels.set(mockedChannelA);
     interaction.guild.channels.set(mockedChannelB);
@@ -97,6 +106,9 @@ describe('sendFormResponses.js', () => {
     expect(response.data.fields[0]).toHaveProperty("value")
     expect(response.data.fields[0].name).toEqual(":white_check_mark: Successfully posted results for:")
     expect(response.data.fields[0].value).toEqual(`${embedTeamNames.join('\n')}`)
+
+    expect(quizDateSpy).toHaveBeenCalledTimes(3);
+    // shouldn't be being called again, since our interaction does include a getString('date') and therefore session !== null
 
     expect(mockedChannelA.send).toHaveBeenCalledTimes(1);
     expect(mockedChannelA.send).toHaveBeenCalledWith({embeds: [data.botHeldEmbeds.embeds[0]]});
@@ -116,10 +128,12 @@ describe('sendFormResponses.js', () => {
     const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
     const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
     
-    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
-    await deleteTeam(interaction.guildId,data.botHeldEmbeds.embeds[1].title, 'date');
-    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}));
+    await deleteTeam(interaction.guildId,data.botHeldEmbeds.embeds[1].title);
+    await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}));
     
+    expect(quizDateSpy).toHaveBeenCalledTimes(3);
+
     interaction.guild.channels.set(mockedChannelA);
     interaction.guild.channels.set(mockedChannelB); // no registered team for this (see deleteTeam above) but we want channel to exist (see additional error fields below)
     interaction.guild.channels.set(mockedChannelC);
@@ -139,6 +153,9 @@ describe('sendFormResponses.js', () => {
     expect(response.data.fields[1].value).toEqual(`${embedTeamNames[1]}`);
     expect(response.data.fields[2].name).toEqual(":warning: Registered teams did not receive results:");
     expect(response.data.fields[2].value).toEqual(mockedChannelB.toString());
+
+    expect(quizDateSpy).toHaveBeenCalledTimes(3);
+    // shouldn't be being called again, since our interaction does include a getString('date') and therefore session !== null
 
     expect(mockedChannelA.send).toHaveBeenCalledTimes(1);
     expect(mockedChannelA.send).toHaveBeenCalledWith({embeds: [data.botHeldEmbeds.embeds[0]]});
@@ -167,9 +184,9 @@ describe('sendFormResponses.js', () => {
       const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
       const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
       
-      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
-      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}), 'date');
-      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}));
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}));
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}));
       
       interaction.guild.channels.set(mockedChannelA);
       interaction.guild.channels.set(mockedChannelB);
@@ -209,9 +226,9 @@ describe('sendFormResponses.js', () => {
       const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
       const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
       
-      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
-      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}), 'date');
-      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}));
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}));
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}));
       
       interaction.guild.channels.set(mockedChannelA);
       interaction.guild.channels.set(mockedChannelB);
@@ -251,9 +268,9 @@ describe('sendFormResponses.js', () => {
       const mockedChannelB = mockTextChannel(data.botHeldEmbeds.embeds[1].title, '456-789');
       const mockedChannelC = mockTextChannel(data.botHeldEmbeds.embeds[2].title, '789-123');
       
-      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}), 'date');
-      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}), 'date');
-      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}), 'date');
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[0].title, channels: {textChannel: mockedChannelA}}));
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[1].title, channels: {textChannel: mockedChannelB}}));
+      await recordTeam(interaction.guildId, mockTeam({teamName: data.botHeldEmbeds.embeds[2].title, channels: {textChannel: mockedChannelC}}));
       
       interaction.guild.channels.set(mockedChannelA);
       interaction.guild.channels.set(mockedChannelB);
