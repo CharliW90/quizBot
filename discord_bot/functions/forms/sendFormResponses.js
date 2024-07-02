@@ -83,7 +83,7 @@ exports.sendResponses = async (interaction, heldResponse, teamName = null) => {
       const failures = responses.filter(result => !result.success).map(result => result.team);
 
       const summary = new EmbedBuilder()
-        .setColor('Purple')
+        .setColor('e511c7')
         .setTitle(`Scorecards Sent for Round ${roundNum}`)
         .setAuthor({name: `Virtual Quizzes Response Handler`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
         .setThumbnail('https://cdn.discordapp.com/attachments/633012685902053397/1250728073293201420/sent.png')

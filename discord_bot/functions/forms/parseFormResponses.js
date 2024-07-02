@@ -34,7 +34,7 @@ exports.parse = (data) => {
 
   teams.forEach((teamname) => {
     const teamEmbed = new EmbedBuilder()
-      .setColor('Fuchsia')
+      .setColor('e511c7')
       .setTitle(teamname)
       .setAuthor({name: `Virtual Quizzes - Round Number ${roundDetails.number}`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
       .setImage('https://cdn.discordapp.com/attachments/633012685902053397/1239615993156862016/virtualQuizzes.png')
