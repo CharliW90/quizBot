@@ -30,6 +30,11 @@ module.exports = {
       const pastQuizzes = quizSessions.filter(date => date.name !== today.name);
 
       const filtered = pastQuizzes.filter(choice => choice.name.startsWith(focusedOption));
+      filtered.sort((a, b) => {
+        const dateA = a.code.replaceAll('-','');
+        const dateB = b.code.replaceAll('-','');
+        return dateB - dateA;
+      });
       await interaction.respond(
         filtered.map(choice => ({ name: choice.name, value: choice.code}))
       )
