@@ -1,5 +1,5 @@
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
-const { addResponseToFirestore } = require("../firestore");
+const { addResponseToFirestore, indexRounds } = require("../firestore");
 const { sendResponses } = require("./sendFormResponses");
 
 const tempStore = new Map();
@@ -38,7 +38,7 @@ exports.hold = (roundNum, embeds, teamNames) => {
   }
 }
 
-exports.followUp = async (interaction, roundNum, stored = false) => {
+exports.followUp = async (message, interaction, roundNum, stored = false) => {
   const roundMsg = isNaN(roundNum) ? 'All rounds' : `Round ${roundNum}`
   const store = new ButtonBuilder()
     .setCustomId('store')
@@ -63,7 +63,7 @@ exports.followUp = async (interaction, roundNum, stored = false) => {
 
   const row = stored ? sender : storer;
 
-  const furtherResponse = await interaction.channel.send({
+  const furtherResponse = await message.editReply({
     content: 'What action would you like to take with these results?',
     components: [row],
   });
@@ -73,15 +73,31 @@ exports.followUp = async (interaction, roundNum, stored = false) => {
   try {
     const toDo = await furtherResponse.awaitMessageComponent({ filter: collectorFilter, time: 10_000 });
     if(toDo.customId === 'store'){
-      const quizRound = await tempStore.get(String(roundNum));
-      const {error, response} = await addResponseToFirestore(interaction.guildId, roundNum, quizRound);
-      if(error){
-        throw error;
+      const promises = [];
+      if(roundNum === 'all'){
+        tempStore.forEach((quizRound, roundNum) => {
+          promises.push(addResponseToFirestore(interaction.guildId, roundNum, quizRound))
+        })
+      } else {
+        const quizRound = await tempStore.get(String(roundNum));
+        promises.push(addResponseToFirestore(interaction.guildId, roundNum, quizRound))
       }
-      await toDo.update({ content: `Results for ${roundMsg} have been stored. :white_check_mark:`, components: [] });
-      
-      const roundsMsg = response.rounds.length > 1 ? `Rounds ${response.rounds.join(', ')}` : `Round ${response.rounds[0]}`
-      return `We now have stored results for ${roundsMsg} - to access these results use the command /results`
+      return Promise.all(promises)
+      .then((responses) => {
+        responses.forEach(({error, response}) => {
+          if(error){throw error};
+        })
+      return Promise.all([toDo.update({ content: `Results for ${roundMsg} have been stored. :white_check_mark:`, components: [] }), indexRounds(interaction.guildId)])
+      })
+      .then(([messageUpdate, indexedRounds]) => {
+        if(indexedRounds.error){throw indexedRounds.error}
+        const rounds = indexedRounds.response;
+        const roundsMsg = rounds.length > 1 ? `Rounds ${rounds.map(round => round.split(' ')[1]).join(', ')}` : `Round ${rounds[0]}`
+        return {error: null, response: `We now have stored results for ${roundsMsg} - to access these results use the command /results`}
+      })
+      .catch((error) => {
+        console.error(error);;
+      })      
     } else if(toDo.customId === 'send') {
       await toDo.update({ content: `Results for ${roundNum} are being sent out now... :incoming_envelope:`, components: [] });
       
@@ -105,16 +121,15 @@ exports.followUp = async (interaction, roundNum, stored = false) => {
       
       if(tempStore.size > 0){
         const roundsMsg = tempStore.size > 1 ? `${tempStore.size} Quiz Rounds: Rounds ${tempStore.keys().join(', ')}` : `1 Quiz Round: Round ${tempStore.keys()}`
-        return `Deleted results for ${roundMsg} :: we now have data for ${roundsMsg} :mailbox_with_mail:`
+        return `Deleted results for ${roundMsg} :: we now have data for ${roundsMsg} stored locally :mailbox_with_mail:`
       } else {
-        return `Deleted results for ${roundMsg} :: we now have no rounds stored :mailbox_with_no_mail:`
+        return `Deleted results for ${roundMsg} :: we now have no rounds stored locally :mailbox_with_no_mail:`
       }
     }
   } catch(e) {
-    console.error(e);
     if(e.message === "Collector received no interactions before ending with reason: time"){
       // handles failure to reply to the followup response of 'what do you want to do with the responses?'
-      await furtherResponse.edit({ content: 'Response not received within 10 seconds, cancelling...', components: [] });
+      await message.editReply({ content: 'Response not received within 10 seconds, cancelling...', embeds: [], components: [] });
       return;
     } else {
       throw e;

@@ -83,15 +83,13 @@ module.exports = {
         .then(({error, response}) => {
           if(error){throw error;}
           // a successful response will be a single embed summarising what has been fetched
-          interaction.channel.send({embeds: [response]});
-          fetcher.editReply({ content: `${message} ready - see summary below:`, components: [] });
+          fetcher.editReply({ content: `${message} ready - see summary below:`, embeds: [response], components: [] });
           // finally, we have a follow up question of 'What do you want to do with the results stored in working memory?'
-          return followUp(interaction, roundNum);
+          return followUp(fetcher, interaction, roundNum);
         })
-        .then((followUpMessage) => {
-          if(followUpMessage){
-            interaction.channel.send(followUpMessage);
-          }
+        .then(({error, response}) => {
+          if(error){throw error};
+          interaction.channel.send(response);
         })
         .catch((error) => {
           console.error(error);

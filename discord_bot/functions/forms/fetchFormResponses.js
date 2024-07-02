@@ -48,15 +48,18 @@ exports.summarise = async (data) => {
   if(!data || data.length === 0){
     return {error: `No data: ${data}`, response: null};
   }
+  if(data.length > 1){
+    data.reverse();
+  }
   const summaryMessage = new EmbedBuilder()
-    .setColor('Purple')
+    .setColor('e511c7')
     .setTitle("Responses Fetched")
     .setAuthor({name: `Virtual Quizzes Response Handler`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
     .addFields({name: "Rounds Fetched", value: `${data.length}`})
 
   data.forEach((round) => {
     summaryMessage.addFields(
-      {name: `Responses for Quiz Round ${round.roundNum}`, value: round.teams.join('\n')}
+      {name: `Responses for Quiz Round ${round.roundNum}`, value: round.teams.sort().join('\n')}
     )
   })
   
