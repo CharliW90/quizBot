@@ -93,15 +93,12 @@ exports.getUserFromFirestore = async (userId, serverId, session = null) => {
   if(!userId || !serverId){
     return {error: {code: 400, loc: "firestore/users.js", message: `Missing parameters - expected userId and serverId`}, response: null}
   }
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
 
-  const quiz = session ?? quizDate();
+  const quiz = quizDate();
 
   const thisUser = firestore.collection('Users').doc(userId)
   const thisGuild = thisUser.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
 
   const thisUserStorage = await thisUser.get();
   if(!thisUserStorage.exists){

@@ -37,14 +37,10 @@ exports.setTeamsAliases = async (serverId, team, alias) => {
 }
 
 exports.getTeamsAliases = async (serverId, session = null) => {
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
-
-  const quiz = session ?? quizDate();
+  const quiz = quizDate();
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
   const teamsAliases = thisQuiz.collection('Maps').doc('Teams Aliases');
 
   const thisGuildStorage = await thisGuild.get();
@@ -103,9 +99,6 @@ exports.deleteTeamsAliases = async (serverId, registration) => {
 }
 
 exports.lookupAlias = async (serverId, alias, session = null) => {
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
   const {error, response} = await this.getTeamsAliases(serverId, session);
   
   if(error){
@@ -130,6 +123,7 @@ exports.setTeamsMembers = async (serverId, team, members) => {
     const error = {code: 400, loc: "firestore/maps.js", message: `members ${typeof(members)} was ${members} - expected array with at least one member`};
     return {error, response: null};
   }
+
   const quiz = quizDate();
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
@@ -163,13 +157,10 @@ exports.setTeamsMembers = async (serverId, team, members) => {
 }
 
 exports.getTeamsMembers = async (serverId, session = null) => {
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
-  const quiz = session ?? quizDate();
+  const quiz = quizDate();
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
   const teamsMembers = thisQuiz.collection('Maps').doc('Teams Members');
 
   const thisGuildStorage = await thisGuild.get();
@@ -251,6 +242,7 @@ exports.reset = async (serverId, blame) => {
   };
 
   const quiz = quizDate();
+
   const thisGuild = firestore.collection('Servers').doc(serverId);
   const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
   const thisTeams = thisQuiz.collection('Teams')

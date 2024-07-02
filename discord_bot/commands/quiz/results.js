@@ -27,11 +27,11 @@ module.exports = {
       const quizSessions = response ?? error.message;
 
       const today = quizDate();
-      const pastQuizzes = quizSessions.filter(date => date !== today);
+      const pastQuizzes = quizSessions.filter(date => date.name !== today.name);
 
-      const filtered = pastQuizzes.filter(choice => choice.startsWith(focusedOption));
+      const filtered = pastQuizzes.filter(choice => choice.name.startsWith(focusedOption));
       await interaction.respond(
-        filtered.map(choice => ({ name: choice, value: choice}))
+        filtered.map(choice => ({ name: choice.name, value: choice.code}))
       )
     },
     async execute(interaction) {

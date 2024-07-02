@@ -5,10 +5,6 @@ exports.recordTeam = async (serverId, data, session = null) => {
     return {error: {code: 400, loc: "firestore/quiz.js", message: `Missing parameters - expected serverId and data`}, response: null};
   }
 
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
-
   const {teamName, captain, members, settledColour, channels, roles} = data;
   if(!teamName || !captain || !members || !settledColour || !channels || !roles){
     return {error: {code: 400, loc: "firestore/quiz.js", message: `Missing data - expected teamName, captain, members, settledColour, channels and roles`}, response: null};
@@ -17,9 +13,10 @@ exports.recordTeam = async (serverId, data, session = null) => {
   data.rounds = [];
   data.score = 0;
     
-  const quiz = session ?? quizDate();
+  const quiz = quizDate();
+
   const thisGuild = firestore.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
   const thisTeam = thisQuiz.collection('Teams').doc(teamName.toLowerCase());
 
   const thisGuildStorage = await thisGuild.get();
@@ -53,13 +50,11 @@ exports.getTeam = async (serverId, teamName, session = null) => {
   if(!serverId){
     return {error: {code: 400, loc: "firestore/quiz.js", message: `Missing parameters - expected serverId`}, response: null};
   }
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
 
-  const quiz = session ?? quizDate();
+  const quiz = quizDate();
+  
   const thisGuild = firestore.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
   const thisTeam = thisQuiz.collection('Teams').doc(teamName.toLowerCase());
 
   const thisGuildStorage = await thisGuild.get();
@@ -86,13 +81,11 @@ exports.deleteTeam = async (serverId, teamName, session = null) => {
   if(!serverId){
     return {error: {code: 400, loc: "firestore/quiz.js", message: `Missing parameters - expected serverId`}, response: null};
   }
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
 
-  const quiz = session ?? quizDate();
+  const quiz = quizDate();
+
   const thisGuild = firestore.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
   const thisTeam = thisQuiz.collection('Teams').doc(teamName.toLowerCase());
 
   const thisGuildStorage = await thisGuild.get();
@@ -135,13 +128,10 @@ exports.indexQuizzes = async (serverId) => {
 }
 
 exports.indexTeams = async (serverId, session = null) => {
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
+  const quiz = quizDate();
 
-  const quiz = session ?? quizDate();
   const thisGuild = firestore.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
   
   const thisGuildStorage = await thisGuild.get();
   if(!thisGuildStorage.exists){
@@ -167,13 +157,11 @@ exports.endQuiz = async (serverId, session = null) => {
   if(!serverId){
     return {error: {code: 400, loc: "firestore/quiz.js", message: `Missing parameters - expected serverId`}, response: null};
   }
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
     
-  const quiz = session ?? quizDate();
+  const quiz = quizDate();
+
   const thisGuild = firestore.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
 
   const thisGuildStorage = await thisGuild.get();
   if(!thisGuildStorage.exists){

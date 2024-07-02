@@ -49,15 +49,11 @@ exports.addResponseToFirestore = async (serverId, roundNum, quizRoundObject) => 
 }
 
 exports.getResponseFromFirestore = async (serverId, roundNum, session = null) => {
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
-
-  const quiz = session ?? quizDate();
+  const quiz = quizDate();
   const round = `Round ${roundNum}`;
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
   const thisRound = thisQuiz.collection('Rounds').doc(round);
 
   const thisGuildStorage = await thisGuild.get();
@@ -84,10 +80,6 @@ exports.getResponseFromFirestore = async (serverId, roundNum, session = null) =>
 }
 
 exports.checkHistory = async (serverId, roundNum, session = null) => {
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
-
   const {error, response} = await this.getFromFirestore(serverId, roundNum, session);
 
   if(error){
@@ -105,10 +97,6 @@ exports.checkHistory = async (serverId, roundNum, session = null) => {
 }
 
 exports.revertHistory = async (serverId, roundNum, session = null) => {
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
-
   const {error, response} = await this.checkHistory(serverId, roundNum, session);
 
   if(error){
@@ -120,14 +108,10 @@ exports.revertHistory = async (serverId, roundNum, session = null) => {
 }
 
 exports.indexRounds = async (serverId, session = null) => {
-  if(session && (!session.code  || !session.name)){
-    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
-  }
-
-  const quiz = session ?? quizDate();
+  const quiz = quizDate();
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
   const thisDocs = await thisQuiz.collection('Rounds').get();
 
   const rounds = [];
