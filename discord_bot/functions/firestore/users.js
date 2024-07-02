@@ -1,8 +1,12 @@
 const { firestore, quizDate } = require("../../database");
 
 exports.addTeamMemberToFirestore = async (member, guild, teamName) => {
-  if(!member.user.id || !guild.id || !teamName){
-    return {error: {code: 400, loc: "firestore/users.js", message: `Missing parameters - expected user with id, guild with id, and a teamName`}, response: null}
+  if(!member || !guild || !teamName){
+    return {error: {code: 400, loc: "firestore/users/addTeamMemberToFirestore", message: `Missing parameters - expected member, guild and teamName`}, response: null}
+  }
+
+  if(!member.user || !guild.id){
+    return {error: {code: 400, loc: "firestore/users/addTeamMemberToFirestore", message: `Error in parameters - missing properties for member.user ${member.user} or guild.id ${guild.id}`}, response: null}
   }
   const quiz = quizDate();
 
@@ -52,8 +56,8 @@ exports.addTeamMemberToFirestore = async (member, guild, teamName) => {
 }
 
 exports.postScoreToUser = async (userId, serverId, roundNum, score, teamName) => {
-  if(!userId || !serverId || !roundNum || isNaN(roundNum) || !score || isNaN(roundNum) || teamName){
-    return {error: {code: 400, loc: "firestore/users.js", message: `Missing parameters - expected userId, serverId, serverName, roundNum (number), score (number), and teamName`}, response: null}
+  if(!userId || !serverId || !roundNum || isNaN(roundNum) || !score || isNaN(score) || teamName){
+    return {error: {code: 400, loc: "firestore/users/postScoreToUser", message: `Missing parameters - expected userId, serverId, serverName, roundNum (number), score (number), and teamName`}, response: null}
   }
   const quiz = quizDate();
   const quizRound = `Round ${roundNum}`;
@@ -64,12 +68,12 @@ exports.postScoreToUser = async (userId, serverId, roundNum, score, teamName) =>
 
   const thisUserRecord = await thisUser.get();
   if(!thisUserRecord.exists){
-    return {error: {code: 404, loc: "firestore/users.js", message: `No firestore document for ${userId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for ${userId}`}, response: null};
   }
 
   const thisGuildRecord = await thisGuild.get();
   if(!thisGuildRecord.exists){
-    return {error: {code: 404, loc: "firestore/users.js", message: `No firestore document for ${serverId} under ${userId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for ${serverId} under ${userId}`}, response: null};
   }
 
   let thisQuizRecord = await thisQuiz.get();
@@ -91,7 +95,7 @@ exports.postScoreToUser = async (userId, serverId, roundNum, score, teamName) =>
 
 exports.getUserFromFirestore = async (userId, serverId, session = null) => {
   if(!userId || !serverId){
-    return {error: {code: 400, loc: "firestore/users.js", message: `Missing parameters - expected userId and serverId`}, response: null}
+    return {error: {code: 400, loc: "firestore/users/getUserFromFirestore", message: `Missing parameters - expected userId and serverId`}, response: null}
   }
 
   const quiz = quizDate();
@@ -102,22 +106,22 @@ exports.getUserFromFirestore = async (userId, serverId, session = null) => {
 
   const thisUserStorage = await thisUser.get();
   if(!thisUserStorage.exists){
-    return {error: {code: 404, loc: "firestore/users.js", message: `No firestore document for ${userId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for ${userId}`}, response: null};
   }
 
   const thisGuildStorage = await thisGuild.get();
   if(!thisGuildStorage.exists){
-    return {error: {code: 404, loc: "firestore/users.js", message: `No firestore document for ${serverId} under ${userId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for ${serverId} under ${userId}`}, response: null};
   }
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    return {error: {code: 404, loc: "firestore/users.js", message: `No firestore document for a Quiz Session on ${quiz.name} for ${serverId} under ${userId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${session ?? quiz.code} for ${serverId} under ${userId}`}, response: null};
   }
 
   const scoresData = await thisQuizStore.data();
   if(!scoresData.current){
-    return {error: {code: 404, loc: "firestore/users.js", message: `Document does not contain data for the ${quiz.name} Quiz for ${serverId} under ${userId}`}, response: null};
+    return {error: {code: 404, message: `Document does not contain data for the ${session ?? quiz.code} Quiz for ${serverId} under ${userId}`}, response: null};
   }
 
   return {error: null, response: scoresData}
@@ -125,7 +129,7 @@ exports.getUserFromFirestore = async (userId, serverId, session = null) => {
 
 exports.getUserTeamNames = async (userId, serverId) => {
   if(!userId || !serverId){
-    return {error: {code: 400, loc: "firestore/users.js", message: `Missing parameters - expected userId and serverId`}, response: null}
+    return {error: {code: 400, loc: "firestore/users/getUserTeamNames", message: `Missing parameters - expected userId and serverId`}, response: null}
   }
 
   const thisUser = firestore.collection('Users').doc(userId);
@@ -133,12 +137,12 @@ exports.getUserTeamNames = async (userId, serverId) => {
 
   const thisUserStorage = await thisUser.get();
   if(!thisUserStorage.exists){
-    return {error: {code: 404, loc: "firestore/users.js", message: `No firestore document for ${userId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for ${userId}`}, response: null};
   }
 
   const thisGuildStorage = await thisGuild.get();
   if(!thisGuildStorage.exists){
-    return {error: {code: 404, loc: "firestore/users.js", message: `No firestore document for ${serverId} under ${userId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for ${serverId} under ${userId}`}, response: null};
   }
 
   const {usersTeams} = await thisGuildStorage.data();

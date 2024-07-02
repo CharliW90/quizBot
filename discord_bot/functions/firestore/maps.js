@@ -2,9 +2,9 @@ const { firestore, quizDate } = require("../../database");
 
 exports.setTeamsAliases = async (serverId, team, alias) => {
   if(!serverId || !team || !alias){
-    const error = {code: 400, loc: "firestore/maps.js", message: `serverId was ${serverId}, team was ${team}, alias was ${alias}`};
-    return {error, response: null};
+    return {error: {code: 400, loc: "firestore/maps/setTeamsAliases", message: `Missing parameters - expected serverId, team and alias`}, response: null};
   }
+
   const quiz = quizDate();
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
@@ -22,7 +22,7 @@ exports.setTeamsAliases = async (serverId, team, alias) => {
   } else {
     const check = await thisQuizStore.data();
     if(check.ended){
-      return {error: {code: 403, message: `The quiz for ${quiz.name} has ended - no further updates allowed`}, response: null}
+      return {error: {code: 403, loc: "firestore/maps/setTeamsAliases", message: `The quiz for ${quiz.code} has ended - no further updates allowed`}, response: null}
     }
   }
 
@@ -37,6 +37,9 @@ exports.setTeamsAliases = async (serverId, team, alias) => {
 }
 
 exports.getTeamsAliases = async (serverId, session = null) => {
+  if(!serverId){
+    return {error: {code: 400, loc: "firestore/maps/getTeamsAliases", message: `Missing parameters - expected serverId`}, response: null};
+  }
   const quiz = quizDate();
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
@@ -50,12 +53,12 @@ exports.getTeamsAliases = async (serverId, session = null) => {
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz.name} for ${serverId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${session ?? quiz.code} for ${serverId}`}, response: null};
   }
 
   const teamsAliasesRecord = await teamsAliases.get();
   if(!teamsAliasesRecord.exists) {
-    return {error: {code: 404, message: `No team-aliases map recorded yet for a Quiz Session on ${quiz.name} for ${serverId}`}, response: null};
+    return {error: {code: 404, message: `No team-aliases map recorded yet for a Quiz Session on ${session ?? quiz.code} for ${serverId}`}, response: null};
   }
 
   const response = await teamsAliasesRecord.data();
@@ -63,6 +66,10 @@ exports.getTeamsAliases = async (serverId, session = null) => {
 }
 
 exports.deleteTeamsAliases = async (serverId, registration) => {
+  if(!serverId || !registration){
+    return {error: {code: 400, loc: "firestore/maps/deleteTeamsAliases", message: `Missing parameters - expected serverId and registration object`}, response: null};
+  }
+
   const quiz = quizDate();
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
@@ -76,17 +83,17 @@ exports.deleteTeamsAliases = async (serverId, registration) => {
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz.name} for ${serverId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz.code} for ${serverId}`}, response: null};
   } else {
     const check = await thisQuizStore.data();
     if(check.ended){
-      return {error: {code: 403, message: `The quiz for ${quiz.name} has ended - no further updates allowed`}, response: null}
+      return {error: {code: 403, message: `The quiz for ${quiz.code} has ended - no further updates allowed`}, response: null}
     }
   }
 
   const teamsAliasesRecord = await teamsAliases.get();
   if(!teamsAliasesRecord.exists) {
-    return {error: {code: 404, message: `No team-aliases map recorded yet for a Quiz Session on ${quiz.name} for ${serverId}`}, response: null};
+    return {error: {code: 404, message: `No team-aliases map recorded yet for a Quiz Session on ${quiz.code} for ${serverId}`}, response: null};
   }
 
   const data = await teamsAliasesRecord.data();
@@ -99,6 +106,10 @@ exports.deleteTeamsAliases = async (serverId, registration) => {
 }
 
 exports.lookupAlias = async (serverId, alias, session = null) => {
+  if(!serverId || !alias){
+    return {error: {code: 400, loc: "firestore/maps/lookupAlias", message: `Missing parameters - expected serverId and alias`}, response: null};
+  }
+
   const {error, response} = await this.getTeamsAliases(serverId, session);
   
   if(error){
@@ -116,11 +127,10 @@ exports.lookupAlias = async (serverId, alias, session = null) => {
 
 exports.setTeamsMembers = async (serverId, team, members) => {
   if(!serverId || !team || !members){
-    const error = {code: 400, loc: "firestore/maps.js", message: `serverId was ${serverId}, team was ${team}, members was ${members}`};
-    return {error, response: null};
+    return {error: {code: 400, loc: "firestore/maps/setTeamsMembers", message: `Missing parameters - expected serverId, team and members`}, response: null};
   }
   if(members.constructor.name !== 'Array' || members.length < 1){
-    const error = {code: 400, loc: "firestore/maps.js", message: `members ${typeof(members)} was ${members} - expected array with at least one member`};
+    const error = {code: 400, loc: "firestore/maps/setTeamsMembers", message: `members ${members.constructor.name} was ${members} - expected Array with at least one member`};
     return {error, response: null};
   }
 
@@ -141,7 +151,7 @@ exports.setTeamsMembers = async (serverId, team, members) => {
   } else {
     const check = await thisQuizStore.data();
     if(check.ended){
-      return {error: {code: 403, message: `The quiz for ${quiz.name} has ended - no further updates allowed`}, response: null}
+      return {error: {code: 403, message: `The quiz for ${quiz.code} has ended - no further updates allowed`}, response: null}
     }
   }
 
@@ -157,6 +167,10 @@ exports.setTeamsMembers = async (serverId, team, members) => {
 }
 
 exports.getTeamsMembers = async (serverId, session = null) => {
+  if(!serverId){
+    return {error: {code: 400, loc: "firestore/maps/getTeamsMembers", message: `Missing parameters - expected serverId`}, response: null};
+  }
+
   const quiz = quizDate();
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
@@ -170,12 +184,12 @@ exports.getTeamsMembers = async (serverId, session = null) => {
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz.name} for ${serverId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${session ?? quiz.code} for ${serverId}`}, response: null};
   }
 
   const teamsMembersRecord = await teamsMembers.get();
   if(!teamsMembersRecord.exists) {
-    return {error: {code: 404, message: `No teams-members map recorded yet for a Quiz Session on ${quiz.name} for ${serverId}`}, response: null};
+    return {error: {code: 404, message: `No teams-members map recorded yet for a Quiz Session on ${session ?? quiz.code} for ${serverId}`}, response: null};
   }
 
   const response = await teamsMembersRecord.data();
@@ -183,6 +197,10 @@ exports.getTeamsMembers = async (serverId, session = null) => {
 }
 
 exports.deleteTeamsMembers = async (serverId, registration) => {
+  if(!serverId || !registration){
+    return {error: {code: 400, loc: "firestore/maps/deleteTeamsMembers", message: `Missing parameters - expected serverId and registration object`}, response: null};
+  }
+
   const quiz = quizDate();
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
@@ -196,17 +214,17 @@ exports.deleteTeamsMembers = async (serverId, registration) => {
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz.name} for ${serverId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz.code} for ${serverId}`}, response: null};
   } else {
     const check = await thisQuizStore.data();
     if(check.ended){
-      return {error: {code: 403, message: `The quiz for ${quiz.name} has ended - no further updates allowed`}, response: null}
+      return {error: {code: 403, message: `The quiz for ${quiz.code} has ended - no further updates allowed`}, response: null}
     }
   }
 
   const teamsMembersRecord = await teamsMembers.get();
   if(!teamsMembersRecord.exists) {
-    return {error: {code: 404, message: `No teams-members map recorded yet for a Quiz Session on ${quiz.name} for ${serverId}`}, response: null};
+    return {error: {code: 404, message: `No teams-members map recorded yet for a Quiz Session on ${quiz.code} for ${serverId}`}, response: null};
   }
 
   const data = await teamsMembersRecord.data();
@@ -219,6 +237,14 @@ exports.deleteTeamsMembers = async (serverId, registration) => {
 }
 
 exports.checkMembers = async (serverId, members) => {
+  if(!serverId || !members){
+    return {error: {code: 400, loc: "firestore/maps/checkMembers", message: `Missing parameters - expected serverId and members`}, response: null};
+  }
+  if(members.constructor.name !== 'Array' || members.length < 1){
+    const error = {code: 400, loc: "firestore/maps/checkMembers", message: `members ${members.constructor.name} was ${members} - expected Array with at least one member`};
+    return {error, response: null};
+  }
+
   const {error, response} = await this.getTeamsMembers(serverId);
   if(error){
     return {error, response: null}
@@ -256,11 +282,11 @@ exports.reset = async (serverId, blame) => {
     
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz.name} for ${serverId}`}, response: null};
+    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz.code} for ${serverId}`}, response: null};
   } else {
     const check = await thisQuizStore.data();
     if(check.ended){
-      return {error: {code: 403, message: `The quiz for ${quiz.name} has ended - reset is not allowed`}, response: null}
+      return {error: {code: 403, message: `The quiz for ${quiz.code} has ended - reset is not allowed`}, response: null}
     }
   }
       

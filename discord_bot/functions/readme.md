@@ -29,9 +29,9 @@ These functions interact with the Google Firebase Firestore noSQL database.  The
 
 - scores: (WIP) these are functions for storing/retrieving a team's scores for past and present quizzes
 
-- users: (WIP) these are functions for storing/retrieving a user's scores and previous team names - allows a user to check how well they've done historically, and also helps the to register a team by providing their previous team names to re-use
+- users: these are functions for storing/retrieving a user's scores and previous team names - allows a user to check how well they've done historically, and also helps the to register a team by providing their previous team names to re-use
 
-As a rule, all of these functions return an Object response of {error, response} where one is always null.
+As a rule, all of these functions return an Object response of {error, response} where one is always null.  When the error message is caused by improper calling of the function (i.e. parameters undefined, incorrect type or missing properties) the error message includes the location (loc) of the error to assist in debugging.
 
 To make these easier and cleaner to reference, they are all collated in the index.js file, and exported again.
 They can then be referenced using `const { nameOfFunctionA, nameOfFunctionB } = require('../pathTo/folderCalled/firestore')`
