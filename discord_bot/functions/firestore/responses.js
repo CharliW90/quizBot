@@ -28,23 +28,18 @@ exports.addResponseToFirestore = async (serverId, roundNum, quizRoundObject) => 
     thisRoundScores = await thisRound.get();
   }
   
-  const docs = await thisQuiz.collection('Rounds').get();
-  const rounds = [];
-  docs.forEach(doc => {
-    rounds.push(doc.id.split(' ')[1])
-  })
   const existingScores = await thisRoundScores.data();
   const {history, current} = existingScores;
   if(history){
     history.unshift(current);
     const write = await thisRound.set({current: JSON.parse(JSON.stringify(quizRoundObject)), history});
-    return {error: null, response: {rounds, write}}
+    return {error: null, response: write}
   } else if(current){
     const write = await thisRound.set({current: JSON.parse(JSON.stringify(quizRoundObject)), history: [current]});
-    return {error: null, response: {rounds, write}}
+    return {error: null, response: write}
   } else {
     const write = await thisRound.set({current: JSON.parse(JSON.stringify(quizRoundObject))});
-    return {error: null, response: {rounds, write}}
+    return {error: null, response: write}
   }
 }
 
