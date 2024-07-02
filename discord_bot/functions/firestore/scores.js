@@ -11,25 +11,38 @@ exports.addScoreToFirestoreTeam = async (serverId, roundNum, teamName, userName,
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
   const thisUser = thisGuild.collection('Users').doc(userName);
-  const thisTeam = thisGuild.collection('Teams').doc(teamName)
+  const thisTeam = thisUser.collection('Teams').doc(teamName);
+  const thisQuiz = thisTeam.collection('Quizzes').doc(quiz.code);
 
   let thisGuildRecord = await thisGuild.get();
   if(!thisGuildRecord.exists){
     return {error: {code: 404, loc: "firestore/scores.js", message: `No firestore document for ${serverId}`}, response: null};
   }
   
-  let thisUserRecord = await thisUser.get();
+  const thisUserRecord = await thisUser.get();
   if(!thisUserRecord.exists){
-    await thisUser.set({servers: {}});
-    thisUserRecord = await thisUser.get();
+    return {error: {code: 404, loc: "firestore/scores.js", message: `No firestore document for ${userName} on ${serverId}`}, response: null};
+  }
+
+  let thisTeamRecord = await thisTeam.get();
+  if(!thisTeamRecord.exists){
+    await thisTeam.set();
+    thisTeamRecord = await thisTeam.get();
+  }
+
+  let thisQuizRecord = await thisQuiz.get();
+  if(!thisQuizRecord.exists){
+    await thisQuiz.set({});
+    thisQuizRecord = await thisQuiz.get();
   }
 
   const currentScores = await thisQuizRecord.data();
     let total = score;
     for(round in currentScores){
-      total += round.score;
+      total += round;
     }
-    currentScores[roundNum] = {teamName, score};
+    currentScores[roundNum] = score;
     currentScores.total = total;
     const write = thisQuizRecord.set(currentScores);
+    return {error: null, response: write}
 }

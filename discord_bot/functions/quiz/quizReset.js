@@ -50,7 +50,7 @@ module.exports = (guild, blame) => {
         deletions["Firestore Mapping"] = response.mappings;
       }
       if(response.teams.length > 0){
-        deletions["Firestore Team Registrations"] = response.teams;
+        deletions["Firestore Team Registration"] = response.teams;
       }
     }
     
@@ -61,7 +61,7 @@ module.exports = (guild, blame) => {
       deletions["Reset Team Captain Role Failed"] = [true];
     } else {
       if(response.length > 0){
-        deletions["Removed Captain Role from member"] = response;
+        deletions["Captain Role"] = response;
       }
     }
     

@@ -8,7 +8,7 @@ exports.addTeamMemberToFirestore = async (member, guild, teamName) => {
 
   const thisUser = firestore.collection('Users').doc(member.user.id);
   const thisGuild = thisUser.collection('Servers').doc(guild.id);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
 
   let thisUserRecord = await thisUser.get();
   if(!thisUserRecord.exists){
@@ -60,7 +60,7 @@ exports.postScoreToUser = async (userId, serverId, roundNum, score, teamName) =>
 
   const thisUser = firestore.collection('Users').doc(userId);
   const thisGuild = thisUser.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
 
   const thisUserRecord = await thisUser.get();
   if(!thisUserRecord.exists){
@@ -74,7 +74,7 @@ exports.postScoreToUser = async (userId, serverId, roundNum, score, teamName) =>
 
   let thisQuizRecord = await thisQuiz.get();
   if(!thisQuizRecord.exists) {
-    await thisQuiz.set({total: 0});
+    await thisQuiz.set({date: quiz.name, total: 0});
     thisQuizRecord = await thisQuiz.get();
   }
 
@@ -93,12 +93,15 @@ exports.getUserFromFirestore = async (userId, serverId, session = null) => {
   if(!userId || !serverId){
     return {error: {code: 400, loc: "firestore/users.js", message: `Missing parameters - expected userId and serverId`}, response: null}
   }
+  if(session && (!session.code  || !session.name)){
+    return {error: {code: 400, loc: "firestore/quiz.js", message: `Error in parameters - when session is used it must include both code and name properties:\n${session}`}, response: null};
+  }
 
   const quiz = session ?? quizDate();
 
   const thisUser = firestore.collection('Users').doc(userId)
   const thisGuild = thisUser.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
 
   const thisUserStorage = await thisUser.get();
   if(!thisUserStorage.exists){
@@ -112,12 +115,12 @@ exports.getUserFromFirestore = async (userId, serverId, session = null) => {
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    return {error: {code: 404, loc: "firestore/users.js", message: `No firestore document for a Quiz Session on ${quiz} for ${serverId} under ${userId}`}, response: null};
+    return {error: {code: 404, loc: "firestore/users.js", message: `No firestore document for a Quiz Session on ${quiz.name} for ${serverId} under ${userId}`}, response: null};
   }
 
   const scoresData = await thisQuizStore.data();
   if(!scoresData.current){
-    return {error: {code: 404, loc: "firestore/users.js", message: `Document does not contain data for the ${quiz} Quiz for ${serverId} under ${userId}`}, response: null};
+    return {error: {code: 404, loc: "firestore/users.js", message: `Document does not contain data for the ${quiz.name} Quiz for ${serverId} under ${userId}`}, response: null};
   }
 
   return {error: null, response: scoresData}
