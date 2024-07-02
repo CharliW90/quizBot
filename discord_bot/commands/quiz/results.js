@@ -76,7 +76,7 @@ module.exports = {
     const collectorFilter = i => i.user.id === interaction.user.id;
 
     try {
-      const fetcher = await userResponse.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
+      const fetcher = await userResponse.awaitMessageComponent({ filter: collectorFilter, time: 30_000 });
       // if the user clicks cancel
       if(fetcher.customId === 'cancel'){
         await fetcher.update({ content: `Action cancelled.`, components: [] });
@@ -108,7 +108,7 @@ module.exports = {
     } catch(e) {
       if(e.message === "Collector received no interactions before ending with reason: time"){
         // handles failure to reply to the initial response of 'which round do you want to fetch?'
-        await userResponse.edit({ content: 'Response not received within 1 minute, cancelling...', components: [] });
+        await userResponse.edit({ content: 'Response not received within 30 seconds, cancelling...', components: [] });
       } else {
         throw e;
       }
