@@ -26,7 +26,7 @@ exports.sendResponses = async (interaction, heldResponse, teamName = null) => {
     if(teamName){
       const {error, response} = lookupAlias(interaction.guildId, teamName, interaction.options.getString('date'))
       const lookup = response ?? teamName;
-      if(!teams.map(name => name.toLowerCase()).includes(lookup)){
+      if(!teams.includes(lookup)){
         return {error: `the provided responses index of teams does not seem to include ${lookup} \n ${teams}`, response: null}
       }
       const embed = embeds.filter(embed => embed.title.toLowerCase() === lookup.toLowerCase());
