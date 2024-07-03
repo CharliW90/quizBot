@@ -42,8 +42,10 @@ They can then be referenced using `const { nameOfFunctionA, nameOfFunctionB } = 
 **The following firestore functions create new top-level (i.e. server and/or quiz-date) collections and documents:**
 *(all others return error messages if a given server/quiz date does not exist yet)*
 
+- [maps/setTeamsMembers()](./firestore/maps.js)
+  - may set up *new server* and *new quiz*: This function is one of the first ones called when a new quiz has started, as it is used for recording members who are assigned to a team.
 - [quiz/recordTeam()](./firestore/quiz.js)
-  - may set up *new server* and *new quiz*: This function is ought to be the first one called when a new quiz has started, as it is used for registering teams wanting to play.
+  - may set up *new server* and *new quiz*: This function is one of the first ones called when a new quiz has started, as it is used for registering teams wanting to play.
 - [responses/addResponseToFirestore()](./firestore/responses.js)
   - may set up *new server* and *new quiz*: This function ought not to be called if a quiz isn't already set up, however we must allow for situations where none of the quiz teams have registered on Discord but we still wish to pull, parse and store all of the Google Forms responses from non-discord teams.
 - [users/addTeamMemberToFirestore()](./firestore/users.js)

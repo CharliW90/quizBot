@@ -142,17 +142,17 @@ exports.setTeamsMembers = async (serverId, team, members) => {
 
   const thisGuildStorage = await thisGuild.get();
   if(!thisGuildStorage.exists){
-    return {error: {code: 404, message: `No firestore document for ${serverId}`}, response: null};
+    await thisGuild.set({});
   }
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz.code} for ${serverId}`}, response: null};
-  }
-
-  const check = await thisQuizStore.data();
-  if(check.ended){
-    return {error: {code: 403, message: `The quiz for ${quiz.code} has ended - no further updates allowed`}, response: null}
+    await thisQuiz.set({date: quiz.name, scoreboard: {}, ended: false});
+  } else {
+    const check = await thisQuizStore.data();
+    if(check.ended){
+      return {error: {code: 403, message: `The quiz for ${quiz.code} has ended - no further updates allowed`}, response: null};
+    }
   }
 
   let teamsMembersRecord = await teamsMembers.get();
@@ -241,8 +241,7 @@ exports.checkMembers = async (serverId, members) => {
     return {error: {code: 400, loc: "firestore/maps/checkMembers", message: `Missing parameters - expected serverId and members`}, response: null};
   }
   if(members.constructor.name !== 'Array' || members.length < 1){
-    const error = {code: 400, loc: "firestore/maps/checkMembers", message: `members ${members.constructor.name} was ${members} - expected Array with at least one member`};
-    return {error, response: null};
+    return {error: {code: 400, loc: "firestore/maps/checkMembers", message: `members ${members.constructor.name} was ${members} - expected Array with at least one member`}, response: null};
   }
 
   const {error, response} = await this.getTeamsMembers(serverId);
