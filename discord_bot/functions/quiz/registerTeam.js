@@ -149,7 +149,7 @@ module.exports = (interaction, team) => {
   })
   .catch((error) => {
     undo(interaction);
-    throw error;
+    return{error, response: null}
   })
   
 }
@@ -185,7 +185,7 @@ const undo = (interaction) => {
         actionTaken.delete().then((deletion) => console.log(`Deleted ${deletion.constructor.name} ${deletion.name}`));
       }
     } catch(e){
-      console.error(e);
+      console.error("FATAL: registerTeam undo() failed!\nERR =>", e);
     }
   })
 }

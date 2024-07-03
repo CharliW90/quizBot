@@ -47,11 +47,7 @@ exports.sendResponses = async (interaction, heldResponse, teamName = null) => {
         return {success: true, team: embed[0].title};
       })
       .catch((error) => {
-        if(error.code === 404){
-          return {success: false, team: embed[0].title};
-        } else {
-          throw error;
-        }
+        return {success: false, team: embed[0].title};
       });
 
       promises.push(promise)
@@ -67,12 +63,7 @@ exports.sendResponses = async (interaction, heldResponse, teamName = null) => {
           return {success: true, team: embed.title};
         })
         .catch((error) => {
-          if(error.code === 404){
-            return {success: false, team: embed.title};
-          } else {
-            console.error(error);
-            return {success: false, team: embed.title};
-          }
+          return {success: false, team: embed.title};
         });
         promises.push(promise);
       }
@@ -108,7 +99,7 @@ exports.sendResponses = async (interaction, heldResponse, teamName = null) => {
       return {error, response: null}
     })
   } catch(error) {
-    throw error;
+    return {error, response: null}
   }
 }
 

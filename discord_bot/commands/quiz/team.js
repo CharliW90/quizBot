@@ -220,8 +220,8 @@ module.exports = {
         }
       }
     } catch(e) {
-      console.error("team.js ERR =>", e);
-      throw e;
+      console.error("team error handler:\nERR =>", e);
+      await interaction.editReply({ content: `An unknown error occurred - see the logs for further details`, components: [] });
     }
   }
 }

@@ -27,16 +27,16 @@ module.exports = {
       const quizSessions = response ?? error.message;
 
       const today = quizDate();
-      const pastQuizzes = quizSessions.filter(date => date.name !== today.name);
+      const pastQuizzes = quizSessions.filter(session => session.date.name !== today.name);
 
-      const filtered = pastQuizzes.filter(choice => choice.name.startsWith(focusedOption));
+      const filtered = pastQuizzes.filter(choice => choice.date.name.startsWith(focusedOption));
       filtered.sort((a, b) => {
-        const dateA = a.code.replaceAll('-','');
-        const dateB = b.code.replaceAll('-','');
+        const dateA = a.date.code.replaceAll('-','');
+        const dateB = b.date.code.replaceAll('-','');
         return dateB - dateA;
       });
       await interaction.respond(
-        filtered.map(choice => ({ name: choice.name, value: choice.code}))
+        filtered.map(choice => ({ name: choice.date.name, value: choice.date.code}))
       )
     },
     async execute(interaction) {
@@ -107,7 +107,7 @@ module.exports = {
           }
         })
         .catch((error) => {
-          throw error;
+          interaction.channel.send({content: `${JSON.stringify(error)}`});
         })
       }
     } catch(e) {
@@ -115,8 +115,8 @@ module.exports = {
         // handles failure to reply to the initial response of 'which round do you want to fetch?'
         await userResponse.edit({ content: 'Response not received within 30 seconds, cancelling...', components: [] });
       } else {
-        console.error("results.js ERR =>", e);
-        throw e;
+        console.error("results error handler:\nERR =>", e);
+        await userResponse.edit({content: `An unknown error occurred - see the logs for further details`});
       }
     }
   }

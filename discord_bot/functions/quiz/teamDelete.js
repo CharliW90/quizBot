@@ -35,7 +35,6 @@ module.exports = (guild, teamRole) => {
     }
   })
   .catch((error) => {
-    console.error(error);
-    throw error;
+    return {error, response: null}
   })
 }

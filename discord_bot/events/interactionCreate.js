@@ -23,7 +23,7 @@ module.exports = {
         await command.execute(interaction);
       }
 		} catch (error) {
-			console.error(error);
+			console.error("interactionCreate error handler:\nERR =>", error);
       if(!interaction){
         return;
       }

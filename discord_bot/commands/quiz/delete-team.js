@@ -32,8 +32,7 @@ module.exports = {
     const teamName = interaction.options.getString('team')
     const {error, response} = findRole(interaction.guild, teamName)
     if(error){
-      console.error(error)
-      interaction.reply(`Error: ${error}`)
+      interaction.reply(`Error: ${JSON.stringify(error)}`)
     }
     const confirm = new ButtonBuilder()
       .setCustomId('delete')
@@ -70,7 +69,7 @@ module.exports = {
           interaction.channel.send({embeds: [response]});
         })
         .catch((error) => {
-          console.error(error);
+          interaction.channel.send({content: `${JSON.stringify(error)}`});
         })
       }
     } catch(e) {
@@ -78,8 +77,8 @@ module.exports = {
         // handles failure to reply to the initial response of 'which round do you want to fetch?'
         await confirmation.edit({ content: 'Response not received within 1 minute, cancelling...', components: [] });
       } else {
-        console.error("delete-team.js ERR =>", e);
-        throw e;
+        console.error("delete-team error handler:\nERR =>", e);
+        await confirmation.edit({ content: `An unknown error occurred - see the logs for further details`, components: [] });
       }
     }
     

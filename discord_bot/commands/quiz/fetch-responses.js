@@ -92,7 +92,7 @@ module.exports = {
           interaction.channel.send(response);
         })
         .catch((error) => {
-          console.error(error);
+          interaction.channel.send({content: `${JSON.stringify(error)}`});
         })
       }
     } catch(e) {
@@ -100,8 +100,8 @@ module.exports = {
         // handles failure to reply to the initial response of 'which round do you want to fetch?'
         await interaction.editReply({ content: 'Response not received within 10 seconds, cancelling...', components: [] });
       } else {
-        console.error("fetch-responses.js ERR =>", e);
-        throw e;
+        console.error("fetch-responses error handler:\nERR =>", e);
+        await interaction.editReply({content: `An unknown error occurred - see the logs for further details`});
       }
     }
   },

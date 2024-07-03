@@ -25,16 +25,16 @@ module.exports = {
     const quizSessions = response ?? error.message;
 
     const today = quizDate();
-    const pastQuizzes = quizSessions.filter(date => date.name !== today.name);
+    const pastQuizzes = quizSessions.filter(session => session.date.name !== today.name);
 
-    const filtered = pastQuizzes.filter(choice => choice.name.startsWith(focusedOption));
+    const filtered = pastQuizzes.filter(choice => choice.date.name.startsWith(focusedOption));
     filtered.sort((a, b) => {
-      const dateA = a.code.replaceAll('-','');
-      const dateB = b.code.replaceAll('-','');
+      const dateA = a.date.code.replaceAll('-','');
+      const dateB = b.date.code.replaceAll('-','');
       return dateB - dateA;
     });
     await interaction.respond(
-      filtered.map(choice => ({ name: choice.name, value: choice.code}))
+      filtered.map(choice => ({ name: choice.date.name, value: choice.date.code}))
     )
   },
   async execute(interaction) {
@@ -76,8 +76,13 @@ module.exports = {
         scoreboardGenerator(interaction.guildId, response, interaction.options.getString('date'))
         .then(({error, response}) => {
           if(error){throw error}
-          fetcher.update({ content: ``, components: [], embeds: [response], ephemeral: false});
-          addScoreboardToFirestore(interaction.guildId, response);
+          fetcher.update({ content: `:white_check_mark: Scoreboard generated`, components: []});
+          interaction.channel.send({embeds: [response]});
+          return addScoreboardToFirestore(interaction.guildId, response);
+        })
+        .then(({error, response}) => {
+          if(error){throw error}
+          interaction.channel.send({content: "Need to amend these teams? Use /fix\n otherwise, if the quiz is over, don't forget to /end-quiz."})
         })
       }
     } catch(e) {
@@ -85,8 +90,8 @@ module.exports = {
         // handles failure to reply to the initial response of 'which round do you want to fetch?'
         await userResponse.edit({ content: 'Response not received within 30 seconds, cancelling...', components: [] });
       } else {
-        console.error("scores.js ERR =>", e);
-        throw e;
+        console.error("scores error handler:\nERR =>", e);
+        await userResponse.edit({ content: `An unknown error occurred - see the logs for further details`, components: [] });
       }
     }
   }

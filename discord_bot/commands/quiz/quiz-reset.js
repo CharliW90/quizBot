@@ -86,8 +86,8 @@ module.exports = {
         // handles failure to reply to the confirmation popup
         await interaction.editReply({ content: 'Response not received within 1 minute, cancelling...', embeds: [], components: [] });
       } else {
-        console.error("quiz-reset.js ERR =>", e);
-        throw e;
+        console.error("quiz-reset error handler:\nERR =>", e);
+        await interaction.editReply({ content: `An unknown error occurred - see the logs for further details`, components: [] });
       }
     }
   }

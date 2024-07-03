@@ -33,7 +33,7 @@ exports.hold = (roundNum, embeds, teamNames) => {
     return {error: null, response: {roundNum, teams}};
   } else {
     const details = {roundNum, teamNames, teams, embeds, tempStore, loc: "holdFormResponses.js/hold()"};
-    const error = {message: `error occured when storing ${embeds.length} embeds for ${teams.length} teams against round number ${roundNum}`, code: 500, details};
+    const error = {message: `error occurred when storing ${embeds.length} embeds for ${teams.length} teams against round number ${roundNum}`, code: 500, details};
     return {error, response: null}
   }
 }
@@ -132,7 +132,8 @@ exports.followUp = async (message, interaction, roundNum, stored = false) => {
       await message.editReply({ content: 'Response not received within 10 seconds, cancelling...', embeds: [], components: [] });
       return;
     } else {
-      throw e;
+      console.error("holdFormResponses error handler:\nERR =>", e);
+      await message.editReply({content: `An unknown error occurred - see the logs for further details`});
     }
   }
 }

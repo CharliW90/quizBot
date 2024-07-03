@@ -145,7 +145,7 @@ module.exports = {
           }
         })
         .catch((error) => {
-          throw error;
+          interaction.channel.send({content: `${JSON.stringify(error)}`});
         })
       }
     } catch(e) {
@@ -153,8 +153,8 @@ module.exports = {
         // handles failure to reply to the initial response of 'which round do you want to fetch?'
         await confirmation.edit({ content: 'Response not received within 20 seconds, cancelling...', components: [] });
       } else {
-        console.error("register-team.js ERR =>", e);
-        throw e;
+        console.error("register-team error handler:\nERR =>", e);
+        await confirmation.edit({content: `An unknown error occurred - see the logs for further details`});
       }
     }
   }
