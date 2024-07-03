@@ -30,12 +30,14 @@ Most of these commands trigger one 'back-end' function in the /functions directo
 
 | Command | Option/Parameter | Function | notes |
 | ------- | ---------------- | -------- | ----- |
+| correction | subcommands() | firestore/responses/correctResponseInFirestore | corrects errors/typos in data |
 | delete-team | team name | quiz/teamDelete |  |
 | fetch-responses | round number | forms/fetchFormResponses | goes through two layers of interaction |
 | leave | n/a | discord/roleRemove | allows a team member to leave the team they are in |
 | quiz-reset | n/a | quiz/quizReset | clears server of all current teams etc. |
 | register-team | team name, captain, member(s), colour | quiz/registerTeam | the backbone of this bot |
 | results\* | round number | multiple | actually quite complicated to follow - needs cleaner abstracting away |
+| scores | n/a | quiz/scoreboardGenerator |  |
 | team | add-member / remove-member / promote-to-captain | quiz/teamMemberAdd, teamMemberRemove, teamMemberPromote respectively | allows amendments to be made to a team's members |
 
 
