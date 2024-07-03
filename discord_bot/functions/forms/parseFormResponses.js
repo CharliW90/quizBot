@@ -58,15 +58,15 @@ exports.parse = (data) => {
 }
 
 const determineEmoji = (percent) => {
-  if(percent = 1){
-    return "https://cdn.discordapp.com/attachments/1250390976829067268/1250467682663272601/top.png"
+  if(percent === 1){
+    return "https://cdn.discordapp.com/attachments/633012685902053397/1258126047296094319/top.png"
   } else if(percent >= 0.75) {
-    return "https://cdn.discordapp.com/attachments/1250390976829067268/1250467682986496192/first.png"
+    return "https://cdn.discordapp.com/attachments/633012685902053397/1258126224698642542/first.png"
   } else if(percent >= 0.5) {
-    return "https://cdn.discordapp.com/attachments/1250390976829067268/1250467683288223864/second.png"
+    return "https://cdn.discordapp.com/attachments/633012685902053397/1258126320089436303/second.png"
   } else if(percent >= 0.25) {
-    return "https://cdn.discordapp.com/attachments/633268964662968320/1250470326694055957/third.png"
+    return "https://cdn.discordapp.com/attachments/633012685902053397/1258126424628269067/third.png"
   } else {
-    return "https://cdn.discordapp.com/attachments/1250390976829067268/1250467506779586660/poop.png"
+    return "https://cdn.discordapp.com/attachments/633012685902053397/1258126602600972333/poop.png"
   }
 }
