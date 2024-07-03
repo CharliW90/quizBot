@@ -137,3 +137,55 @@ exports.indexRounds = async (serverId, session = null) => {
 
   return {error: null, response: rounds}
 }
+
+exports.indexResponsesTeams = async (serverId, session = null) => {
+  if(!serverId){
+    return {error: {code: 400, loc: "firestore/responses/indexRounds", message: `Missing parameters - expected serverId`}, response: null}
+  }
+
+  const quiz = quizDate();
+
+  const thisGuild = firestore.collection('Servers').doc(serverId);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
+
+  const thisDocs = await thisQuiz.collection('Rounds').get();
+  const teams = [];
+  thisDocs.forEach(doc => {
+    const roundsEmbeds = doc.data().current.embeds;
+    const roundsTeams = roundsEmbeds.map(embed => embed.title);
+    teams.push(...roundsTeams);
+  })
+  const responsesTeams = new Set(teams)
+
+  return {error: null, response: [...responsesTeams]}
+}
+
+exports.correctResponseInFirestore = async (serverId, incorrectTeamName, correctTeamName) => {
+  if(!serverId || !incorrectTeamName || !correctTeamName){
+    return {error: {code: 400, loc: "firestore/responses/correctResponseInFirestore", message: `Missing parameters - expected serverId, incorrectTeamName and correctTeamName`}, response: null}
+  }
+
+  const quiz = quizDate();
+
+  const thisGuild = firestore.collection('Servers').doc(serverId);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const rounds = thisQuiz.collection('Rounds');
+
+  const relevantRounds = await rounds.where('current.teams', 'array-contains', incorrectTeamName).get();
+
+  const promises = []
+  relevantRounds.forEach(doc => {
+    const roundNum = doc.id.split(' ')[1];
+    const {current} = doc.data();
+    const {teams, embeds} = current;
+
+    const teamCorrection = teams.findIndex(team => team === incorrectTeamName);
+    const embedCorrection = embeds.findIndex(embed => embed.title === incorrectTeamName);
+
+    teams[teamCorrection] = correctTeamName;
+    embeds[embedCorrection].title = correctTeamName;
+    
+    promises.push(this.addResponseToFirestore(serverId, roundNum, {teams, embeds}));
+  })
+  return Promise.all(promises);
+}
