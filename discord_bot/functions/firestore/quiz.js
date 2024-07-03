@@ -127,7 +127,7 @@ exports.indexQuizzes = async (serverId) => {
   const quizzes = [];
   thisDocs.forEach(doc => {
     const data = doc.data();
-    quizzes.push({code: doc.id, name: data.date})
+    quizzes.push({date: {code: doc.id, name: data.date}, ended: data.ended})
   })
 
   return {error: null, response: quizzes}
@@ -186,10 +186,18 @@ exports.endQuiz = async (serverId, session = null) => {
   const quizSession = await thisQuizStore.data();
 
   if(quizSession.ended){
-    return {error: {code: 400, message: `Quiz Session ${session ?? quiz.code} for ${serverId} is already ended`}, response: null};
+    return {error: {code: 400, message: `Cannot end Quiz Session ${session ?? quiz.code} for ${serverId} as it is already ended`}, response: null};
   }
 
-  thisQuiz.update({ended: true})
+  if(!quizSession.scoreboard){
+    return {error: {code: 500, message: `Quiz Session ${session ?? quiz.code} for ${serverId} does not have a scoreboard field.`}, response: null};
+  }
+
+  if(!quizSession.scoreboard.current){
+    return {error: {code: 400, message: `Cannot end Quiz Session ${session ?? quiz.code} for ${serverId} as it has not generated a scoreboard.`}, response: null};
+  }
+
+  const write = await thisQuiz.update({ended: true})
 
   return {error: null, response: write};
 }
