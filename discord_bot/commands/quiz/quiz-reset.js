@@ -54,7 +54,7 @@ module.exports = {
     const collectorFilter = i => i.user.id === interaction.user.id;
 
     try{
-      const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
+      const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 10_000 });
       if(reply.customId === 'cancel'){
         interaction.editReply({ content: `Action cancelled.`, embeds: [], components: [] })
         return;
@@ -84,7 +84,7 @@ module.exports = {
     } catch(e) {
       if(e.message === "Collector received no interactions before ending with reason: time"){
         // handles failure to reply to the confirmation popup
-        await interaction.editReply({ content: 'Response not received within 1 minute, cancelling...', embeds: [], components: [] });
+        await interaction.editReply({ content: 'Response not received within 10 seconds, cancelling...', embeds: [], components: [] });
       } else {
         console.error("quiz-reset error handler:\nERR =>", e);
         await interaction.editReply({ content: `An unknown error occurred - see the logs for further details`, components: [] });

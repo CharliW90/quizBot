@@ -181,7 +181,7 @@ module.exports = {
     const collectorFilter = i => i.user.id === interaction.user.id;
 
     try{
-      const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 60_000 });
+      const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 10_000 });
 
       if(reply.customId === 'cancel'){
         interaction.editReply({ content: `Action cancelled.` });

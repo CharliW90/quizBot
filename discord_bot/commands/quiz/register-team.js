@@ -113,7 +113,7 @@ module.exports = {
     const collectorFilter = i => i.user.id === interaction.user.id || captain.user.id;
 
     try{
-      const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 20_000 });
+      const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 10_000 });
       if(reply.customId === 'cancel'){
         interaction.editReply({ content: `Action cancelled.`, embeds: [], components: [] });
         return;
@@ -151,7 +151,7 @@ module.exports = {
     } catch(e) {
       if(e.message === "Collector received no interactions before ending with reason: time"){
         // handles failure to reply to the initial response of 'which round do you want to fetch?'
-        await confirmation.edit({ content: 'Response not received within 20 seconds, cancelling...', components: [] });
+        await confirmation.edit({ content: 'Response not received within 10 seconds, cancelling...', components: [] });
       } else {
         console.error("register-team error handler:\nERR =>", e);
         await confirmation.edit({content: `An unknown error occurred - see the logs for further details`});

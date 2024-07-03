@@ -81,7 +81,7 @@ module.exports = {
     const collectorFilter = i => i.user.id === interaction.user.id;
 
     try {
-      const fetcher = await userResponse.awaitMessageComponent({ filter: collectorFilter, time: 30_000 });
+      const fetcher = await userResponse.awaitMessageComponent({ filter: collectorFilter, time: 10_000 });
       // if the user clicks cancel
       if(fetcher.customId === 'cancel'){
         await fetcher.update({ content: `Action cancelled.`, components: [] });
@@ -98,8 +98,8 @@ module.exports = {
         .then(([holding, summary]) => {
           if(holding.error){throw holding.error};
           if(summary.error){throw summary.error};
-          interaction.channel.send({embeds: [summary.response]});
-          return followUp(interaction, roundNumberToFetch, true);
+          fetcher.editReply({content: '', embeds: [summary.response]});
+          return followUp(interaction, interaction, roundNumberToFetch, true);
         })
         .then((followUpMessage) => {
           if(followUpMessage){
@@ -113,7 +113,7 @@ module.exports = {
     } catch(e) {
       if(e.message === "Collector received no interactions before ending with reason: time"){
         // handles failure to reply to the initial response of 'which round do you want to fetch?'
-        await userResponse.edit({ content: 'Response not received within 30 seconds, cancelling...', components: [] });
+        await userResponse.edit({ content: 'Response not received within 10 seconds, cancelling...', components: [] });
       } else {
         console.error("results error handler:\nERR =>", e);
         await userResponse.edit({content: `An unknown error occurred - see the logs for further details`});
