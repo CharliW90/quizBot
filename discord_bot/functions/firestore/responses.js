@@ -123,8 +123,8 @@ exports.indexRounds = async (serverId, session = null) => {
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
   const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
-  const thisDocs = await thisQuiz.collection('Rounds').get();
 
+  const thisDocs = await thisQuiz.collection('Rounds').get();
   const rounds = [];
   thisDocs.forEach(doc => {
     rounds.push(doc.id)
