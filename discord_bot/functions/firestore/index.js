@@ -1,6 +1,6 @@
 const { setTeamsAliases, getTeamsAliases, deleteTeamsAliases, lookupAlias, setTeamsMembers, getTeamsMembers, deleteTeamsMembers, checkMembers, reset } = require("./maps");
-const { recordTeam, getTeam, deleteTeam, indexQuizzes, indexTeams } = require("./quiz");
-const { addResponseToFirestore, getResponseFromFirestore, checkHistory, revertHistory, indexRounds } = require("./responses");
+const { recordTeam, getTeam, deleteTeam, indexQuizzes, indexTeams, endQuiz } = require("./quiz");
+const { addResponseToFirestore, getResponseFromFirestore, indexRounds } = require("./responses");
 const { addScoreboardToFirestore, getScoreboardFromFirestore } = require("./scoreboard");
 const { addScoreToFirestoreTeam } = require("./scores");
 const { addTeamMemberToFirestore, postScoreToUser, getUserFromFirestore, getUserTeamNames } = require("./users");
@@ -20,10 +20,9 @@ module.exports = {
   deleteTeam,
   indexQuizzes,
   indexTeams,
+  endQuiz,
   addResponseToFirestore,
   getResponseFromFirestore,
-  checkHistory,
-  revertHistory,
   indexRounds,
   addScoreboardToFirestore,
   getScoreboardFromFirestore,

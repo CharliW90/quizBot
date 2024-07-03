@@ -199,5 +199,5 @@ exports.endQuiz = async (serverId, session = null) => {
 
   const write = await thisQuiz.update({ended: true})
 
-  return {error: null, response: write};
+  return {error: null, response: {write, date: quizSession.date}};
 }
