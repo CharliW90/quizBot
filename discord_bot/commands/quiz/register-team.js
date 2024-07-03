@@ -162,38 +162,37 @@ module.exports = {
 const validateTeamDetails = async (interaction, teamName, teamMembers) => {
   const { findAdmins } = require('../../functions/discord');
 
-  const refusal = new EmbedBuilder()
-    .setColor('Red')
-    .setTitle("Registration request not valid!")
-    .setAuthor({name: `QuizBot 2.0`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
-    .setThumbnail('https://discord.com/assets/4ffa4ee231208ea704a2.svg')
-    .addFields(
-      {name: "Team Name requested", value: teamName},
-      {name: "Team Members requested", value: teamMembers.join('\n')}
-    )
-
-    
-    const roles = interaction.guild.roles.cache.map(role => role.name);
-    const dupedRole = roles.filter((role) => {return role.toLowerCase() === teamName.toLowerCase()});
-    const channels = interaction.guild.channels.cache.map((channel) => {return `${channel.constructor.name}: ${channel.name}`});
-    const dupedChannel = channels.filter((channel) => {return (channel.split(': ')[1].toLowerCase() === teamName.toLowerCase() || channel.split(': ')[1].toLowerCase() === teamName.toLowerCase().replaceAll(" ", "-"))});
-    const aliasCheck = await lookupAlias(interaction.guildId, teamName);
-    const membersCheck = await checkMembers(interaction.guildId, teamMembers);
-    const admins = findAdmins(interaction.guild).response.admins;
-    let hasAdmins = false;
-    let hasBots = false;
-    teamMembers.forEach((member) => {
-      if(admins.has(member.id)){
-        hasAdmins = true;
-        refusal.addFields({name: "Admin Member not allowed",  value: `${member}`});
-      }
-      if(member.user.bot){
-        hasBots = true;
-        refusal.addFields({name: "Bot Member not allowed",  value: `${member}`});
-      }
-    })
+  const roles = interaction.guild.roles.cache.map(role => role.name);
+  const dupedRole = roles.filter((role) => {return role.toLowerCase() === teamName.toLowerCase()});
+  const channels = interaction.guild.channels.cache.map((channel) => {return `${channel.constructor.name}: ${channel.name}`});
+  const dupedChannel = channels.filter((channel) => {return (channel.split(': ')[1].toLowerCase() === teamName.toLowerCase() || channel.split(': ')[1].toLowerCase() === teamName.toLowerCase().replaceAll(" ", "-"))});
+  const aliasCheck = await lookupAlias(interaction.guildId, teamName);
+  const membersCheck = await checkMembers(interaction.guildId, teamMembers);
+  const admins = findAdmins(interaction.guild).response.admins;
+  let hasAdmins = false;
+  let hasBots = false;
+  teamMembers.forEach((member) => {
+    if(admins.has(member.id)){
+      hasAdmins = true;
+      refusal.addFields({name: "Admin Member not allowed",  value: `${member}`});
+    }
+    if(member.user.bot){
+      hasBots = true;
+      refusal.addFields({name: "Bot Member not allowed",  value: `${member}`});
+    }
+  })
     
   if(dupedRole.length > 0 || dupedChannel.length > 0 || aliasCheck.response || membersCheck.response || hasAdmins || hasBots){
+    const refusal = new EmbedBuilder()
+      .setColor('Red')
+      .setTitle(":x: Registration request not valid!")
+      .setAuthor({name: `QuizBot 2.0`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
+      .setThumbnail('https://discord.com/assets/4ffa4ee231208ea704a2.svg')
+      .addFields(
+        {name: "Team Name requested", value: teamName},
+        {name: "Team Members requested", value: teamMembers.join('\n')}
+      )
+    
     if(dupedRole.length > 0){
       refusal.addFields(
         {name: ":warning: Role already exists", value: `${dupedRole.join('\n')}`},
