@@ -1,6 +1,6 @@
 const { firestore, quizDate } = require("../../database");
 
-exports.recordTeam = async (serverId, data, session = null) => {
+exports.recordTeam = async (serverId, data) => {
   if(!serverId || !data){
     return {error: {code: 400, loc: "firestore/quiz/recordTeam", message: `Missing parameters - expected serverId and data`}, response: null};
   }
@@ -15,7 +15,7 @@ exports.recordTeam = async (serverId, data, session = null) => {
   const quiz = quizDate();
 
   const thisGuild = firestore.collection('Servers').doc(serverId);
-  const thisQuiz = thisGuild.collection('Quizzes').doc(session ?? quiz.code);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
   const thisTeam = thisQuiz.collection('Teams').doc(teamName.toLowerCase());
 
   const thisGuildStorage = await thisGuild.get();
@@ -25,12 +25,11 @@ exports.recordTeam = async (serverId, data, session = null) => {
 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
-    await thisQuiz.set({date: quiz.name, ended: false});
+    await thisQuiz.set({date: quiz.name, scoreboard: {}, ended: false});
   } else {
     const check = await thisQuizStore.data();
     if(check.ended){
-      const error = {code: 403, message: `The quiz for ${session ?? quiz.code} has ended - no further updates allowed`}
-      return {error, response: null}
+      return {error: {code: 403, message: `The quiz for ${quiz.code} has ended - no further updates allowed`}, response: null};
     }
   }
 
@@ -95,6 +94,11 @@ exports.deleteTeam = async (serverId, teamName, session = null) => {
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
     return {error: {code: 404, message: `No firestore document for a Quiz Session on ${session ?? quiz.code} for ${serverId}`}, response: null};
+  }
+
+  const check = await thisQuizStore.data();
+  if(check.ended){
+    return {error: {code: 403, message: `The quiz for ${quiz.code} has ended - no further updates allowed`}, response: null};
   }
 
   const thisTeamRecord = await thisTeam.get();

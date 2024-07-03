@@ -20,6 +20,11 @@ exports.addResponseToFirestore = async (serverId, roundNum, quizRoundObject) => 
   const thisQuizStore = await thisQuiz.get();
   if(!thisQuizStore.exists) {
     await thisQuiz.set({date: quiz.name, ended: false});
+  } else {
+    const check = await thisQuizStore.data();
+    if(check.ended){
+      return {error: {code: 403, message: `The quiz for ${quiz.code} has ended - no further updates allowed`}, response: null};
+    }
   }
 
   let thisRoundScores = await thisRound.get();
@@ -77,13 +82,13 @@ exports.getResponseFromFirestore = async (serverId, roundNum, session = null) =>
 
   return {error: null, response: scoresData}
 }
-
+/* WIP:
 exports.checkHistory = async (serverId, roundNum, session = null) => {
   if(!serverId || !roundNum || isNaN(roundNum)){
     return {error: {code: 400, loc: "firestore/responses/checkHistory", message: `Missing parameters - expected serverId and roundNum (number)`}, response: null}
   }
 
-  const {error, response} = await this.getFromFirestore(serverId, roundNum, session);
+  const {error, response} = await this.getResponseFromFirestore(serverId, roundNum, session);
 
   if(error){
     return {error, response: null}
@@ -91,7 +96,7 @@ exports.checkHistory = async (serverId, roundNum, session = null) => {
 
   const {current, history} = response;
   if(!history){
-    return {error: {code: 404, message: `Document does not contain history for ${round}, ${session ?? quiz.code} for ${serverId}`}, response: null};
+    return {error: {code: 404, message: `Document does not contain history for ${roundNum}, ${session} for ${serverId}`}, response: null};
   }
 
   const count = history.length();
@@ -113,7 +118,7 @@ exports.revertHistory = async (serverId, roundNum, session = null) => {
   await thisRound.set({current: response.latest, history: response.history});
   return {error: null, response: {loc: "firestore/responses.js", message: `Reverted to version ${response.count}`, data: response.latest}}
 }
-
+*/
 exports.indexRounds = async (serverId, session = null) => {
   if(!serverId){
     return {error: {code: 400, loc: "firestore/responses/indexRounds", message: `Missing parameters - expected serverId`}, response: null}

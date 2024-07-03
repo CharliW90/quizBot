@@ -20,9 +20,24 @@ exports.addScoreboardToFirestore = async (serverId, scoreboard) => {
     return {error: {code: 404, message: `No firestore document for a Quiz Session on ${quiz.code} for ${serverId}`}, response: null};
   }
 
-  const write = await thisQuizStore.update('scoreboard', scoreboard);
+  const thisSession = await thisQuizStore.data();
+  if(thisSession.ended){
+    return {error: {code: 403, message: `The quiz for ${quiz.code} has ended - no further updates allowed`}, response: null};
+  }
 
-  return {error: null, response: write};
+  const {scoreboard} = thisSession;
+  const {history, current} = scoreboard;
+  if(history){
+    history.unshift(current);
+    const write = await thisQuiz.update('scoreboard', {current: JSON.parse(JSON.stringify(quizRoundObject)), history});
+    return {error: null, response: write}
+  } else if(current){
+    const write = await thisQuiz.update('scoreboard', {current: JSON.parse(JSON.stringify(quizRoundObject)), history: [current]});
+    return {error: null, response: write}
+  } else {
+    const write = await thisQuiz.update('scoreboard', {current: JSON.parse(JSON.stringify(quizRoundObject))});
+    return {error: null, response: write}
+  }
 }
 
 exports.getScoreboardFromFirestore = async (serverId, session = null) => {
@@ -47,5 +62,10 @@ exports.getScoreboardFromFirestore = async (serverId, session = null) => {
 
   const thisSession = await thisQuizStore.data();
 
-  return {error: null, response: thisSession.scoreboard};
+  const {scoreboard} = thisSession;
+  if(!scoreboard){
+    return {error: {code: 400, message: `No scoreboard reference for the Quiz Session on ${session ?? quiz.code} for ${serverId}`}, response: null};
+  }
+
+  return {error: null, response: scoreboard.current};
 }
