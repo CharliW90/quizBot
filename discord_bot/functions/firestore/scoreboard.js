@@ -1,7 +1,7 @@
 const { firestore, quizDate } = require("../../database");
 
-exports.addScoreboardToFirestore = async (serverId, scoreboard) => {
-  if(!serverId || !scoreboard){
+exports.addScoreboardToFirestore = async (serverId, scoreboardObject) => {
+  if(!serverId || !scoreboardObject){
     return {error: {code: 400, loc: "firestore/scoreboard/addScoreboardToFirestore", message: `Missing parameters - expected serverId and scoreboard object`}, response: null}
   }
 
@@ -29,13 +29,13 @@ exports.addScoreboardToFirestore = async (serverId, scoreboard) => {
   const {history, current} = scoreboard;
   if(history){
     history.unshift(current);
-    const write = await thisQuiz.update('scoreboard', {current: JSON.parse(JSON.stringify(quizRoundObject)), history});
+    const write = await thisQuiz.update('scoreboard', {current: JSON.parse(JSON.stringify(scoreboardObject)), history});
     return {error: null, response: write}
   } else if(current){
-    const write = await thisQuiz.update('scoreboard', {current: JSON.parse(JSON.stringify(quizRoundObject)), history: [current]});
+    const write = await thisQuiz.update('scoreboard', {current: JSON.parse(JSON.stringify(scoreboardObject)), history: [current]});
     return {error: null, response: write}
   } else {
-    const write = await thisQuiz.update('scoreboard', {current: JSON.parse(JSON.stringify(quizRoundObject))});
+    const write = await thisQuiz.update('scoreboard', {current: JSON.parse(JSON.stringify(scoreboardObject))});
     return {error: null, response: write}
   }
 }
