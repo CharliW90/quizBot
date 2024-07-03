@@ -26,14 +26,13 @@ exports.hold = (roundNum, embeds, teamNames) => {
     return {error, response: null};
   }
 
-  const teams = teamNames.map(name => name.toLowerCase());
-  tempStore.set(String(roundNum), {teams, embeds});
+  tempStore.set(String(roundNum), {teams: teamNames, embeds});
   
   if(tempStore.get(String(roundNum)).teams && tempStore.get(String(roundNum)).embeds) {
-    return {error: null, response: {roundNum, teams}};
+    return {error: null, response: {roundNum, teams: teamNames}};
   } else {
-    const details = {roundNum, teamNames, teams, embeds, tempStore, loc: "holdFormResponses.js/hold()"};
-    const error = {message: `error occurred when storing ${embeds.length} embeds for ${teams.length} teams against round number ${roundNum}`, code: 500, details};
+    const details = {roundNum, teamNames, teams: teamNames, embeds, tempStore, loc: "holdFormResponses.js/hold()"};
+    const error = {message: `error occurred when storing ${embeds.length} embeds for ${teamNames.length} teams against round number ${roundNum}`, code: 500, details};
     return {error, response: null}
   }
 }
@@ -130,7 +129,6 @@ exports.followUp = async (message, interaction, roundNum, stored = false) => {
     if(e.message === "Collector received no interactions before ending with reason: time"){
       // handles failure to reply to the followup response of 'what do you want to do with the responses?'
       await message.editReply({ content: 'Response not received within 10 seconds, cancelling...', embeds: [], components: [] });
-      return;
     } else {
       console.error("holdFormResponses error handler:\nERR =>", e);
       await message.editReply({content: `An unknown error occurred - see the logs for further details`});
