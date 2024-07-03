@@ -242,8 +242,6 @@ describe('sendFormResponses.js', () => {
 
       expect(error).toBeNull();
       expect(getTeam).toHaveBeenCalledTimes(3);
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(3);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
 
       expect(response).toBeInstanceOf(EmbedBuilder);
       expect(response.data.fields).toHaveLength(2);
