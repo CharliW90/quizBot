@@ -96,7 +96,7 @@ exports.followUp = async (message, interaction, roundNum, stored = false) => {
         return {error: null, response: `We now have stored results for ${roundsMsg} - to access these results use the command /results`}
       })
       .catch((error) => {
-        console.error(error);;
+        return {error, response: null}
       })      
     } else if(toDo.customId === 'send') {
       await toDo.update({ content: `Results for ${roundNum} are being sent out now... :incoming_envelope:`, components: [] });
@@ -107,7 +107,7 @@ exports.followUp = async (message, interaction, roundNum, stored = false) => {
         interaction.channel.send({embeds: [response]});
       })
       .catch((error) => {
-        console.error(error);
+        return {error, response: null}
       })
       // await toDo.update({ content: `Results for ${roundNum} have been sent out. :white_check_mark:`, components: [] });
     } else if(toDo.customId === 'cancel') {

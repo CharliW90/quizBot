@@ -220,6 +220,7 @@ module.exports = {
         }
       }
     } catch(e) {
+      console.error("team.js ERR =>", e);
       throw e;
     }
   }

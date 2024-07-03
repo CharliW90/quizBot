@@ -115,6 +115,7 @@ module.exports = {
         // handles failure to reply to the initial response of 'which round do you want to fetch?'
         await userResponse.edit({ content: 'Response not received within 30 seconds, cancelling...', components: [] });
       } else {
+        console.error("results.js ERR =>", e);
         throw e;
       }
     }

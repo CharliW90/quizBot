@@ -133,6 +133,6 @@ const getChannel = async (interaction, teamName, session = null) => {
     return channel
   })
   .catch((error) => {
-    throw error;
+    return {error, response: null}
   })
 }
