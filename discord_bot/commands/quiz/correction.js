@@ -158,9 +158,9 @@ module.exports = {
         }
       }
     } else if(cmd === "score"){
-
+      interaction.reply("This is a Work in Progress")
     } else if(cmd === "scoreboard"){
-
+      interaction.reply("This is a Work in Progress")
     }
   }
 }
