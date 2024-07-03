@@ -6,6 +6,8 @@ const { quizDate } = require('../../database.js');
 
 // A command to fetch embed messages for teams from storage, and send them to the teams
 
+const sent = [];
+
 module.exports = {
   category: 'quiz',
   data: new SlashCommandBuilder()
@@ -54,9 +56,10 @@ module.exports = {
     
     response.forEach((round) => {
       const roundNumber = round.split(' ')[1];
+      const label = sent.includes(roundNumber) ? `${round}  (already sent)` : round
       dropdown.addOptions(
         new StringSelectMenuOptionBuilder()
-          .setLabel(round)
+          .setLabel(label)
           .setValue(roundNumber),
       )
     });
@@ -102,6 +105,7 @@ module.exports = {
           return followUp(interaction, interaction, roundNumberToFetch, true);
         })
         .then((followUpMessage) => {
+          sent.push(roundNumberToFetch);
           if(followUpMessage){
             interaction.channel.send(followUpMessage);
           }
