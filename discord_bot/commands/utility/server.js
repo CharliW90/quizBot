@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { indexQuizzes, indexTeams } = require('../../functions/firestore/quiz');
+const { quizDate } = require('../../database');
+const { indexRounds } = require('../../functions/firestore/responses');
 
 module.exports = {
 	category: 'utility',
@@ -8,7 +11,57 @@ module.exports = {
     .setDMPermission(false)
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),  // admin only command
 	async execute(interaction) {
-		// interaction.guild is the object representing the Guild in which the command was run
-		await interaction.reply(`This server is ${interaction.guild.name} and has ${interaction.guild.memberCount} members.`);
+    const today = quizDate();
+    
+    const data = {quizRunning: false, quizdates: []}
+    const {error, response} = await indexQuizzes(interaction.guildId);
+    if(error){
+      console.error(error)
+    } else {
+      data.quizdates = response;
+      if(response.find(date => date.code === today.code)){
+        data.quizRunning = true;
+        
+        const thisQuizTeams = await indexTeams(interaction.guildId);
+        if(thisQuizTeams.response){
+          data.thisQuizTeams = thisQuizTeams.response;
+        }
+
+        const thisQuizRounds = await indexRounds(interaction.guildId);
+        if(thisQuizRounds.response){
+          data.thisQuizRounds = thisQuizRounds.response;
+        }
+      }
+    }
+    
+    const reply = new EmbedBuilder()
+      .setColor('e511c7')
+      .setTitle(`Server Status for ${interaction.guild.name}`)
+      .setAuthor({name: `QuizBot 2.0`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
+      .setThumbnail('https://discord.com/assets/4ffa4ee231208ea704a2.svg')
+      .addFields(
+        {name: "Member Count", value: `${interaction.guild.memberCount} (${interaction.guild.members.cache.size} online)`},
+        {name: "Past Quizzes on record", value: `${data.quizRunning ? data.quizdates.length-1 : data.quizdates.length}`}
+      )
+    
+    if(data.quizRunning){
+      reply.addFields({name: `${today.name}`, value: ":white_check_mark: Quiz running today:"})
+    } else {
+      reply.addFields({name: `${today.name}`, value: ":x: No Quiz running today:"})
+    }
+
+    if(data.thisQuizTeams.length > 0){
+      reply.addFields({name: ":busts_in_silhouette: Teams registered:", value: `${data.thisQuizTeams.join('\n')}`})
+    } else {
+      reply.addFields({name: ":busts_in_silhouette: Teams registered:", value: `${data.thisQuizTeams.length}`})
+    }
+
+    if(data.thisQuizRounds.length > 0){
+      reply.addFields({name: ":bookmark_tabs: Rounds marked and retrieved:", value: `${data.thisQuizRounds.join('\n')}`})
+    } else {
+      reply.addFields({name: ":bookmark_tabs: Rounds marked and retrieved:", value: `${data.thisQuizRounds.length}`})
+    }
+
+    await interaction.reply({embeds: [reply]})
 	},
 };
