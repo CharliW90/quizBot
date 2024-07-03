@@ -1,5 +1,5 @@
 const { ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
-const { indexRounds, indexQuizzes } = require('../../functions/firestore');
+const { indexRounds, indexQuizzes, addScoreboardToFirestore } = require('../../functions/firestore');
 const { quizDate } = require('../../database');
 const scoreboardGenerator = require('../../functions/quiz/scoreboardGenerator');
 
@@ -76,7 +76,8 @@ module.exports = {
         scoreboardGenerator(interaction.guildId, response, interaction.options.getString('date'))
         .then(({error, response}) => {
           if(error){throw error}
-          fetcher.update({ content: ``, components: [], embeds: [response] });
+          fetcher.update({ content: ``, components: [], embeds: [response], ephemeral: false});
+          addScoreboardToFirestore(interaction.guildId, response);
         })
       }
     } catch(e) {
@@ -84,6 +85,7 @@ module.exports = {
         // handles failure to reply to the initial response of 'which round do you want to fetch?'
         await userResponse.edit({ content: 'Response not received within 30 seconds, cancelling...', components: [] });
       } else {
+        console.error("scores.js ERR =>", e);
         throw e;
       }
     }

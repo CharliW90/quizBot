@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js")
-const { getResponseFromFirestore } = require("../firestore")
+const { getResponseFromFirestore, lookupAlias } = require("../firestore")
 
 module.exports = async (serverId, rounds, session = null) => {
   if(!serverId || !rounds){
@@ -22,10 +22,12 @@ module.exports = async (serverId, rounds, session = null) => {
       const currentRound = round.response.current;
       currentRound.embeds.forEach((embed) => {
         const teamName = embed.title;
-        if(!scoreboard.has(teamName)){
-          scoreboard.set(teamName, {scores: [], total: 0, totalPossible: 0})
+        const {error, response} = lookupAlias(serverId, teamName, session)
+        const lookup = response ?? teamName;
+        if(!scoreboard.has(lookup.toLowerCase())){
+          scoreboard.set(lookup.toLowerCase(), {name: teamName, scores: [], total: 0, totalPossible: 0})
         }
-        let {scores, total, totalPossible} = scoreboard.get(teamName);
+        let {name, scores, total, totalPossible} = scoreboard.get(lookup.toLowerCase());
 
         const totalScore = embed.fields.filter((field) => {return field.name === "Total Score"}).map(field => field.value)[0];
         scores.push(totalScore);
@@ -36,7 +38,7 @@ module.exports = async (serverId, rounds, session = null) => {
         total += scored;
         totalPossible += possible;
 
-        scoreboard.set(teamName, {scores, total, totalPossible});
+        scoreboard.set(lookup.toLowerCase(), {name, scores, total, totalPossible});
       })
     })
 
@@ -45,9 +47,9 @@ module.exports = async (serverId, rounds, session = null) => {
 
     uniqueScores.forEach((score) => {
       const teams = [];
-      for(const [name, value] of scoreboard.entries()){
+      for(const [key, value] of scoreboard.entries()){
         if(value.total === score){
-          teams.push(name)
+          teams.push(value.name)
         }
       }
       leaderboard.set(score, teams)
@@ -69,7 +71,7 @@ module.exports = async (serverId, rounds, session = null) => {
       message += `${position} place, with ${score} points:\n${teams.join('\n')}`
       count += teams.length;
       const output = teams.map((name) => {
-        const team = scoreboard.get(name);
+        const team = scoreboard.get(name.toLowerCase());
         const scoring = team.scores.map((score, i) => {return `${i+1}) ${score.split(' / ')[0]}`})
         return `${name}:\n${team.total} / ${team.totalPossible}\n${scoring.join(', ')}\n`
       })
