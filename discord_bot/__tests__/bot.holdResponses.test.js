@@ -75,7 +75,7 @@ describe('holdFormResponses.js', () => {
         const output = hold(roundNum, embeds, teamNames);
         const {error, response} = output;
         expect(error).toBeNull();
-        expect(response).toEqual({roundNum, teams: teamNames.map(name => name.toLowerCase())});
+        expect(response).toEqual({roundNum, teams: teamNames});
       })
 
       test('returns success for storing single embed and team', () => {
@@ -87,7 +87,7 @@ describe('holdFormResponses.js', () => {
         const {error, response} = output;
         expect(error).toBeNull();
         expect(response).not.toBeNull();
-        expect(response).toEqual({roundNum, teams: teamNames.map(name => name.toLowerCase())});
+        expect(response).toEqual({roundNum, teams: teamNames});
       })
     })
 

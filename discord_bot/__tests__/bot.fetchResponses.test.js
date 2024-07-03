@@ -56,7 +56,7 @@ describe('fetch()', () => {
     const {error, response} = await fetch(1);
     expect(error).toBeNull();
     expect(response).toBeInstanceOf(Array);
-    expect(response).toEqual([{roundNum: input.roundDetails.number, teams: Object.keys(input.results).map(teamname => teamname.toLowerCase())}]);
+    expect(response).toEqual([{roundNum: input.roundDetails.number, teams: Object.keys(input.results)}]);
 
     expect(parseSpy).toHaveBeenCalledTimes(1);
     expect(parseSpy).toHaveBeenCalledWith(input);
@@ -76,7 +76,7 @@ describe('fetch()', () => {
     const {error, response} = await fetch("all");
     expect(error).toBeNull()
     expect(response).toBeInstanceOf(Array);
-    expect(response).toEqual(input.map((round) => {return {roundNum: round.roundDetails.number, teams: Object.keys(round.results).map(teamname => teamname.toLowerCase())}}));
+    expect(response).toEqual(input.map((round) => {return {roundNum: round.roundDetails.number, teams: Object.keys(round.results)}}));
 
     expect(parseSpy).toHaveBeenCalledTimes(rounds);
     for(let i = 0; i < rounds; i++){
