@@ -69,7 +69,7 @@ module.exports = {
           interaction.channel.send({embeds: [response]});
         })
         .catch((error) => {
-          interaction.channel.send({content: `${JSON.stringify(error)}`});
+          if(error.code && error.message){interaction.channel.send({content: `${JSON.stringify(error)}`})};
         })
       }
     } catch(e) {
