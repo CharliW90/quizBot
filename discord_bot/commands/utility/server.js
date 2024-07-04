@@ -25,7 +25,7 @@ module.exports = {
       return;
     } else {
       data.quizdates = response;
-      if(response.find(date => date.code === today.code)){
+      if(response.find(quiz => quiz.date.code === today.code)){
         data.quizRunning = true;
         
         const thisQuizTeams = await indexTeams(interaction.guildId);
@@ -52,28 +52,20 @@ module.exports = {
     
     if(data.quizRunning){
       reply.addFields({name: `${today.name}`, value: ":white_check_mark: Quiz running today:"})
-    } else {
-      reply.addFields({name: `${today.name}`, value: ":x: No Quiz running today:"})
-    }
-
-    if(data.thisQuizTeams){
+      
       if(data.thisQuizTeams.length > 1){
         reply.addFields({name: ":busts_in_silhouette: Teams registered:", value: `${data.thisQuizTeams.join('\n')}`})
       } else {
         reply.addFields({name: ":busts_in_silhouette: Teams registered:", value: `${data.thisQuizTeams.length}`})
       }
-    } else {
-      reply.addFields({name: ":busts_in_silhouette: Teams registered:", value: "0"})
-    }
-
-    if(data.thisQuizRounds){
+      
       if(data.thisQuizRounds.length > 0){
         reply.addFields({name: ":bookmark_tabs: Rounds marked and retrieved:", value: `${data.thisQuizRounds.join('\n')}`})
       } else {
         reply.addFields({name: ":bookmark_tabs: Rounds marked and retrieved:", value: `${data.thisQuizRounds.length}`})
       }
     } else {
-      reply.addFields({name: ":bookmark_tabs: Rounds marked and retrieved:", value: "0"})
+      reply.addFields({name: `${today.name}`, value: ":x: No Quiz running today:"})
     }
 
     await interaction.reply({embeds: [reply]})
