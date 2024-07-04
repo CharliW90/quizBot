@@ -142,18 +142,17 @@ module.exports = {
               })
             }
           }catch(e){
-            console.log("error stage 1");
             throw e
           }
         }
       } catch(e) {
         if(e.message === "Collector received no interactions before ending with reason: time"){
           // handles failure to reply to the followup response of 'what do you want to do with the responses?'
-          await interaction.editReply({ content: 'Response not received within 10 seconds, cancelling...', embeds: [], components: [] });
+          await interaction.editReply({ content: 'Response not received within 10 seconds, cancelling...', embeds: [], components: []});
           return;
         } else {
           console.error("correction error handler:\nERR =>", e);
-          await interaction.editReply({content: `An unknown error occurred - see the logs for further details`});
+          await interaction.editReply({content: `An unknown error occurred - see the logs for further details`, embeds: [], components: []});
           return;
         }
       }
