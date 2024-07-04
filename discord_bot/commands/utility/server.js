@@ -16,7 +16,13 @@ module.exports = {
     const data = {quizRunning: false, quizdates: []}
     const {error, response} = await indexQuizzes(interaction.guildId);
     if(error){
-      console.error(error)
+      console.error("server error handler:\nERR => ", error)
+      if(error.code && error.message){
+        interaction.reply(`${JSON.stringify(error)}`)
+      } else {
+        interaction.reply({content: `An unknown error occurred - see the logs for further details`, embeds: [], components: []})
+      }
+      return;
     } else {
       data.quizdates = response;
       if(response.find(date => date.code === today.code)){
@@ -50,16 +56,24 @@ module.exports = {
       reply.addFields({name: `${today.name}`, value: ":x: No Quiz running today:"})
     }
 
-    if(data.thisQuizTeams.length > 0){
-      reply.addFields({name: ":busts_in_silhouette: Teams registered:", value: `${data.thisQuizTeams.join('\n')}`})
+    if(data.thisQuizTeams){
+      if(data.thisQuizTeams.length > 1){
+        reply.addFields({name: ":busts_in_silhouette: Teams registered:", value: `${data.thisQuizTeams.join('\n')}`})
+      } else {
+        reply.addFields({name: ":busts_in_silhouette: Teams registered:", value: `${data.thisQuizTeams.length}`})
+      }
     } else {
-      reply.addFields({name: ":busts_in_silhouette: Teams registered:", value: `${data.thisQuizTeams.length}`})
+      reply.addFields({name: ":busts_in_silhouette: Teams registered:", value: "0"})
     }
 
-    if(data.thisQuizRounds.length > 0){
-      reply.addFields({name: ":bookmark_tabs: Rounds marked and retrieved:", value: `${data.thisQuizRounds.join('\n')}`})
+    if(data.thisQuizRounds){
+      if(data.thisQuizRounds.length > 0){
+        reply.addFields({name: ":bookmark_tabs: Rounds marked and retrieved:", value: `${data.thisQuizRounds.join('\n')}`})
+      } else {
+        reply.addFields({name: ":bookmark_tabs: Rounds marked and retrieved:", value: `${data.thisQuizRounds.length}`})
+      }
     } else {
-      reply.addFields({name: ":bookmark_tabs: Rounds marked and retrieved:", value: `${data.thisQuizRounds.length}`})
+      reply.addFields({name: ":bookmark_tabs: Rounds marked and retrieved:", value: "0"})
     }
 
     await interaction.reply({embeds: [reply]})
