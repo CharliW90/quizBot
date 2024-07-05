@@ -105,8 +105,8 @@ module.exports = {
           return followUp(interaction, interaction, roundNumberToFetch, true);
         })
         .then((followUpMessage) => {
-          sent.push(roundNumberToFetch);
           if(followUpMessage){
+            sent.push(roundNumberToFetch);
             interaction.channel.send(followUpMessage);
           }
         })
