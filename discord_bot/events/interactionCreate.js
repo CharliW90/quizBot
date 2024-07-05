@@ -1,9 +1,11 @@
 const { Events } = require('discord.js');
+const logger = require('../logger');
 const prepQuizEnvironment = require('../functions/quiz/prepQuizEnvironment');
 
 module.exports = {
 	name: Events.InteractionCreate,
 	async execute(interaction) {
+    const localLogger = logger.child({command: false, file: 'events/interactionCreate.js', fn: 'execute()'});
 		if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()){
       return;
     }  
@@ -11,7 +13,7 @@ module.exports = {
 		const command = interaction.client.commands.get(interaction.commandName);
 
 		if (!command) {
-      console.error(`No command matching ${interaction.commandName} was found.`);
+      localLogger.error(`No command matching ${interaction.commandName} was found.`);
 			return;
 		}
 
@@ -23,7 +25,7 @@ module.exports = {
         await command.execute(interaction);
       }
 		} catch (error) {
-			console.error("interactionCreate error handler:\nERR =>", error);
+			localLogger.error(error);
       if(!interaction){
         return;
       }

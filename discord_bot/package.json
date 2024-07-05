@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "deploy": "node deploy-commands.js && node index.js"
+    "deploy": "node deploy-commands.js | npx pino-pretty && node index.js | npx pino-pretty"
   },
   "keywords": [
     "discord",
@@ -20,6 +20,9 @@
     "enmap": "^5.9.8",
     "firebase": "^10.12.2",
     "firebase-admin": "^12.1.1",
+    "js-md5": "^0.8.3",
+    "pino": "^9.2.0",
+    "pino-pretty": "^11.2.1",
     "puppeteer": "^22.11.2",
     "request": "^2.88.2"
   },
