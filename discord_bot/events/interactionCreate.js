@@ -5,7 +5,6 @@ const prepQuizEnvironment = require('../functions/quiz/prepQuizEnvironment');
 module.exports = {
 	name: Events.InteractionCreate,
 	async execute(interaction) {
-    const localLogger = logger.child({command: false, file: 'events/interactionCreate.js', fn: 'execute()'});
 		if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()){
       return;
     }  
@@ -13,7 +12,7 @@ module.exports = {
 		const command = interaction.client.commands.get(interaction.commandName);
 
 		if (!command) {
-      localLogger.error(`No command matching ${interaction.commandName} was found.`);
+      logger.error(`No command matching ${interaction.commandName} was found.`);
 			return;
 		}
 
@@ -25,7 +24,7 @@ module.exports = {
         await command.execute(interaction);
       }
 		} catch (error) {
-			localLogger.error(error);
+			logger.error(error);
       if(!interaction){
         return;
       }
