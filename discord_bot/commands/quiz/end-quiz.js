@@ -37,8 +37,11 @@ module.exports = {
   async execute(interaction) {
     endQuiz(interaction.guildId, interaction.options.getString('date'))
     .then(({error, response}) => {
-      if(error){interaction.reply(error.message)};
-      interaction.reply({content: `Quiz for ${response.date} ended - no further updates, now read-only.`, ephemeral: true});
+      if(error){
+        interaction.reply(error.message);
+        return;
+      };
+      interaction.reply({content: `Quiz for ${response.date} ended - no further updates, now read-only.`});
     })
   }
 }
