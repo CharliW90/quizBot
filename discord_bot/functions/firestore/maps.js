@@ -65,8 +65,8 @@ exports.getTeamsAliases = async (serverId, session = null) => {
   return {error: null, response};
 }
 
-exports.deleteTeamsAliases = async (serverId, registration) => {
-  if(!serverId || !registration){
+exports.deleteTeamsAliases = async (serverId, teamName) => {
+  if(!serverId || !teamName){
     return {error: {code: 400, loc: "firestore/maps/deleteTeamsAliases", message: `Missing parameters - expected serverId and registration object`}, response: null};
   }
 
@@ -98,11 +98,19 @@ exports.deleteTeamsAliases = async (serverId, registration) => {
 
   const data = await teamsAliasesRecord.data();
 
-  await registration.forEach(key => delete data[key]);
+  const aliases = Object.keys(data);
+  const deletions = []
+
+  for(const alias of aliases){
+    if(data[alias] === teamName){
+      deletions.push(alias);
+      delete data[alias];
+    }
+  }
 
   await teamsAliases.set(data);
 
-  return {error: null, response: registration.join(', ')};
+  return {error: null, response: deletions};
 }
 
 exports.lookupAlias = async (serverId, alias, session = null) => {
@@ -196,8 +204,8 @@ exports.getTeamsMembers = async (serverId, session = null) => {
   return {error: null, response};
 }
 
-exports.deleteTeamsMembers = async (serverId, registration) => {
-  if(!serverId || !registration){
+exports.deleteTeamsMembers = async (serverId, memberIds) => {
+  if(!serverId || !memberIds){
     return {error: {code: 400, loc: "firestore/maps/deleteTeamsMembers", message: `Missing parameters - expected serverId and registration object`}, response: null};
   }
 
@@ -229,11 +237,11 @@ exports.deleteTeamsMembers = async (serverId, registration) => {
 
   const data = await teamsMembersRecord.data();
 
-  await registration.forEach(key => delete data[key]);
+  await memberIds.forEach(id => delete data[id]);
 
   await teamsMembers.set(data);
 
-  return {error: null, response: registration.join(', ')};
+  return {error: null, response: memberIds};
 }
 
 exports.checkMembers = async (serverId, members) => {
@@ -249,13 +257,13 @@ exports.checkMembers = async (serverId, members) => {
     return {error, response: null}
   }
 
-  const results = await members.map((member) => {return {user: member, team: response[member.user.id]}});
+  const results = await members.filter(member => response[member.user.id]).map((member) => {return {user: member, team: response[member.user.id]}});
 
   if(results.length > 0){
     return {error: null, response: results};
   } else {
     const memberNames = members.map((member) => member.user.globalName)
-    return {error: {message: `No teams found for ${members.map(member => member.user.name).join(', ')}`, code: 404}, response: null}
+    return {error: {message: `No teams found for ${memberNames.join(', ')}`, code: 404}, response: null}
   }
 }
 
