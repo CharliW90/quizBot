@@ -1,10 +1,11 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
   category: 'utility',
 	data: new SlashCommandBuilder()
 		.setName('ping')
 		.setDescription('Replies with Pong!')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
     .addBooleanOption(option =>
       option
       .setName('bool')
