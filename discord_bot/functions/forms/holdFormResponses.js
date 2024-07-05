@@ -98,7 +98,7 @@ exports.followUp = async (message, interaction, roundNum, stored = false) => {
         return {error, response: null}
       })      
     } else if(toDo.customId === 'send') {
-      await toDo.update({ content: `Results for ${roundNum} are being sent out now... :incoming_envelope:`, components: [] });
+      await toDo.update({ content: `Results for Round ${roundNum} are being sent out now... :incoming_envelope:`, components: [] });
       
       sendResponses(interaction, {...tempStore.get(String(roundNum)), roundNum})
       .then(({error, response}) => {
