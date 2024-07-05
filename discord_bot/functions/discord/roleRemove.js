@@ -1,4 +1,4 @@
-module.exports = async (role, members) => {
+module.exports = (role, members) => {
   try{
     members.forEach((member) => {
       member.roles.remove(role)
