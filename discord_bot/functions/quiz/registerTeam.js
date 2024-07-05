@@ -42,10 +42,19 @@ module.exports = (interaction, team) => {
     const captainRole = response;
     // don't push to history - this isn't something we've created, and we wouldn't want to undo it if something fails
 
+    ({error, response} = findRole(guild, "Teams"));
+    if(error){
+      undo();
+      throw error;
+    }
+    const teamsRole = response;
+    // don't push to history - this isn't something we've created, and we wouldn't want to undo it if something fails
+
     const promises = [];
 
     promises.push(
       roleAssign(teamRole, [captain, ...members]),
+      roleAssign(teamsRole, [captain, ...members]),
       roleAssign(captainRole, [captain])
     );
 
@@ -151,7 +160,6 @@ module.exports = (interaction, team) => {
     undo(interaction);
     return{error, response: null}
   })
-  
 }
 
 const textifyTeamName = (string) => {
