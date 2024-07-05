@@ -144,6 +144,39 @@ module.exports = {
     const [teamCaptain] = roleMembers.filter(member => member.roles.cache.has(captainRole.id));
     const teamMembers = roleMembers.filter(member => member !== teamCaptain)
 
+    const validate = {refuse: false, admins: [], bots: []}
+    members.forEach((member) => {
+      if(admins.has(member.id)){
+        validate.refuse = true;
+        validate.admins.push(member)
+      }else if(member.user.bot){
+        validate.refuse = true;
+        validate.bots.push(member)
+      }
+    })
+
+    if(validate.refuse){
+      const refusal = new EmbedBuilder()
+        .setColor('Red')
+        .setTitle(":x: Registration request not valid!")
+        .setAuthor({name: `QuizBot 2.0`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
+        .setThumbnail('https://discord.com/assets/4ffa4ee231208ea704a2.svg')
+        .addFields(
+          {name: `Amendments requested to ${teamName}`, value: `${interaction.options.getSubcommand().replace("-", " ")}(s)`},
+          {name: "Member(s) requested:", value: members.join('\n')}
+        )
+      
+      if(validate.admins.length > 0){
+        refusal.addFields({name: ":x: Admin Member not allowed",  value: validate.admins.join('\n')});
+      }
+
+      if(validate.bots.length > 0){
+        refusal.addFields({name: ":x: Bot Member not allowed",  value: validate.bots.join('\n')});
+      }
+      await interaction.editReply({embeds: [refusal]})
+      return;
+    }
+
     const confirmation_screen = new EmbedBuilder()
       .setColor(teamRole.color)
       .setTitle("Quiz Team Amendments")
@@ -155,7 +188,7 @@ module.exports = {
     if(teamMembers.length > 0){
       confirmation_screen.addFields({name: `Members`, value: teamMembers.join('\n')})
     }
-    confirmation_screen.addFields({name: `${interaction.options.getSubcommand().replace("-", " ")}`, value: members.join('\n')})
+    confirmation_screen.addFields({name: `${interaction.options.getSubcommand().replace("-", " ")}(s)`, value: members.join('\n')})
 
     const confirm = new ButtonBuilder()
       .setCustomId('confirm')
