@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require("discord.js");
-const { findAdmins, findRole, roleRemove } = require("../../functions/discord");
+const { findAdmins, findRole, roleRemove, findTextChannel } = require("../../functions/discord");
+const { getTeam } = require("../../functions/firestore");
 
 module.exports = {
   category: 'quiz',
@@ -64,12 +65,6 @@ module.exports = {
       return;
     }
 
-    const teamChannel = await channelFromTeam(teamRole.name);
-    if(teamChannel.error){
-      interaction.editReply({content: `Error ${teamChannel.error.code}: ${teamChannel.error.message}`});
-      return;
-    }
-
     const confirmation_screen = new EmbedBuilder()
       .setColor(teamRole.color)
       .setTitle(`${interaction.user.globalName}'s Request to Leave ${teamRole.name}`)
@@ -121,6 +116,18 @@ module.exports = {
           await interaction.editReply({ content: `Error ${error.code}: ${error.message}`, embeds: [], components: [] });
           return;
         };
+
+        const team = await getTeam(interaction.guildId, teamName);
+        if(team.error){
+          await interaction.editReply({ content: `Error ${error.code}: ${error.message}`, embeds: [], components: [] });
+          return;
+        }
+        
+        const teamChannel = findTextChannel(interaction.guild, team.response.textChannel.name);
+        if(teamChannel.error){
+          await interaction.editReply({ content: `Error ${error.code}: ${error.message}`, embeds: [], components: [] });
+          return;
+        }
 
         if(interaction.channel.id !== teamChannel.response.id){
           await interaction.editReply({ content: `You have left ${response.name}.`, embeds: [], components: [] });
