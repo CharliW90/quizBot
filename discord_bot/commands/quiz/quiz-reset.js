@@ -79,7 +79,7 @@ module.exports = {
           .setAuthor({name: `QuizBot 2.0`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
           .addFields({name: "Reset Complete", value: message})
 
-        interaction.editReply({ embeds: [success_message], components: [] });
+        interaction.editReply({ embeds: [success_message], components: [], ephemeral: false});
       }
     } catch(e) {
       if(e.message === "Collector received no interactions before ending with reason: time"){

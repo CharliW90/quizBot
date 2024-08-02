@@ -1,5 +1,6 @@
 const { findCategoryChannel } = require("../../functions/discord");
 const { reset } = require("../firestore");
+const clearGenericTeamsRole = require("./clearGenericTeamsRole");
 const clearTeamCaptains = require("./clearTeamCaptains");
 
 module.exports = (guild, blame) => {
@@ -62,6 +63,16 @@ module.exports = (guild, blame) => {
     } else {
       if(response.length > 0){
         deletions["Captain Role"] = response;
+      }
+    }
+    return clearGenericTeamsRole(guild);
+  })
+  .then(({error, response}) => {
+    if(error){
+      deletions["Reset Generic Teams Role Failed"] = [true];
+    } else {
+      if(response.length > 0){
+        deletions["Generic Teams Role"] = response;
       }
     }
     
