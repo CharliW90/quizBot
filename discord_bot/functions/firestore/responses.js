@@ -37,15 +37,52 @@ exports.addResponseToFirestore = async (serverId, roundNum, quizRoundObject) => 
   const {history, current} = existingScores;
   if(history){
     history.unshift(current);
-    const write = await thisRound.set({current: JSON.parse(JSON.stringify(quizRoundObject)), history});
+    const write = await thisRound.set({published: false, current: JSON.parse(JSON.stringify(quizRoundObject)), history});
     return {error: null, response: write}
   } else if(current){
-    const write = await thisRound.set({current: JSON.parse(JSON.stringify(quizRoundObject)), history: [current]});
+    const write = await thisRound.set({published: false,current: JSON.parse(JSON.stringify(quizRoundObject)), history: [current]});
     return {error: null, response: write}
   } else {
-    const write = await thisRound.set({current: JSON.parse(JSON.stringify(quizRoundObject))});
+    const write = await thisRound.set({published: false,current: JSON.parse(JSON.stringify(quizRoundObject))});
     return {error: null, response: write}
   }
+}
+
+exports.publishedResponseInFirestore = async (serverId, roundNum) => {
+  if(!serverId || !roundNum || isNaN(roundNum)){
+    return {error: {code: 400, loc: "firestore/responses/addResponseToFirestore", message: `Missing parameters - expected serverId and roundNum (number)`}, response: null}
+  }
+  
+  const quiz = quizDate();
+  const round = `Round ${roundNum}`;
+
+  const thisGuild = firestore.collection('Servers').doc(serverId);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisRound = thisQuiz.collection('Rounds').doc(round);
+
+  const thisGuildStorage = await thisGuild.get();
+  if(!thisGuildStorage.exists){
+    return {error: {code: 404, message: `No firestore document for ${serverId}`}, response: null};
+  }
+
+  const thisQuizStore = await thisQuiz.get();
+  if(!thisQuizStore.exists) {
+    return {error: {code: 404, message: `No firestore document for a Quiz Session on ${session ?? quiz.code} for ${serverId}`}, response: null};
+  }
+
+  const thisRoundScores = await thisRound.get();
+  if(!thisRoundScores.exists) {
+    return {error: {code: 404, message: `No firestore document for ${round}, ${session ?? quiz.code} for ${serverId}`}, response: null};
+  }
+
+  const scoresData = await thisRoundScores.data();
+  if(!scoresData.current){
+    return {error: {code: 404, message: `Document does not contain data for ${round}, ${session ?? quiz.code} for ${serverId}`}, response: null};
+  }
+
+  await thisRoundScores.update({published: true});
+  const updatedScoresData = await thisRoundScores.data();
+  return {error: null, response: updatedScoresData}
 }
 
 exports.getResponseFromFirestore = async (serverId, roundNum, session = null) => {

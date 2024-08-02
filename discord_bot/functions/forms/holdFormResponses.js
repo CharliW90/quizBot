@@ -1,5 +1,5 @@
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
-const { addResponseToFirestore, indexRounds } = require("../firestore");
+const { addResponseToFirestore, indexRounds, publishedResponseInFirestore } = require("../firestore");
 const { sendResponses } = require("./sendFormResponses");
 
 const tempStore = new Map();
@@ -49,7 +49,7 @@ exports.followUp = async (message, interaction, roundNum, stored = false) => {
     .setLabel('Send')
     .setStyle(ButtonStyle.Primary);
 
-    const cancel = new ButtonBuilder()
+  const cancel = new ButtonBuilder()
     .setCustomId('cancel')
     .setLabel('Cancel')
     .setStyle(ButtonStyle.Secondary);
@@ -103,6 +103,7 @@ exports.followUp = async (message, interaction, roundNum, stored = false) => {
       sendResponses(interaction, {...tempStore.get(String(roundNum)), roundNum})
       .then(({error, response}) => {
         if(error){throw error}
+        publishedResponseInFirestore(interaction.guildId, roundNum)
         interaction.channel.send({embeds: [response]});
       })
       .catch((error) => {
