@@ -105,15 +105,15 @@ module.exports = {
         await interaction.editReply({ content: `Action cancelled.`, embeds: [], components: []});
         return;
       } else if(reply.customId === 'confirm'){
-        let {error, response} = await removeTeamMember(interaction.member);
-        if(error){
-          await interaction.editReply({ content: `Error ${error.code}: ${error.message}`, embeds: [], components: [] });
+        const removedMember = await removeTeamMember(interaction.member);
+        if(removedMember.error){
+          await interaction.editReply({ content: `Error ${removedMember.error.code}: ${removedMember.error.message}`, embeds: [], components: [] });
           return;
         };
 
-        ({error, response} = await roleRemove(teamRole, [interaction.member]));
-        if(error){
-          await interaction.editReply({ content: `Error ${error.code}: ${error.message}`, embeds: [], components: [] });
+        const removedRole = await roleRemove(teamRole, [interaction.member]);
+        if(removedRole.error){
+          await interaction.editReply({ content: `Error ${removedRole.error.code}: ${removedRole.error.message}`, embeds: [], components: [] });
           return;
         };
 
@@ -130,10 +130,10 @@ module.exports = {
         }
 
         if(interaction.channel.id !== teamChannel.response.id){
-          await interaction.editReply({ content: `You have left ${response.name}.`, embeds: [], components: [] });
+          await interaction.editReply({ content: `You have left ${removedRole.response.name}.`, embeds: [], components: [] });
           await teamChannel.response.send({content: `${interaction.user} has left your team...`, embeds: [confirmation_screen]});
         } else {
-          await interaction.followUp({ content: `${interaction.member} has left ${response.name}.`, embeds: [confirmation_screen], components: [], ephemeral: false });
+          await interaction.followUp({ content: `${interaction.member} has left ${removedRole.response.name}.`, embeds: [confirmation_screen], components: [], ephemeral: false });
         }
       }
     } catch(e) {

@@ -267,6 +267,13 @@ exports.checkMembers = async (serverId, members) => {
   }
 }
 
+/**
+ * Clears the mappings for a given quiz.  Only works when the reset command is called on the day of a running quiz.
+ * This reset should, therefore, only run when something has gone wrong during registering teams for a quiz.
+ * @param {number} serverId - the ID of the discord server
+ * @param {string} blame - the name of the user that called this command
+ * @returns {object} {error, response} where response is a list of everything deleted
+ */
 exports.reset = async (serverId, blame) => {
   if(!serverId){
     const error = {code: 400, loc: "firestore/maps.js", message: `serverId was ${serverId}`};

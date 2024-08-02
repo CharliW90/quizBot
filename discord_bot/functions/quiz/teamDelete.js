@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js")
-const { findVoiceChannel, findTextChannel } = require("../discord");
+const { findVoiceChannel, findTextChannel, roleRemove } = require("../discord");
 const { getTeam, deleteTeam, deleteTeamsMembers, deleteTeamsAliases } = require("../firestore");
 
 module.exports = async (guild, teamRole) => {
@@ -28,13 +28,18 @@ module.exports = async (guild, teamRole) => {
     deletionRequests.push(teamRole.delete());
     
     const teamsMembers = [response.captain, ...response.members].map(member => member.userId);
+    const teamsRole = guild.roles.cache.map(role => role).filter(role => role.name === "Teams");
+    deletionRequests.push(roleRemove(teamsRole, teamsMembers))
+    const teamCaptainRole = guild.roles.cache.map(role => role).filter(role => role.name === "Team Captain");
+    deletionRequests.push(roleRemove(teamCaptainRole, [response.captain]))
+    //  The below functions are firestore deletions
     deletionRequests.push(deleteTeamsMembers(guild.id, teamsMembers));
     deletionRequests.push(deleteTeamsAliases(guild.id, teamName));
     deletionRequests.push(deleteTeam(guild.id, teamName));
   
     return Promise.all(deletionRequests)
   })
-  .then(([deletedVoice, deletedText, deletedRole, deletedMembers, deletedAliases, deletedTeam]) => {
+  .then(([deletedVoice, deletedText, deletedRole, removedTeamsRole, removedCaptainRole, deletedMembers, deletedAliases, deletedTeam]) => {
     if(deletedVoice.constructor.name === 'VoiceChannel' && deletedText.constructor.name === 'TextChannel' && deletedRole.constructor.name === 'Role'){
       const deletionEmbed = new EmbedBuilder()
       .setColor('Red')
@@ -43,6 +48,18 @@ module.exports = async (guild, teamRole) => {
       .setImage('https://cdn.discordapp.com/attachments/633012685902053397/1239615993156862016/virtualQuizzes.png')
       .addFields({name: `Deleted:`, value: `${deletedRole.constructor.name}: ${deletedRole.name}\n${deletedText.constructor.name}: ${deletedText.name}\n${deletedVoice.constructor.name}: ${deletedVoice.name}`})
     
+    if(removedTeamsRole.response){
+      deletionEmbed.addFields(
+        {name: `Removed:`, value: `The '@Teams' Role for ${removedTeamsRole.response.count} users`}
+      )
+    }
+
+    if(removedCaptainRole.response){
+      deletionEmbed.addFields(
+        {name: `Removed:`, value: `The '@Team Captain' Role for ${removedCaptainRole.response.count} users`}
+      )
+    }
+
     if(deletedMembers.response){
       deletionEmbed.addFields(
         {name: `Deleted:`, value: `Database entries for ${deletedMembers.response.length} team members`}
@@ -65,7 +82,7 @@ module.exports = async (guild, teamRole) => {
 
     return {error: null, response: deletionEmbed}
     } else {
-      const details = {deletedVoice, deletedText, deletedRole, deletedMembers, deletedAliases, deletedTeam}
+      const details = {deletedVoice, deletedText, deletedRole, removedTeamsRole, deletedMembers, deletedAliases, deletedTeam}
       return {error: {message: `Something failed when deleting Role and Channels`, code: 500, details}, response: null}
     }
   })
