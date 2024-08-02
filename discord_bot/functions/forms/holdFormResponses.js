@@ -86,12 +86,12 @@ exports.followUp = async (message, interaction, roundNum, stored = false) => {
         responses.forEach(({error, response}) => {
           if(error){throw error};
         })
-      return Promise.all([toDo.update({ content: `Results for ${roundMsg} have been stored. :white_check_mark:`, components: [] }), indexRounds(interaction.guildId)])
+      return Promise.all([toDo.update({ content: `Results for ${roundMsg} have been stored. :white_check_mark:`, components: [], ephemeral: false }), indexRounds(interaction.guildId)])
       })
       .then(([messageUpdate, indexedRounds]) => {
         if(indexedRounds.error){throw indexedRounds.error}
         const rounds = indexedRounds.response;
-        const roundsMsg = rounds.length > 1 ? `Rounds ${rounds.map(round => round.split(' ')[1]).join(', ')}` : `Round ${rounds[0]}`
+        const roundsMsg = rounds.length > 1 ? `Rounds ${rounds.map(round => round.split(' ')[1]).join(', ')}` : `Round ${rounds[0].split(' ')[1]}`
         return {error: null, response: `We now have stored results for ${roundsMsg} - to access these results use the command /results`}
       })
       .catch((error) => {
