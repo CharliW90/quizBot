@@ -4,3 +4,4 @@ config.json
 package-lock.json
 .clasp.json
 gha-creds-*.json
+__dev__/
