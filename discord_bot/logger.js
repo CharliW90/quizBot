@@ -1,5 +1,4 @@
 const pino = require('pino');
-const { isColorSupported } = require('pino-pretty')
 const { PermissionFlagsBits } = require('discord.js');
 
 const transports = pino.transport({
