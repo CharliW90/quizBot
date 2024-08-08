@@ -15,7 +15,7 @@ module.exports = {
     const {error, response} = prepQuizEnvironment(client)
     logger.debug({msg: `prepQuizEnvironment(client):`, client, error, response})
     if(error){
-      logger.error({error});
+      logger.error(error);
     }
     if(response.length > 0){
       response.forEach((actionTaken) => {

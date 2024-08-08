@@ -26,7 +26,7 @@ module.exports = {
         await command.execute(interaction);
       }
 		} catch (error) {
-      logger.error({error})
+      logger.error(error)
       if(!interaction){
         logger.debug("No interaction")
         return;
