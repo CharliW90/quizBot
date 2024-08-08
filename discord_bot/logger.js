@@ -123,4 +123,11 @@ const localisedLogging = (error, localArgs, globalDetails) => {
   })
 }
 
-module.exports = {logger, localisedLogging};
+const toggleDebug = (toggle, blame) => {
+  logger.info(`${blame} ${toggle ? 'activated' : 'deactivated'} debugging`)
+  logger.level = toggle ? 'debug' : 'info'
+  logger.debug("DEBUG MODE: ON")
+  return `Logging set to ${toggle ? 'debug' : 'info'} level and above; ${toggle ? 'trace' : 'debug and trace'} suppressed`
+}
+
+module.exports = {toggleDebug, localisedLogging};
