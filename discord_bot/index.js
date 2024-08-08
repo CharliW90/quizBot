@@ -1,9 +1,11 @@
 // Require the necessary discord.js classes
 const fs = require('node:fs');
 const path = require('node:path');
-const logger = require('./logger')
+const { localisedLogging } = require('./logger')
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { token } = require('./config.json');
+
+const logger = localisedLogging(new Error(), arguments, this)
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
@@ -22,12 +24,16 @@ for (const folder of commandFolders) {
 		const command = require(filePath);
 		// Set a new item in the Collection with the key as the command name and the value as the exported module
 		if ('data' in command && 'execute' in command) {
+      logger.debug({msg: `command loaded (${command.data.name}):`, filePath, command})
 			client.commands.set(command.data.name, command);
+      logger.info(`Set command /${command.data.name}`)
 		} else {
-			logger.warn(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+      logger.debug({msg: `command not loaded:`, filePath, command})
+			logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
 		}
 	}
 }
+logger.debug({msg: `commands:`, commands: client.commands})
 
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
@@ -41,5 +47,6 @@ for (const file of eventFiles) {
     client.on(event.name, (...args) => event.execute(...args));
   }
 }
+logger.debug({msg: `client prepared:`, client})
 
 client.login(token);

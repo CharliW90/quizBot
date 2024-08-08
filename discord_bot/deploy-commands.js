@@ -2,7 +2,9 @@ const { REST, Routes } = require('discord.js');
 const { clientId, guildId, token } = require('./config.json');
 const fs = require('node:fs');
 const path = require('node:path');
-const logger = require('./logger')
+const {localisedLogging} = require('./logger')
+
+const logger = localisedLogging(new Error(), arguments, this)
 
 const commands = [];
 // fetch all the command folders from the commands directory
@@ -18,12 +20,16 @@ for (const folder of commandFolders) {
 		const filePath = path.join(commandsPath, file);
 		const command = require(filePath);
 		if ('data' in command && 'execute' in command) {
+      logger.debug({msg: `command loaded (${command.data.name}):`, filePath, command})
 			commands.push(command.data.toJSON());
+      logger.info(`loaded command /${command.data.name}`)
 		} else {
-			logger.warn(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+      logger.debug({msg: `command not loaded:`, filePath, command})
+			logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
 		}
 	}
 }
+logger.debug({msg: `commands:`, commands})
 
 // construct and prepare an instance of the REST module
 const rest = new REST().setToken(token);
@@ -39,6 +45,7 @@ const rest = new REST().setToken(token);
 			{ body: commands },
 		);
 		logger.info(`Successfully reloaded ${data.length} application (/) commands.`);
+    logger.debug({msg: `client updated with reloaded slash command data:`, data})
 	} catch (error) {
 		logger.error("deploy-commands error handler:\nERR =>", error);
 	}
