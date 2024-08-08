@@ -46,7 +46,7 @@ const rest = new REST().setToken(token);
 		);
 		logger.info(`Successfully reloaded ${data.length} application (/) commands.`);
     logger.debug({msg: `client updated with reloaded slash command data:`, data})
-	} catch (error) {
-		logger.error("deploy-commands error handler:\nERR =>", error);
+	} catch(error) {
+		logger.error({msg: "catch(error)", error});
 	}
 })();
