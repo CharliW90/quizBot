@@ -140,8 +140,25 @@ const toggleDebug = (toggle, blame) => {
 }
 
 const calls = {}
+/**
+ * Converts a pino logger into a 'throttled logger' which will only allow a certain number of calls to the logger
+ * before suppressing further logs for a period of time.
+ * @param {pino.Logger} logger a pino logger to be throttled
+ * @param {Number} limit the number of successive logs to allow within a timeframe before suppressing further logs
+ * @param {Number} throttle the amount of time to suppress further logs for, given as a number of milliseconds
+ * @returns {(call:string, ...args:any) => void}
+ */
 const throttledLogger = (logger, limit=4, throttle=6000) => {
-  return (call, ...args) => {
+  /**
+   * A throttled pino logger - use like a pino logger, but with the log level provided as a string e.g.
+   * logger.info("Hello World")
+   * becomes
+   * logger('info', "Hello World")
+   * @param {String} call the type of log to use (e.g. info, debug, error etc.)
+   * @param  {...any} args the arguments to pass into the logger
+   * @returns {void}
+   */
+  const logger = (call, ...args) => {
     const lastCall = calls[call];
     if(lastCall){
       if(Date.now() - lastCall.time > throttle){
@@ -158,7 +175,8 @@ const throttledLogger = (logger, limit=4, throttle=6000) => {
       logger[call](...args);
       return
     }
-  } 
+  }
+  return logger
 }
 
 module.exports = {localisedLogging, toggleDebug, throttledLogger};
