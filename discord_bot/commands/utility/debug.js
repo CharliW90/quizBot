@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const {logger, toggleDebug} = require('../../logger')
+const { toggleDebug, localisedLogging } = require('../../logger')
+const { ownerId } = require('../../config.json')
 
 module.exports = {
   category: 'utility',
@@ -13,15 +14,12 @@ module.exports = {
       .setDescription('Do you want to the debugger on?')
       .setRequired(true)),
 	async execute(interaction) {
-    const trigger = interaction.options.getBoolean('bool')
-    if(trigger){
-      logger.level = 'debug'
-      logger.debug(`debug logs activated by ${interaction.user.globalName}`)
-      await interaction.reply('\`Logging set to debug level and above; trace suppressed\`');
+    if(interaction.user.id !== ownerId){
+      interaction.reply("You do not have permission to perform this command.")
     } else {
-      logger.level = 'info'
-      logger.info(`debug logs deactivated by ${interaction.user.globalName}`)
-      await interaction.reply('\`Logging set to info level and above; debug and trace suppressed\`');
+      const trigger = interaction.options.getBoolean('bool')
+      const response = toggleDebug(trigger, interaction.user.globalName)
+      await interaction.reply("`" + response + "`")
     }
 	},
 };
