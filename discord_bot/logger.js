@@ -1,8 +1,17 @@
 const pino = require('pino');
 const { PermissionFlagsBits } = require('discord.js');
+const session = process.env.SESSION_MANAGER.split('/')[0]
 
 const transports = pino.transport({
-  targets: [{
+  targets: [
+    {
+      level: 'trace',
+      target: 'pino-pretty',
+      options: {
+        ignore: 'slashCommand,path,fn,stack,source',
+      },
+    },
+    {
     level: 'error',
     target: 'pino-pretty',
     options: {
@@ -20,7 +29,7 @@ const transports = pino.transport({
   {
     target: 'pino-pretty',
     options: {
-      ignore: 'pid,hostname,slashCommand,path,fn,stack,source,code,message,details',
+      ignore: 'pid,hostname,slashCommand,path,fn,stack,source,error,response,details',
     },
   }],
   dedupe: true
@@ -40,6 +49,7 @@ const logger = pino({
       }
     }
   },
+  msgPrefix: `[discord_bot](${session}) | `,
 },transports)
 
 const buildCommandDetails = (localDetails) => {
@@ -129,4 +139,26 @@ const toggleDebug = (toggle, blame) => {
   return `Logging set to ${toggle ? 'debug' : 'info'} level and above; ${toggle ? 'trace' : 'debug and trace'} suppressed`
 }
 
-module.exports = {toggleDebug, localisedLogging};
+const calls = {}
+const throttledLogger = (logger, limit=4, throttle=6000) => {
+  return (call, ...args) => {
+    const lastCall = calls[call];
+    if(lastCall){
+      if(Date.now() - lastCall.time > throttle){
+        calls[call] = {time: Date.now(), count: 1};
+        logger[call](...args);
+        return
+      } else if(lastCall.count < limit){
+        calls[call] = {time: Date.now(), count: lastCall.count + 1};
+        logger[call](...args);
+        return
+      }
+    } else {
+      calls[call] = {time: Date.now(), count: 1};
+      logger[call](...args);
+      return
+    }
+  } 
+}
+
+module.exports = {localisedLogging, toggleDebug, throttledLogger};
