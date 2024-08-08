@@ -1,16 +1,18 @@
 const { Events } = require('discord.js');
-const logger = require('../logger');
+const { localisedLogging } = require('../logger');
 const prepQuizEnvironment = require('../functions/quiz/prepQuizEnvironment');
 
 module.exports = {
 	name: Events.InteractionCreate,
 	async execute(interaction) {
-		if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()){
+    if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()){
       return;
     }  
+    
+    logger = localisedLogging(new Error(), arguments, this)
 
 		const command = interaction.client.commands.get(interaction.commandName);
-
+    logger.debug({msg: `command = interaction.client.commands.get(${interaction.commandName}):`, command, interaction})
 		if (!command) {
       logger.error(`No command matching ${interaction.commandName} was found.`);
 			return;
@@ -24,8 +26,9 @@ module.exports = {
         await command.execute(interaction);
       }
 		} catch (error) {
-			logger.error(error);
+      logger.error({error})
       if(!interaction){
+        logger.debug("No interaction")
         return;
       }
 			if (interaction.replied || interaction.deferred) {
