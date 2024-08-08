@@ -17,9 +17,7 @@ module.exports = {
     if(interaction.user.id !== ownerId && !elevatedUsers.includes(interaction.user.id)){
       interaction.reply("You do not have permission to perform this command.")
     } else {
-      const trigger = interaction.options.getBoolean('bool')
-      const response = toggleDebug(trigger, interaction.user.globalName)
-      await interaction.reply("`" + response + "`")
+      await interaction.reply("`" + toggleDebug(interaction.options.getBoolean('bool'), interaction.user.globalName) + "`")
     }
 	},
 };
