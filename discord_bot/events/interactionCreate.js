@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { localisedLogging } = require('../logger');
+const { localisedLogging } = require('../logging');
 const prepQuizEnvironment = require('../functions/quiz/prepQuizEnvironment');
 
 module.exports = {
