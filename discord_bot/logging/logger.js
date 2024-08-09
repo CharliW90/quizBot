@@ -15,7 +15,7 @@ const transports = pino.transport({
     level: 'error',
     target: 'pino-pretty',
     options: {
-      ignore: 'pid,hostname,path,code,message',
+      ignore: 'pid,hostname,path',
       singleLine: false,
     },
   },
@@ -35,22 +35,25 @@ const transports = pino.transport({
   dedupe: true
 })
 
-const logger = pino({
-  mixin(obj, num) {
-    if(obj.code && obj.message && num === 50){
-      errCode = obj.code;
-      errMsg = obj.message;
-      return {msg: `${errCode}: ${errMsg}`}
+const customMixin = (input, num) => {
+  if(input.code && input.message && num === 50){
+    errCode = input.code;
+    errMsg = input.message;
+    delete input.code;
+    delete input.message;
+    return { msg: `${errCode}: ${errMsg}` }
+  } else {
+    if(input.message){
+      return { msg: input.message}
     } else {
-      if(obj.message){
-        return { msg: obj.message}
-      } else {
-        return { msg: obj.msg}
-      }
+      return { msg: input.msg}
     }
-  },
-  msgPrefix: `[discord_bot](${session}) | `,
-},transports)
+  }
+}
+
+const msgPrefix = `[discord_bot](${session}) | `
+
+const logger = pino({mixin: customMixin, msgPrefix}, transports)
 
 const buildCommandDetails = (localDetails) => {
   const {category, data, execute, autocomplete} = localDetails
@@ -158,7 +161,7 @@ const throttledLogger = (logger, limit=4, throttle=6000) => {
    * @param  {...any} args the arguments to pass into the logger
    * @returns {void}
    */
-  const logger = (call, ...args) => {
+  return (call, ...args) => {
     const lastCall = calls[call];
     if(lastCall){
       if(Date.now() - lastCall.time > throttle){
@@ -176,7 +179,6 @@ const throttledLogger = (logger, limit=4, throttle=6000) => {
       return
     }
   }
-  return logger
 }
 
 module.exports = {localisedLogging, toggleDebug, throttledLogger};
