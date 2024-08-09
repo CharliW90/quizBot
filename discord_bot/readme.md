@@ -14,4 +14,6 @@ The [bot](/discord_bot/readme.md) is essentially a collection of ['slash-command
 
 ## functions
 
+## logging
+
 ## tests

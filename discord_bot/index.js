@@ -1,7 +1,7 @@
 // Require the necessary discord.js classes
 const fs = require('node:fs');
 const path = require('node:path');
-const { localisedLogging } = require('./logger')
+const { localisedLogging } = require('./logging')
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { token } = require('./config.json');
 

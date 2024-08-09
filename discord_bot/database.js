@@ -1,6 +1,6 @@
 const { serviceAccount } = require('./config.json');
 const firebase = require('firebase-admin');
-const { localisedLogging } = require('./logger');
+const { localisedLogging } = require('./logging');
 
 const logger = localisedLogging(new Error(), arguments, this)
 
