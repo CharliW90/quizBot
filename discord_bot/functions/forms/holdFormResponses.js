@@ -121,9 +121,9 @@ exports.followUp = async (message, interaction, roundNum, stored = false) => {
       
       if(tempStore.size > 0){
         const roundsMsg = tempStore.size > 1 ? `${tempStore.size} Quiz Rounds: Rounds ${tempStore.keys().join(', ')}` : `1 Quiz Round: Round ${tempStore.keys()}`
-        return `Deleted results for ${roundMsg} :: we now have data for ${roundsMsg} stored locally :mailbox_with_mail:`
+        return {error: null, response: `Deleted results for ${roundMsg} :: we now have data for ${roundsMsg} stored locally :mailbox_with_mail:`}
       } else {
-        return `Deleted results for ${roundMsg} :: we now have no rounds stored locally :mailbox_with_no_mail:`
+        return {error: null, response: `Deleted results for ${roundMsg} :: we now have no rounds stored locally :mailbox_with_no_mail:`}
       }
     }
   } catch(e) {
