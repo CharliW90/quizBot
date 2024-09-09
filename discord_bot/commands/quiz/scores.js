@@ -73,16 +73,24 @@ module.exports = {
       if(fetcher.customId === 'cancel'){
         await fetcher.update({ content: `Action cancelled.`, components: [] });
       } else if(fetcher.customId === 'continue'){
-        scoreboardGenerator(interaction.guildId, response, interaction.options.getString('date'))
+        const pastQuizDate = interaction.options.getString('date');
+        scoreboardGenerator(interaction.guildId, response, pastQuizDate)
         .then(({error, response}) => {
           if(error){throw error}
           fetcher.update({ content: `:white_check_mark: Scoreboard generated`, components: []});
           interaction.channel.send({embeds: [response]});
-          return addScoreboardToFirestore(interaction.guildId, response);
-        })
-        .then(({error, response}) => {
-          if(error){throw error}
-          interaction.channel.send({content: "Need to amend the data? Use /correction :wrench:\notherwise, if the quiz is over, don't forget to /end-quiz. :relaxed:"})
+          if(pastQuizDate){
+            interaction.channel.send({content: `This is the historic scoreboard for ${pastQuizDate} - they cannot be amended.`})
+            return
+          }
+          addScoreboardToFirestore(interaction.guildId, response)
+          .then(({error, response}) => {
+            if(error){throw error}
+            interaction.channel.send({content: "Need to amend the data? Use /correction :wrench:\notherwise, if the quiz is over, don't forget to /end-quiz. :relaxed:"})
+          })
+          .catch((error) => {
+            console.log(error)
+          })
         })
       }
     } catch(e) {
