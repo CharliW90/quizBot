@@ -60,14 +60,14 @@ module.exports = (interaction, team) => {
 
     return Promise.all(promises);
   })
-  .then(([teamRole, captainRole]) => {
+  .then(([teamRole, teamsRole, captainRole]) => {
     const {error, response} = findCategoryChannel(guild, "QUIZ TEAMS");
     if(error){
       undo();
       throw error;
     }
 
-    data.roles = {teamRole, captainRole};
+    data.roles = {teamRole: teamRole.response, captainRole: captainRole.response};
     const quizTeamsCategory = response;
     const promises = [];
     // we want to make the channels viewable only to those with the teamRole, and ourself (the bot)
