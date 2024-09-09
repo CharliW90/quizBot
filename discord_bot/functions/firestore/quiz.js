@@ -38,8 +38,8 @@ exports.recordTeam = async (serverId, data) => {
     await thisTeam.set({});
     thisTeamRecord = await thisTeam.get();
   }
-
-  const write = await thisTeam.set(JSON.parse(JSON.stringify(data)));
+  const teamRecord = {...data, initialValues: data}
+  const write = await thisTeam.set(JSON.parse(JSON.stringify(teamRecord)));
 
   return {error: null, response: write};
 }
