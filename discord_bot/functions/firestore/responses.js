@@ -80,7 +80,7 @@ exports.publishedResponseInFirestore = async (serverId, roundNum) => {
     return {error: {code: 404, message: `Document does not contain data for ${round}, ${session ?? quiz.code} for ${serverId}`}, response: null};
   }
 
-  await thisRoundScores.update({published: true});
+  await thisRound.update({published: true});
   const updatedScoresData = await thisRoundScores.data();
   return {error: null, response: updatedScoresData}
 }
