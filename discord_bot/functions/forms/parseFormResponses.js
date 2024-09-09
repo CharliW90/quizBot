@@ -2,23 +2,23 @@ const { EmbedBuilder } = require("discord.js");
 
 exports.parse = (data) => {
   if(!data) {
-    const error = {message: `forms API data is ${data}`, code: 404, loc: "parseFormdatas.js/parse()"};
+    const error = {message: `forms API data is ${data}`, code: 404, loc: "parseFormResponses.js/parse()"};
     return {error, response: null};
   }
 
   if(!data.roundDetails && !data.results) {
-    const details = {...data, loc: "parseFormdatas.js/parse()"};
+    const details = {data, loc: "parseFormResponses.js/parse()"};
     const error = {message: `forms API data malformed`, code: 400, details};
     return {error, response: null}
   } 
 
   if(!data.roundDetails || typeof(data.roundDetails) !== "object") {
-    const error = {message: `forms API data roundDetails were ${JSON.stringify(data.roundDetails)}`, code: 400, loc: "parseFormdatas.js/parse()"};
+    const error = {message: `forms API data roundDetails were ${JSON.stringify(data.roundDetails)}`, code: 400, loc: "parseFormResponses.js/parse()"};
     return {error, response: null};
   } 
   
   if(!data.results || typeof(data.results) !== "object") {
-    const error = {message: `forms API data results were ${JSON.stringify(data.results)}`, code: 400, loc: "parseFormdatas.js/parse()"};
+    const error = {message: `forms API data results were ${JSON.stringify(data.results)}`, code: 400, loc: "parseFormResponses.js/parse()"};
     return {error, response: null};
   }
 
@@ -26,7 +26,7 @@ exports.parse = (data) => {
   const teams = Object.keys(results);
   
   if(teams.length < 1) {
-    const error = {message: `forms API data results ${JSON.stringify(data.results)} does not contain any teams`, code: 404, loc: "parseFormdatas.js/parse()"};
+    const error = {message: `forms API data results ${JSON.stringify(data.results)} does not contain any teams`, code: 404, loc: "parseFormResponses.js/parse()"};
     return {error, response: null};
   }
   
