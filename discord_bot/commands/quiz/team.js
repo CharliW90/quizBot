@@ -3,6 +3,8 @@ const { findAdmins, findRole } = require("../../functions/discord");
 const teamMemberAdd = require("../../functions/quiz/teamMemberAdd");
 const teamMemberRemove = require("../../functions/quiz/teamMemberRemove");
 const teamMemberPromote = require("../../functions/quiz/teamMemberPromote");
+const { setTeamsMembers, deleteTeamsMembers, getTeam } = require("../../functions/firestore");
+const { updateTeam } = require("../../functions/firestore/quiz");
 
 module.exports = {
   category: 'quiz',
@@ -136,9 +138,9 @@ module.exports = {
     }
 
     const members = [];
-    interaction.options.getMember('member') ? members.push(interaction.options.getMember('member')) : "";
-    interaction.options.getMember('member-2') ? members.push(interaction.options.getMember('member-2')) : "";
-    interaction.options.getMember('member-3') ? members.push(interaction.options.getMember('member-3')) : "";
+    if (interaction.options.getMember('member')) {members.push(interaction.options.getMember('member'))}
+    if (interaction.options.getMember('member-2')) {members.push(interaction.options.getMember('member-2'))}
+    if (interaction.options.getMember('member-3')) {members.push(interaction.options.getMember('member-3'))}
 
     const roleMembers = allMembers.map(member => member).filter(member => member.roles.cache.has(teamRole.id));
     const [teamCaptain] = roleMembers.filter(member => member.roles.cache.has(captainRole.id));
@@ -149,7 +151,7 @@ module.exports = {
       if(admins.has(member.id)){
         validate.refuse = true;
         validate.admins.push(member)
-      }else if(member.user.bot){
+      } else if(member.user.bot){
         validate.refuse = true;
         validate.bots.push(member)
       }
@@ -223,38 +225,99 @@ module.exports = {
         return;
       } else if(reply.customId === 'confirm'){
         if (interaction.options.getSubcommand() === 'add-member') {
-          const {error, response} = teamMemberAdd(teamRole, members)
-          if(error){
-            console.error(error)
-          }
-          interaction.editReply(`Done.`);
-          interaction.channel.messages.delete(popup);
-          confirmation.delete();
+          teamMemberAdd(interaction.guild, teamRole, members)
+          .then(({error, response}) => {
+            if(error){
+              console.error(error)
+              interaction.editReply(`Failed - see the logs for further details.`);
+              throw error
+            }
+            
+            return setTeamsMembers(interaction.guild.id, teamName.split(': ')[1], members)
+          })
+          .then(({error, response}) => {
+            if(error){throw error}
+
+            return getTeam(interaction.guild.id, teamName.split(': ')[1])
+          })
+          .then(({error, response}) => {
+            if(error){throw error}
+            const updatedMembers = response.members.concat(members)
+            return updateTeam(interaction.guild.id, {...response, members: updatedMembers})
+          })
+          .then(({error, response}) => {
+            if(error){throw error}
+            interaction.editReply(`Done.`);
+            interaction.channel.messages.delete(popup);
+            confirmation.delete();
+          })
+          .catch((error) => {
+            return {error, response: null}
+          })
+          
         }
         if (interaction.options.getSubcommand() === 'remove-member') {
-          const {error, response} = teamMemberRemove(teamRole, members)
-          if(error){
-            console.error(error)
-          }
-          interaction.editReply(`Done.`);
-          interaction.channel.messages.delete(popup);
-          confirmation.delete();
+          teamMemberRemove(interaction.guild, teamRole, members)
+          .then(({error, response}) => {
+            if(error){
+              console.error(error)
+              interaction.editReply(`Failed - see the logs for further details.`);
+              throw error
+            }
+            return deleteTeamsMembers(interaction.guild.id, members.map(member => member.user.id))
+          })
+          .then(({error, response}) => {
+            if(error){throw error}
+            return getTeam(interaction.guild.id, teamName.split(': ')[1])
+          })
+          .then(({error, response}) => {
+            if(error){throw error}
+            const deletedMemberIds = members.map((guildMember) => {return guildMember.user.id})
+            const updatedMembers = response.members.filter((member) => {return !deletedMemberIds.includes(member.userId)})
+            return updateTeam(interaction.guild.id, {...response, members: updatedMembers})
+          })
+          .then(({error, response}) => {
+            if(error){throw error}
+            interaction.editReply(`Done.`);
+            interaction.channel.messages.delete(popup);
+            confirmation.delete();
+          })
+          .catch((error) => {
+            return {error, response: null}
+          })
         }
         if (interaction.options.getSubcommand() === 'promote-to-captain') {
           const [newCaptain] = members
-          const {error, response} = teamMemberPromote(teamCaptain, newCaptain, captainRole)
-          if(error){
-            console.error(error);
-            throw error;
-          }
-          interaction.editReply(response);
-          interaction.channel.messages.delete(popup);
-          confirmation.delete();
+          teamMemberPromote(teamCaptain, newCaptain, captainRole)
+          .then(({error, response}) => {
+            if(error){throw error}
+            return getTeam(interaction.guild.id, teamName.split(': ')[1])
+          })
+          .then(({error, response}) => {
+            if(error){throw error}
+            response.members.push(teamCaptain)
+            const updatedMembers = response.members.filter((member) => {return member.userId !== newCaptain.user.id})
+            return updateTeam(interaction.guild.id, {...response, captain: newCaptain, members: updatedMembers})
+          })
+          .then(({error, response}) => {
+            if(error){throw error}
+            interaction.editReply(`Done.`);
+            interaction.channel.messages.delete(popup);
+            confirmation.delete();
+          })
+          .catch((error) => {
+            return {error, response: null}
+          })
         }
       }
     } catch(e) {
-      console.error("team error handler:\nERR =>", e);
-      await interaction.editReply({ content: `An unknown error occurred - see the logs for further details`, components: [] });
+      if(e.message === "Collector received no interactions before ending with reason: time"){
+        // handles failure to reply to the initial response of 'which round do you want to fetch?'
+        await confirmation.edit({ content: 'Response not received within 10 seconds, cancelling...', components: [] });
+      } else {
+        console.error("team error handler:\nERR =>", e);
+        await confirmation.edit({ content: `An unknown error occurred - see the logs for further details`, components: [] });
+      }
     }
   }
 }
