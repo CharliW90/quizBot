@@ -2,7 +2,7 @@ const { newPassword } = require("../../utility/hotPass.js");
 const { fetchFormResponses } = require("../models/formResponses.model.js");
 
 const scriptUrl = `https://script.google.com/macros/s/${process.env.webAppUrl}/exec`
-const reAuth = `https://script.google.com/d/${process.env.scriptId}/edit?usp=sharing`
+const reAuth = `https://script.google.com/u/1/home/projects/${process.env.scriptId}/edit`
 
 exports.fetchResponse = (req, res, next) => {
   const {roundNumber} = req.params;
