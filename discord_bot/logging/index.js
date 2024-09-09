@@ -1,6 +1,35 @@
 const pino = require('pino');
 const { PermissionFlagsBits } = require('discord.js');
-const session = process.env.SESSION_MANAGER.split('/')[0]
+const sessionManager = process.env.SESSION_MANAGER
+let session = "unknown"
+if(sessionManager){
+  session = sessionManager.split('/')[0]
+}
+
+const defaultPinoConf = {
+  messageKey: 'msg'
+}
+
+const PinoLevelToSeverityLookup = {
+  trace: 'DEBUG',
+  debug: 'DEBUG',
+  info: 'INFO',
+  warn: 'WARNING',
+  error: 'ERROR',
+  fatal: 'CRITICAL',
+};
+
+if(session === "google_cloud"){
+  defaultPinoConf.messageKey = 'message';
+  defaultPinoConf.formatters = {
+    level(label, number) {
+      return {
+        severity: PinoLevelToSeverityLookup[label] || "INFO",
+        level: number,
+      }
+    }
+  }
+}
 
 const transports = pino.transport({
   targets: [
@@ -53,7 +82,7 @@ const customMixin = (input, num) => {
 
 const msgPrefix = `[discord_bot](${session}) | `
 
-const logger = pino({mixin: customMixin, msgPrefix}, transports)
+const logger = pino({mixin: customMixin, msgPrefix}, transports, defaultPinoConf)
 
 const buildCommandDetails = (localDetails) => {
   const {category, data, execute, autocomplete} = localDetails
@@ -147,8 +176,8 @@ const calls = {}
  * Converts a pino logger into a 'throttled logger' which will only allow a certain number of calls to the logger
  * before suppressing further logs for a period of time.
  * @param {pino.Logger} logger a pino logger to be throttled
- * @param {Number} limit the number of successive logs to allow within a timeframe before suppressing further logs
- * @param {Number} throttle the amount of time to suppress further logs for, given as a number of milliseconds
+ * @param {number} limit _(optional) default: 4_  the number of successive logs to allow within a timeframe before suppressing further logs
+ * @param {number} throttle _(optional) default: 6000_  the amount of time to suppress further logs for, given as a number of milliseconds
  * @returns {(call:string, ...args:any) => void}
  */
 const throttledLogger = (logger, limit=4, throttle=6000) => {
