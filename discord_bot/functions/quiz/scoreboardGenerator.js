@@ -22,6 +22,7 @@ module.exports = async (serverId, rounds, session = null) => {
       const currentRound = round.response.current;
       currentRound.embeds.forEach((embed) => {
         const teamName = embed.title;
+        const roundNum = embed.author.name.split(' - Round Number ')[1];
         const {error, response} = lookupAlias(serverId, teamName, session)
         const lookup = response ?? teamName;
         if(!scoreboard.has(lookup.toLowerCase())){
@@ -30,11 +31,10 @@ module.exports = async (serverId, rounds, session = null) => {
         let {name, scores, total, totalPossible} = scoreboard.get(lookup.toLowerCase());
 
         const totalScore = embed.fields.filter((field) => {return field.name === "Total Score"}).map(field => field.value)[0];
-        scores.push(totalScore);
-
         const scoreNums = totalScore.split(' / ');
         const scored = Number(scoreNums[0])
         const possible = Number(scoreNums[1])
+        scores.push(`(${roundNum}): ${scored}`);
         total += scored;
         totalPossible += possible;
 
@@ -72,8 +72,7 @@ module.exports = async (serverId, rounds, session = null) => {
       count += teams.length;
       const output = teams.map((name) => {
         const team = scoreboard.get(name.toLowerCase());
-        const scoring = team.scores.map((score, i) => {return `${i+1}) ${score.split(' / ')[0]}`})
-        return `${name}:\n${team.total} / ${team.totalPossible}\n${scoring.join(', ')}\n`
+        return `${name}:\n${team.total} / ${team.totalPossible}\n${team.scores.join(', ')}\n`
       })
       report.addFields({name: message, value: output.join('\n')})
     })
