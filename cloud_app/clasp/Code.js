@@ -74,22 +74,37 @@ function doGet(e) {
   }
 
   const questions = form.getItems()         // first build up some information about the questions
+  const questionsToIgnore = []
 
   questions.forEach((question) => {
-    if(question.getType().name() === "TEXT"){
+    const questionTitle = String(question.getTitle()).toLowerCase()
+    const questionType = String(question.getType().name()).toUpperCase()
+    if(questionType === "PARAGRAPH_TEXT" && questionTitle.includes("feedback")){
+      questionsToIgnore.push(Number(question.getIndex()))
+    } else if(questionType === "TEXT"){
       const parsedItem = question.asTextItem();
       const possiblePoints = parsedItem.getPoints();
       if(possiblePoints > 0){
         roundDetails.questions ++;
         roundDetails.totalScore += possiblePoints;
       }
-    } else if(question.getType().name() === "MULTIPLE_CHOICE"){
+    } else if(questionType === "MULTIPLE_CHOICE"){
       const parsedItem = question.asMultipleChoiceItem();
       const possiblePoints = parsedItem.getPoints();
       if(possiblePoints > 0){
         roundDetails.questions ++;
         roundDetails.totalScore += possiblePoints;
       }
+    } else {
+      msg = {
+        error: {
+          code: 400,
+          reason: `Form contains answer fields other than TEXT or MULTIPLE CHOICE`
+        }
+      }
+      console.warn(msg.error.reason);
+      const response = JSON.stringify(msg)
+      return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
     }
   })
 
@@ -97,8 +112,8 @@ function doGet(e) {
   const results = {};
 
   responses.forEach((teamResponse) => {
-    const responses = parseTeamResponse(teamResponse);
-    const teamName = responses[0].answer   // the first question always asks for team name
+    const responses = parseTeamResponse(teamResponse, questionsToIgnore);
+    const teamName = responses[0].answer.trim()   // the first question always asks for team name
     results[teamName] = {
       answers: [],
       score: 0
@@ -117,26 +132,27 @@ function doGet(e) {
   return ContentService.createTextOutput(stringResponse).setMimeType(ContentService.MimeType.JSON);
 }
 
-function parseTeamResponse(teamResponse) {
+function parseTeamResponse(teamResponse, questionsToIgnore) {
   const questionResponses = teamResponse.getGradableItemResponses();
-
   const results = [];
 
   questionResponses.forEach((questionResponse) => {
-    const response = parseAnswer(questionResponse);
-    results[response.questionIndex] = response.answer;
+    const questionIndex = Number(questionResponse.getItem().getIndex());
+    if(!questionsToIgnore.includes(questionIndex)){
+      const response = parseAnswer(questionResponse);
+      results[questionIndex] = response;
+    }
   })
 
   return results;
 }
 
 function parseAnswer(question) {
-  const questionIndex = Number(question.getItem().getIndex());
   const answerGiven = String(question.getResponse());
   const score = Number(question.getScore());
   const correct = Boolean(score > 0);
 
-  const result = {questionIndex, answer: {answer: answerGiven, score, correct}};
+  const result = {answer: answerGiven, score, correct};
 
   return result;
 }
