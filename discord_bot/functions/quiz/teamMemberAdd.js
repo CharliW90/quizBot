@@ -1,4 +1,4 @@
-const { roleAssign } = require("../discord");
+const { roleAssign, findRole } = require("../discord");
 
 module.exports = (guild, teamRole, members) => {
   if(!teamRole || !members || members.length < 1){
@@ -6,9 +6,9 @@ module.exports = (guild, teamRole, members) => {
     console.error(error);
     return {error, response: null};
   }
-  const genericTeamsRole = guild.roles.cache.map(role => role).filter(role => role.name === "Teams");
+  const genericTeamsRole = findRole(guild, "Teams")
 
-  return roleAssign(genericTeamsRole, members)
+  return roleAssign(genericTeamsRole.response, members)
   .then(({error, response}) => {
     if(error){
       throw {code: 500, message: `genericTeamsRole roleAssign failed with Error: ${error}`}

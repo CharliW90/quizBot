@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js")
-const { findVoiceChannel, findTextChannel, roleRemove } = require("../discord");
+const { findVoiceChannel, findTextChannel, roleRemove, findRole } = require("../discord");
 const { getTeam, deleteTeam, deleteTeamsMembers, deleteTeamsAliases } = require("../firestore");
 
 module.exports = async (guild, teamRole) => {
@@ -21,19 +21,22 @@ module.exports = async (guild, teamRole) => {
     promises.push(findVoiceChannel(guild, response.channels.voiceChannel.name));
     return Promise.all(promises)
   })
-  .then(([response, textChannel, voiceChannel]) => {
+  .then(([team, textChannel, voiceChannel]) => {
     const deletionRequests = []
     deletionRequests.push(voiceChannel.response.delete());
     deletionRequests.push(textChannel.response.delete());
     deletionRequests.push(teamRole.delete());
+
+    const teamCaptain = guild.members.cache.get(team.captain.userId)
+    const teamsMembers = team.members.map((member) => {return guild.members.cache.get(member.userId)});
+    const genericTeamsRole = findRole(guild, "Teams")
+    const teamCaptainRole = findRole(guild, "Team Captain")
+
+    deletionRequests.push(roleRemove(genericTeamsRole.response, teamsMembers.concat(teamCaptain)))
+    deletionRequests.push(roleRemove(teamCaptainRole.response, [teamCaptain]))
     
-    const teamsMembers = [response.captain, ...response.members].map(member => member.userId);
-    const teamsRole = guild.roles.cache.map(role => role).filter(role => role.name === "Teams");
-    deletionRequests.push(roleRemove(teamsRole, teamsMembers))
-    const teamCaptainRole = guild.roles.cache.map(role => role).filter(role => role.name === "Team Captain");
-    deletionRequests.push(roleRemove(teamCaptainRole, [response.captain]))
     //  The below functions are firestore deletions
-    deletionRequests.push(deleteTeamsMembers(guild.id, teamsMembers));
+    deletionRequests.push(deleteTeamsMembers(guild.id, teamsMembers.concat(teamCaptain).map(member => member.user.id)));
     deletionRequests.push(deleteTeamsAliases(guild.id, teamName));
     deletionRequests.push(deleteTeam(guild.id, teamName));
   
