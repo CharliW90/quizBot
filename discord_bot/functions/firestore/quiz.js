@@ -111,6 +111,49 @@ exports.deleteTeam = async (serverId, teamName, session = null) => {
   return {error: null, response: deletion}
 }
 
+exports.updateTeam = async (serverId, data) => {
+  if(!serverId || !data){
+    return {error: {code: 400, loc: "firestore/quiz/recordTeam", message: `Missing parameters - expected serverId and data`}, response: null};
+  }
+  const {teamName, captain, members, settledColour, channels, roles} = data;
+  if(!teamName || !captain || !members || !settledColour || !channels || !roles){
+    return {error: {code: 400, loc: "firestore/quiz/recordTeam", message: `Missing data - expected teamName, captain, members, settledColour, channels and roles`}, response: null};
+  }
+
+  data.rounds = [];
+  data.score = 0;
+    
+  const quiz = quizDate();
+
+  const thisGuild = firestore.collection('Servers').doc(serverId);
+  const thisQuiz = thisGuild.collection('Quizzes').doc(quiz.code);
+  const thisTeam = thisQuiz.collection('Teams').doc(teamName.toLowerCase());
+
+  const thisGuildStorage = await thisGuild.get();
+  if(!thisGuildStorage.exists){
+    await thisGuild.set({});
+  }
+
+  const thisQuizStore = await thisQuiz.get();
+  if(!thisQuizStore.exists) {
+    await thisQuiz.set({date: quiz.name, scoreboard: {}, ended: false});
+  } else {
+    const check = await thisQuizStore.data();
+    if(check.ended){
+      return {error: {code: 403, message: `The quiz for ${quiz.code} has ended - no further updates allowed`}, response: null};
+    }
+  }
+
+  let thisTeamRecord = await thisTeam.get();
+  if(!thisTeamRecord.exists) {
+    return {error: {code: 404, message: `No firestore document for ${teamName}, ${session ?? quiz.code} for ${serverId}`}, response: null};
+  }
+
+  const write = await thisTeam.update({...JSON.parse(JSON.stringify(data))});
+
+  return {error: null, response: write};
+}
+
 exports.indexQuizzes = async (serverId) => {
   if(!serverId){
     return {error: {code: 400, loc: "firestore/quiz/indexQuizzes", message: `Missing parameters - expected serverId`}, response: null};
