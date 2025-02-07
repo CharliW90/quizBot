@@ -27,6 +27,17 @@ function doGet(e) {
     const response = JSON.stringify(msg)
     return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
   }
+  if(e.parameter.endpoint === 'permissionsCheck'){
+    msg = {
+      response: {
+        code: 200,
+        message: "Adequate permissions."
+      }
+    }
+    console.info('Permissions Check: PASS')
+    const stringResponse = JSON.stringify(msg);
+    return ContentService.createTextOutput(stringResponse).setMimeType(ContentService.MimeType.JSON);
+  }
   const roundNumber = e.parameter.formId
   if(isNaN(roundNumber)){
     msg = {

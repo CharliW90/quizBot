@@ -1,11 +1,12 @@
 const { EmbedBuilder } = require('discord.js');
 const { checkMembers, lookupAlias } = require('../../functions/firestore');
 const { findAdmins } = require('../../functions/discord');
-const logger = require('../../logger');
+const { localisedLogging } = require('../../logging');
+const path = require('path')
 
 module.exports = async (interaction, teamName, teamMembers) => {
-  const localLogger = logger.child({command: true, file: 'register-team.js', fn: 'validateTeamDetails()'})
-
+  const logger = localisedLogging(new Error(), arguments, this, interaction.blob)
+  
   const roles = interaction.guild.roles.cache.map(role => role.name);
   const dupedRole = roles.filter((role) => {return role.toLowerCase() === teamName.toLowerCase()});
   const channels = interaction.guild.channels.cache.map((channel) => {return `${channel.constructor.name}: ${channel.name}`});
@@ -22,14 +23,16 @@ module.exports = async (interaction, teamName, teamMembers) => {
       registeringSelf = true
     }
     if(guildAdmins.has(member.id)){
-      admins.push(member)
+      if(!teamName.includes("#!?")){   // use '#!?' in the team name as an override to allow admins to be added
+        admins.push(member)
+      }
     }else if(member.user.bot){
       bots.push(member)
     }
   })
 
   if(!registeringSelf && !guildAdmins.has(interaction.user.id)){
-    localLogger.warn(`${interaction.user.globalName} attempted to register a team that was not their own\nNAME: ${teamName}\nMEMBERS:\n--${teamMembers.join('\n--')}`)
+    logger.warn(`${interaction.user.globalName} attempted to register a team that was not their own\nNAME: ${teamName}\nMEMBERS:\n--${teamMembers.join('\n--')}`)
     const refusal = new EmbedBuilder()
       .setColor('Red')
       .setTitle(":x: You are not permitted to register other people to teams!")
@@ -50,7 +53,7 @@ module.exports = async (interaction, teamName, teamMembers) => {
         {name: "Team Member(s) requested", value: teamMembers.join('\n')}
       )
     
-    localLogger.debug(membersCheck)
+    logger.debug({membersCheck})
 
     if(admins.length > 0){
       refusal.addFields({name: ":x: Admin Member not allowed",  value: admins.join('\n')});

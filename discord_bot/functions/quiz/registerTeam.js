@@ -1,22 +1,27 @@
 const { PermissionFlagsBits, EmbedBuilder } = require("discord.js");
 const { findRole, createRole, roleAssign, createTextChannel, createVoiceChannel, findCategoryChannel } = require('../discord')
-const { setTeamsAliases, setTeamsMembers, deleteTeamsMembers, addTeamMemberToFirestore } = require("../firestore");
+const { setTeamsAliases, deleteTeamsAliases, setTeamsMembers, deleteTeamsMembers, addTeamMemberToFirestore } = require("../firestore");
+const { localisedLogging } = require('../../logging');
 
 // keep a history of the roles and channels created as we go along,
 // so that if a step fails we can undo the completed actions before returning the error message to the end-user
 const history = [];
 
 module.exports = (interaction, team) => {
+  const logger = localisedLogging(new Error(), arguments, this, interaction.blob)
+  
   if(!interaction || !team){
     const error = {code: 400, message: `Interaction was ${interaction}, Team was ${team}`};
-    console.error(error);
+    logger.error({...error});
     return {error, response: null};
   }
+
   const guild = interaction.guild;
   const self = findRole(guild, "Quizzy");
   const {teamName, captain, members, settledColour} = team;
   const data = JSON.parse(JSON.stringify(team));
   const textChannelName = textifyTeamName(teamName.toLowerCase());
+  logger.info(`Textified "${teamName}" => "${textChannelName}"`)
 
   const roleDetails = {
     name: `Team: ${teamName}`,
@@ -28,15 +33,16 @@ module.exports = (interaction, team) => {
   return createRole(guild, roleDetails)
   .then(({error, response}) => {
     if(error){
-      undo();
+      undo(interaction, logger);
       throw error;
     }
+    logger.info(`SUCCESS [createRole response: (${response})]`)
     const teamRole = response;
     history.push(teamRole);
     
     ({error, response} = findRole(guild, "Team Captain"));
     if(error){
-      undo();
+      undo(interaction, logger);
       throw error;
     }
     const captainRole = response;
@@ -44,7 +50,7 @@ module.exports = (interaction, team) => {
 
     ({error, response} = findRole(guild, "Teams"));
     if(error){
-      undo();
+      undo(interaction, logger);
       throw error;
     }
     const teamsRole = response;
@@ -61,9 +67,15 @@ module.exports = (interaction, team) => {
     return Promise.all(promises);
   })
   .then(([teamRole, teamsRole, captainRole]) => {
+    if(teamRole.error || teamsRole.error || captainRole.error){
+      undo(interaction, logger);
+      const errMsg = [teamRole.error, teamsRole.error, captainRole.error].filter(_ => _ !== null).map(_ => _.message).join('; ')
+      const error = {message: `Role Assignment(s) failed: ${errMsg}`, code: 500}
+      throw error
+    }
     const {error, response} = findCategoryChannel(guild, "QUIZ TEAMS");
     if(error){
-      undo();
+      undo(interaction, logger);
       throw error;
     }
 
@@ -95,9 +107,10 @@ module.exports = (interaction, team) => {
   })
   .then(([textChannel, voiceChannel]) => {
     if(textChannel.error || voiceChannel.error){
-      undo();
-      const message = `Text Channel error: ${textChannel.error.message}\nVoice Channel error: ${voiceChannel.error.message}`
-      throw {message, code: 500};
+      undo(interaction, logger);
+      const errMsg = [textChannel.error, voiceChannel.error].filter(_ => _ !== null).map(_ => _.message).join('; ')
+      const error = {message: `Channel Creation(s) failed: ${errMsg}`, code: 500}
+      throw error
     }
     history.push(textChannel.response, voiceChannel.response);
     data.channels = {textChannel: textChannel.response, voiceChannel: voiceChannel.response};
@@ -108,7 +121,7 @@ module.exports = (interaction, team) => {
       const {error, response} = setTeamsAliases(interaction.guildId, teamName.toLowerCase(), textChannelName.toLowerCase());
       if(error){
         // this is a non-fatal error, and is just a 'nice to have' if it works
-        console.warn(error);
+        logger.warn(error);
       } else {
         history.push(response)
       }
@@ -119,7 +132,7 @@ module.exports = (interaction, team) => {
   .then(({error, response}) => {
     if(error){
       // this is a non-fatal error, however it will cause incorrect pre-registration checks against team members
-      console.warn(error);
+      logger.warn(error);
     } else {
       history.push(response);
     }
@@ -130,7 +143,7 @@ module.exports = (interaction, team) => {
     responses.forEach(({error, response}) => {
       if(error){
         // this is a non-fatal error, we just haven't recorded the user in firestore
-        console.warn(error);
+        logger.warn(error);
       } else {
         history.push(response);
       }
@@ -154,10 +167,13 @@ module.exports = (interaction, team) => {
       successfulRegistration.addFields({name: "Team Members", value: members.join('\n')});
     }
 
+    logger.info(`SUCCESS:  Team Registration complete - posting embed update to channel.`)
+
     return {error: null, response: {embed: successfulRegistration, data}};
   })
   .catch((error) => {
-    undo(interaction);
+    logger.error({...error});
+    undo(interaction, logger);
     return{error, response: null}
   })
 }
@@ -177,23 +193,27 @@ const textifyTeamName = (string) => {
   return textified.join('');
 }
 
-const undo = (interaction) => {
+const undo = (interaction, logger) => {
+  logger.warn("FAILURE: Team Registration aborted - attempting to undo all actions taken")
   history.forEach((actionTaken) => {
     try{
       if(String(actionTaken).includes('<=>')){
         // this is our team members registration, where teams and members are mapped to one another
+        logger.warn(`Firestore | Attempt undo for relation of teams and members`)
         const registration = actionTaken.split('<=>');
-        deleteTeamsMembers(interaction.guildId, registration).then((deletion) => console.log(deletion.response));
+        deleteTeamsMembers(interaction.guildId, registration).then((deletion) => logger.info(deletion.response));
       } else if(String(actionTaken).includes('<?>')){
         // this is our team aliases registration, where teamname and textchannelname are mapped to one another
+        logger.warn(`Firestore | Attempt undo for relation of teamname aliases and textchannel name`)
         const registration = actionTaken.split('<?>');
-        deleteTeamsMembers(interaction.guildId, registration).then((deletion) => console.log(deletion.response));
+        deleteTeamsAliases(interaction.guildId, registration).then((deletion) => logger.info(deletion.response));
       } else {
         // this is a discord action (e.g. Role creation or Channel Creation)
-        actionTaken.delete().then((deletion) => console.log(`Deleted ${deletion.constructor.name} ${deletion.name}`));
+        logger.warn(`Firestore | Attempt undo for Channels and Roles created`)
+        actionTaken.delete().then((deletion) => logger.info(`Deleted ${deletion.constructor.name} ${deletion.name}`));
       }
     } catch(e){
-      console.error("FATAL: registerTeam undo() failed!\nERR =>", e);
+      logger.error("FATAL: registerTeam undo() failed!\nERR =>", e);
     }
   })
 }

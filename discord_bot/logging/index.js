@@ -1,14 +1,20 @@
 const pino = require('pino');
 const { PermissionFlagsBits } = require('discord.js');
 const sessionManager = process.env.SESSION_MANAGER
-let session = "unknown"
-if(sessionManager){
-  session = sessionManager.split('/')[0]
-}
+const session = sessionManager ? sessionManager.split('/')[0] : "unknown_session"
+
+// console.log("-------------------- PROCESS.ENV --------------------")
+// const keys = Object.keys(process.env)
+// keys.forEach((key) => {
+//   console.log(key)
+//   console.log(process.env[key])
+// })
 
 const defaultPinoConf = {
   messageKey: 'msg'
 }
+
+// console.log(session, "<<< session")
 
 const PinoLevelToSeverityLookup = {
   trace: 'DEBUG',
@@ -138,21 +144,22 @@ const buildFunctionDetails = (properties) => {
  * @param {Error} error - a 'new Error()' object
  * @param {IArguments} localArgs - the local 'arguments' object
  * @param {object} globalDetails - the global 'this' object
+ * @param {String} trace - (optional) an identifier to help group logs by activity
  * @returns {pino.Logger}
  */
-const localisedLogging = (error, localArgs, globalDetails) => {
+const localisedLogging = (error, localArgs, globalDetails, trace = undefined) => {
   const stackArray = error.stack.split('\n');
   const stack = stackArray.slice(1, -1).map(line => line.trim())
   const location = stackArray[1].trim()
   const details = location.split(" ")
   const arguments = Object.values(localArgs).map((arg) => {return arg.constructor.name ? arg.constructor.name : typeof(arg)})
-
+  
   const filePath = details[2] ? details[2].split(":")[0] : "unknown"
   const functionName = details[1] ? `${details[1]}(${arguments})` : "unknown"
 
-  const path = filePath.split("discord_bot/")[1]
-  const fn = functionName.replace("Object", path.split('/').pop().split('.js')[0])
-  const slashCommand = path.split('/')[0] === 'commands'
+  const path = filePath === "unknown" ? filePath : filePath.split("discord_bot/")[1]
+  const fn = functionName === "unknown" ? functionName : functionName.replace("Object", path.split('/').pop().split('.js')[0])
+  const slashCommand = path === "unknown" ? slashCommand : path.split('/')[0] === 'commands'
 
   return logger.child({
     slashCommand,
@@ -160,8 +167,7 @@ const localisedLogging = (error, localArgs, globalDetails) => {
     fn,
     source: slashCommand ? buildCommandDetails(globalDetails) : buildFunctionDetails(localArgs),
     stack,
-    level: logger.level
-  })
+  },{level: logger.level, msgPrefix: trace !== undefined ? `${trace} | ` : ''})
 }
 
 const toggleDebug = (toggle, blame) => {
@@ -208,6 +214,10 @@ const throttledLogger = (logger, limit=4, throttle=6000) => {
       return
     }
   }
+}
+
+const discordLogger = (message) => {
+  
 }
 
 module.exports = {localisedLogging, toggleDebug, throttledLogger};

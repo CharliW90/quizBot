@@ -1,5 +1,6 @@
 const { Events, ActivityType } = require('discord.js');
 const { localisedLogging } = require('../logging');
+const { versionFlag, versionDate } = require('../config.json')
 const prepQuizEnvironment = require('../functions/quiz/prepQuizEnvironment');
 
 module.exports = {
@@ -12,6 +13,7 @@ module.exports = {
       status: 'online'
     });
 		logger.info(`Ready! Logged in as ${client.user.tag}`);
+    logger.info(`Running QuizBot V${versionFlag}_${versionDate}`);
     const {error, response} = prepQuizEnvironment(client)
     logger.debug({msg: `prepQuizEnvironment(client):`, client, error, response})
     if(error){

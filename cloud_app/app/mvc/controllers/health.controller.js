@@ -1,7 +1,7 @@
 const { ping } = require("../models/health.model.js");
 
 exports.checker = (req, res, next) => {
-  ping("http://worldtimeapi.org/api/ip")
+  ping("https://timeapi.io/api/time/current/zone?timezone=Europe%2FAmsterdam")
   .then((pingResponse) => {
     const healthResponse = {
       "bot":{
@@ -18,6 +18,7 @@ exports.checker = (req, res, next) => {
     if(err.code === '23502'){
       next({status: 400, msg: "Bad request"})  //needs amending once common error codes known
     } else {
+      console.log(err, '<<< err')
       next(err)
     }
   })

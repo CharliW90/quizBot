@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ButtonStyle, ButtonBuilder, ActionRowBuilder } = require("discord.js");
 const { findRole } = require("../../functions/discord");
 const teamDelete = require("../../functions/quiz/teamDelete");
+const { localisedLogging, throttledLogger } = require("../../logging");
 
 module.exports = {
   category: 'quiz',
@@ -17,18 +18,22 @@ module.exports = {
         .setAutocomplete(true)
     ),
   async autocomplete(interaction) {
+    const logger = throttledLogger(localisedLogging(new Error(), arguments, this));
     const focusedOption = interaction.options.getFocused();
-    const guildRoles = await interaction.guild.roles.cache.map(role => role);
+    const guildRoles = await interaction.guild.roles.cache;
     const teamRoles = guildRoles.filter((role) => {
       const prefix = role.name.split(' ')[0];
       return prefix === "Team:"
     });
+    logger("debug", {msg: `option = teamRoles: interaction.guild.roles.cache.filter():`, teamRoles})
     const filtered = teamRoles.filter(choice => choice.name.startsWith(focusedOption));
     await interaction.respond(
       filtered.map(choice => ({ name: choice.name.replace("Team: ", ""), value: choice.name}))
     )
   },
   async execute(interaction) {
+    const logger = localisedLogging(new Error(), arguments, this);
+    logger.debug()
     const teamName = interaction.options.getString('team')
     const {error, response} = findRole(interaction.guild, teamName)
     if(error){

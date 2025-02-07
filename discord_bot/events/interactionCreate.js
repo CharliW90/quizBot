@@ -1,5 +1,6 @@
 const { Events } = require('discord.js');
 const { localisedLogging } = require('../logging');
+const crypto = require('crypto');
 const prepQuizEnvironment = require('../functions/quiz/prepQuizEnvironment');
 
 module.exports = {
@@ -12,7 +13,7 @@ module.exports = {
     logger = localisedLogging(new Error(), arguments, this)
 
 		const command = interaction.client.commands.get(interaction.commandName);
-    logger.debug({msg: `command = interaction.client.commands.get(${interaction.commandName}):`, command, interaction})
+    logger.debug({msg: `eventTicker: command = interaction.client.commands.get(${interaction.commandName}):`, command, interaction})
 		if (!command) {
       logger.error(`No command matching ${interaction.commandName} was found.`);
 			return;
@@ -22,6 +23,7 @@ module.exports = {
       if(interaction.isAutocomplete()){
         await command.autocomplete(interaction);
       } else {
+        interaction.blob = crypto.randomUUID();
         prepQuizEnvironment(null, interaction.guild);
         await command.execute(interaction);
       }

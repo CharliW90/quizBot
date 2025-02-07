@@ -5,3 +5,4 @@ package-lock.json
 .clasp.json
 gha-creds-*.json
 __dev__/
+.vscode/

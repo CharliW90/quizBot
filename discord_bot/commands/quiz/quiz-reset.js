@@ -23,7 +23,7 @@ module.exports = {
       }
       quizSession[channel.constructor.name].push(channel.name);
     });
-    const teamRoles = interaction.guild.roles.cache.map(role => role).filter(role => role.name.split(' ')[0] === "Team:");
+    const teamRoles = interaction.guild.roles.cache.filter(role => role.name.split(' ')[0] === "Team:");
     teamRoles.forEach((role) => {
       if(!quizSession[role.constructor.name]){
         quizSession[role.constructor.name] = [];
@@ -79,7 +79,7 @@ module.exports = {
           .setAuthor({name: `QuizBot 2.0`, iconURL: 'https://cdn.discordapp.com/attachments/633012685902053397/1239617146548519014/icon.png', url: 'https://www.virtual-quiz.co.uk/'})
           .addFields({name: "Reset Complete", value: message})
 
-        interaction.editReply({ embeds: [success_message], components: [], ephemeral: false});
+        interaction.editReply({ embeds: [success_message], components: []});
       }
     } catch(e) {
       if(e.message === "Collector received no interactions before ending with reason: time"){

@@ -13,4 +13,8 @@ portal.get('/', (req, res) => {
   res.status(200).send('Portal home page')
 })
 
+portal.get('/*', (req, res) => {
+  res.status(501).send("This endpoint is under development.")
+})
+
 module.exports = portal

@@ -3,8 +3,10 @@ const { EmbedBuilder } = require('discord.js');
 const { apiEndpoint, apiPasskey } = require('../../config.json');
 const { parse } = require('./parseFormResponses');
 const { hold } = require('./holdFormResponses');
+const { localisedLogging } = require('../../logging');
 
 exports.fetch = async (roundNumber) => {
+  logger = localisedLogging(new Error(), arguments, this)
   const config = {
     headers: { Authorization: `Bearer ${apiPasskey}` }
   }
@@ -33,14 +35,10 @@ exports.fetch = async (roundNumber) => {
     if(error.response){
       if(error.response.status === 403 && error.response.data){
         return {error: {code: 403, message: `Google Apps Script re-authorisation required at: ${error.response.data.reAuth}`}, response: null}
-      } else {
-        console.error(error);
-        return {error, response: null};
       }
-    } else {
-      console.error(error);
-      return {error, response: null};
     }
+    logger.error({...error});
+    return {error, response: null};
   })
 };
 

@@ -57,5 +57,5 @@ exports.fetchAllResponses = (req, res, next) => {
 }
 
 exports.listResponses = (req, res, next) => {
-
+  res.status(501).send("This endpoint is under development.")
 }

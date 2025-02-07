@@ -6,6 +6,15 @@ The [bot](/discord_bot/readme.md) is essentially a collection of ['slash-command
 
 `npm run deploy` triggers our deploy script in our package.json file, which in turn executes both: `node deploy-commands.js` and `node index.js`.
 
+us-east1-b
+e2-micro
+google-logging-enabled: true
+
+process.env:
+{
+  SESSION_MANAGER: google_cloud/quizbot
+}
+
 ## database (firestore)
 
 ## commands

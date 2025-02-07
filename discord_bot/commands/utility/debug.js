@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { toggleDebug, localisedLogging } = require('../../logger')
+const { toggleDebug, localisedLogging } = require('../../logging')
 const { ownerId, elevatedUsers } = require('../../config.json')
 
 module.exports = {

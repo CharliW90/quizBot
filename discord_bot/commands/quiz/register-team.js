@@ -1,5 +1,7 @@
 const { ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
 const { recordTeam, getUserTeamNames } = require('../../functions/firestore');
+const { localisedLogging } = require('../../logging');
+
 const validateTeamDetails = require('../../functions/quiz/validateTeamDetails');
 
 // A command to register a quiz team, including creating a role, and role-restricted channels, for the team members
@@ -62,15 +64,17 @@ module.exports = {
     )
   },
   async execute(interaction) {
+    const logger = localisedLogging(new Error(), arguments, this, interaction.blob);
     const registerTeam = require('../../functions/quiz/registerTeam');
-
-    const teamName = interaction.options.getString('team-name');
+    
+    const teamName = interaction.options.getString('team-name').trim();
     const captain = interaction.options.getMember('team-captain');
+    logger.info(`Registering Team: (${teamName}) with Captain: (${captain.user.globalName}) [Requested by ${interaction.user.globalName}]`)
     
     const members = [];
-    interaction.options.getMember('team-member-1') ? members.push(interaction.options.getMember('team-member-1')) : ""
-    interaction.options.getMember('team-member-2') ? members.push(interaction.options.getMember('team-member-2')) : ""
-    interaction.options.getMember('team-member-3') ? members.push(interaction.options.getMember('team-member-3')) : ""
+    if(interaction.options.getMember('team-member-1')) {members.push(interaction.options.getMember('team-member-1'))}
+    if(interaction.options.getMember('team-member-2')) {members.push(interaction.options.getMember('team-member-2'))}
+    if(interaction.options.getMember('team-member-3')) {members.push(interaction.options.getMember('team-member-3'))}
 
     const {error, response} = await validateTeamDetails(interaction, teamName, [...members, captain]);
 
@@ -116,10 +120,17 @@ module.exports = {
     try{
       const reply = await confirmation.awaitMessageComponent({ filter: collectorFilter, time: 10_000 });
       if(reply.customId === 'cancel'){
+        logger.info(`User cancelled registration attempt`)
         interaction.editReply({ content: `Action cancelled.`, embeds: [], components: [] });
         return;
       } else if(reply.customId === 'register'){
         const settledColour = confirmation_screen.data.color;
+        // const thisMessage = ```User confirmed registration attempt for: 
+        //   teamName: (${teamName}), 
+        //   captain: (${captain}), 
+        //   members: (${members}), 
+        //   settledColour: (${settledColour})```
+        // logger.info(thisMessage)
         interaction.editReply({ content: `Registering your team...`, components: [] })
         .then(() => {
           return registerTeam(interaction, {teamName, captain, members, settledColour})
@@ -128,6 +139,7 @@ module.exports = {
           if(error){
             throw error;
           }
+          logger.info(`SUCCESS: team registered successfully.`)
           interaction.channel.send({embeds: [response.embed]});
           interaction.deleteReply()
           if(interaction.user !== captain.user){

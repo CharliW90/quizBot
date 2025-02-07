@@ -5,6 +5,7 @@ const teamMemberRemove = require("../../functions/quiz/teamMemberRemove");
 const teamMemberPromote = require("../../functions/quiz/teamMemberPromote");
 const { setTeamsMembers, deleteTeamsMembers, getTeam } = require("../../functions/firestore");
 const { updateTeam } = require("../../functions/firestore/quiz");
+const validateTeamDetails = require("../../functions/quiz/validateTeamDetails");
 
 module.exports = {
   category: 'quiz',
@@ -84,7 +85,7 @@ module.exports = {
 
     const admins = await findAdmins(interaction.guild).response.admins;
 
-    const guildRoles = await interaction.guild.roles.cache.map(role => role);
+    const guildRoles = await interaction.guild.roles.cache;
     const teamRoles = guildRoles.filter((role) => {
       const prefix = role.name.split(' ')[0];
       return prefix === "Team:";
@@ -149,8 +150,10 @@ module.exports = {
     const validate = {refuse: false, admins: [], bots: []}
     members.forEach((member) => {
       if(admins.has(member.id)){
-        validate.refuse = true;
-        validate.admins.push(member)
+        if(!teamName.includes("#!?")){
+          validate.refuse = true;
+          validate.admins.push(member)
+        }
       } else if(member.user.bot){
         validate.refuse = true;
         validate.bots.push(member)

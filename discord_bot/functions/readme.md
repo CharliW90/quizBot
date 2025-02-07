@@ -55,6 +55,9 @@ They can then be referenced using `const { nameOfFunctionA, nameOfFunctionB } = 
 
 These functions handle the interaction with the Apps Script, via our custom API (see: [cloud_app](../../cloud_app/readme.md)) ultimately retrieving the responses submitted by teams in Google Forms
 
+checkPermissions:
+- check() calls the apps script endpoint to check that it can respond (if it's permissions have expired, we get an error)
+
 fetchFormResponses:
 - fetch() calls the apps script endpoint, collects an Array of responses
 - summarise() takes an Array of responses, and summarises what they are (i.e. Quiz Round n, Responses for x Teams, Teams: 'list-of-teams')

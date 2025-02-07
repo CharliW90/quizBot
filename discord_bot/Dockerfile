@@ -1,16 +1,16 @@
-FROM node:22-slim AS builder
+FROM node:current-slim AS builder
 
-WORKDIR /app
+WORKDIR /discord_bot
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm install --omit=dev
 
-FROM node:22-slim AS runner
+FROM node:current-slim AS runner
 
-WORKDIR /app
+WORKDIR /discord_bot
 
-COPY --from=builder /app/node_modules /app/node_modules  
+COPY --from=builder /discord_bot/node_modules /discord_bot/node_modules  
 
 COPY . .
 
