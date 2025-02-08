@@ -1,5 +1,6 @@
 const { newPassword } = require("../../utility/hotPass.js");
 const { fetchFormResponses } = require("../models/formResponses.model.js");
+const { fetch } = require("../models/v2Fetch.model.js")
 
 const scriptUrl = `https://script.google.com/macros/s/${process.env.webAppUrl}/exec`
 const reAuth = `https://script.google.com/u/1/home/projects/${process.env.scriptId}/edit`
@@ -58,4 +59,13 @@ exports.fetchAllResponses = (req, res, next) => {
 
 exports.listResponses = (req, res, next) => {
   res.status(501).send("This endpoint is under development.")
+}
+
+exports.newFetch = (req, res, next) => {
+  const attempt = fetch();
+  if(attempt){
+    res.status(200).send("Attempted to fetch - check logs");
+  } else {
+    res.status(500).send("Attempted to fetch - fetch appears to have failed - check logs");
+  }
 }
