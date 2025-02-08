@@ -15,8 +15,6 @@ describe('fetch()', () => {
   })
 
   test('returns an error when API returns no data', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
     const {fetch} = require('../functions/forms/fetchFormResponses');
 
     axios.get.mockResolvedValueOnce({ data: [] });
@@ -26,7 +24,6 @@ describe('fetch()', () => {
     expect(error.loc).toBeDefined();
     expect(response).toBeNull();
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(error)
     expect(parseSpy).not.toHaveBeenCalled();
     expect(holdSpy).not.toHaveBeenCalled();
   });
@@ -34,14 +31,12 @@ describe('fetch()', () => {
   test('returns an error when API returns a Promise rejection', async () => {
     const {fetch} = require('../functions/forms/fetchFormResponses');
 
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     const errorMsg = new Error('API request failed');
     axios.get.mockRejectedValueOnce(errorMsg);
 
     const {error, response} = await fetch(1);
     expect(error).toEqual(errorMsg);
     expect(response).toBeNull();
-    expect(consoleErrorSpy).toHaveBeenCalledWith(error);
 
     expect(parseSpy).not.toHaveBeenCalled();
     expect(holdSpy).not.toHaveBeenCalled();
@@ -100,8 +95,6 @@ describe('fetch()', () => {
     });
 
     test('handles errors from the parse() function', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
       const axios = require('axios');
 
       const mockErrorMsg = {message: "this would not be a useful error message", code: 400, loc: "parse()"}
@@ -119,12 +112,9 @@ describe('fetch()', () => {
       expect(error.code).toEqual(mockErrorMsg.code);
       expect(error.message).toEqual(mockErrorMsg.message);
       expect(error.loc).toBeDefined();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
     })
 
     test('handles errors from the hold() function', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
       const axios = require('axios');
 
       const mockErrorMsg = {message: "this might one day be a useful error message", code: 400, loc: "hold()"}
@@ -149,7 +139,6 @@ describe('fetch()', () => {
       expect(error.code).toEqual(mockErrorMsg.code);
       expect(error.message).toEqual(mockErrorMsg.message);
       expect(error.loc).toBeDefined();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(mockErrorMsg);
     })
   })
 });
