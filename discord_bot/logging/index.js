@@ -79,7 +79,7 @@ const customMixin = (input, num) => {
 
 const msgPrefix = `[discord_bot](${session}) | `
 
-const logger = pino({mixin: customMixin, msgPrefix}, transports, defaultPinoConf)
+const logger = pino({mixin: customMixin, msgPrefix, enabled: process.env.NODE_ENV !== 'test'}, transports, defaultPinoConf)
 
 const buildCommandDetails = (localDetails) => {
   const {category, data, execute, autocomplete} = localDetails
@@ -143,10 +143,10 @@ const localisedLogging = (error, localArgs, globalDetails, trace = undefined) =>
   const stack = stackArray.slice(1, -1).map(line => line.trim())
   const location = stackArray[1].trim()
   const details = location.split(" ")
-  const arguments = Object.values(localArgs).map((arg) => {return arg.constructor.name ? arg.constructor.name : typeof(arg)})
+  const args = Object.values(localArgs).map((arg) => {return arg.constructor.name ? arg.constructor.name : typeof(arg)})
   
   const filePath = details[2] ? details[2].split(":")[0] : "unknown"
-  const functionName = details[1] ? `${details[1]}(${arguments})` : "unknown"
+  const functionName = details[1] ? `${details[1]}(${args})` : "unknown"
 
   const path = filePath === "unknown" ? filePath : filePath.split("discord_bot/")[1]
   const fn = functionName === "unknown" ? functionName : functionName.replace("Object", path.split('/').pop().split('.js')[0])

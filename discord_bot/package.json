@@ -4,7 +4,7 @@
   "description": "Discord bot for helping to run virtual 'pub quizzes' over discord; handles team registration, with role and channel creation",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest ./__tests__",
     "deploy": "node deploy-commands.js && node index.js"
   },
   "keywords": [
