@@ -23,11 +23,11 @@ describe('parseFormResponses.js', () => {
       })
 
       test('returns an error when passed incorrect data', () => {
-        const input = {"data": "this is not correct data"}
+        const input = "this is not correct data"
         const {error, response} = parse(input);
         expect(error.code).toEqual(400);
         expect(error.message).toEqual(`forms API data malformed`);
-        expect(error.details).toEqual({...input, loc: expect.any(String)});
+        expect(error.details).toEqual({data: input, loc: expect.any(String)});
         expect(response).toBeNull();
       })
 

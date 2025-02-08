@@ -22,6 +22,26 @@ A google cloud Compute Engine (GCE) instance set up to utilise free tier, as bel
 > Environment variables:
 > `SESSION_MANAGER: google_cloud/quizbot`
 
+# Running Locally
+
+## via npm
+
+With the repo cloned, navigate to this discord_bot directory and run
+
+`npm i`
+
+Once this completes, you can use `npm run test` to run the tests or `npm run deploy` to launch the bot.
+
+## via Docker
+
+With the repo cloned, navigate to this discord_bot directory and run
+
+`docker build -t <image-name>:<image-tag> .`
+
+> Replace `<image-name>` with whatever name you want to name this image, and replace `<image-tag>` with whatever tag you wish to use.
+
+Once the build is completed you can use `docker run <image-name>:<image-tag>` to launch the bot.
+
 ## database (firestore)
 
 ## commands
