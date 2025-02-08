@@ -13,11 +13,32 @@
   on command!).  Step one, however, should be to simply emulate the /api/responses/ endpoint.
 */
 
+const { google } = require('googleapis');
+const { googleApiAccess } = require("../../config.json")
+
 // authorise with googleapis using serviceAccount credentials
+
+const auth = new google.auth.GoogleAuth({
+  credentials: googleApiAccess.serviceAccount,
+  scopes: ['https://www.googleapis.com/auth/forms.responses.readonly']
+});
 
 // create a Google Forms API client, using the above auth
 
+const forms = google.forms({
+  version: 'v1',
+  auth
+});
+
 // fetch a single form's responses, and format the response to match the external API's output
+
+const res = await forms.forms.responses.list({ formId: googleApiAccess.testFormId });
+
+const responses = res.data.responses;
+
+responses.forEach((response) => {
+  console.log(response)
+})
 
 /* that output is an array containing a round, which looks like this:
 [{
