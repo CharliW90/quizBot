@@ -79,7 +79,7 @@ const customMixin = (input, num) => {
 
 const msgPrefix = `[discord_bot](${session}) | `
 
-const logger = pino({mixin: customMixin, msgPrefix}, transports, defaultPinoConf)
+const logger = pino({mixin: customMixin, msgPrefix, enabled: process.env.NODE_ENV !== 'test'}, transports, defaultPinoConf)
 
 const buildCommandDetails = (localDetails) => {
   const {category, data, execute, autocomplete} = localDetails
