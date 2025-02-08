@@ -1,0 +1,14 @@
+{
+  "token": "get_this_from_discord_developer_portal",
+  "clientId": "get_this_from_discord_developer_portal",
+  "guildId": "get_this_from_the_discord_server_you_use_the_bot_in",
+  "ownerId": "this_should_probably_be_your_id_from_discord",
+  "elevatedUsers": [
+    "(optional)specify_more_discord_user_ids_for_people_to_act_as_owner"
+  ],
+  "apiEndpoint": "https://<the_id_of_your_google_apps_script_deployment>.run.app/api",
+  "apiPasskey": "the_passkey_value_you_have_set_in_the_google_apps_script",
+  "googleFormsAccess": {
+    "serviceAccount": "replace_this_with_the_service_account_json_from_a_suitable_google_service_account_with_access_to_your_forms"
+  }
+}
