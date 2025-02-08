@@ -8,7 +8,7 @@
   ],
   "apiEndpoint": "https://<the_id_of_your_google_apps_script_deployment>.run.app/api",
   "apiPasskey": "the_passkey_value_you_have_set_in_the_google_apps_script",
-  "googleFormsAccess": {
+  "googleApiAccess": {
     "serviceAccount": "replace_this_with_the_service_account_json_from_a_suitable_google_service_account_with_access_to_your_forms"
   }
 }
