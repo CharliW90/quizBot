@@ -70,3 +70,8 @@
 // fetch all forms' responses, and format the response to match the external API's output
 
 // that output is an array containing multiple rounds, that look the same as above
+
+
+/* whilst testing how the googleapis forms api works, I was able to see this snapshot of what the raw response would look like:
+
+*/
