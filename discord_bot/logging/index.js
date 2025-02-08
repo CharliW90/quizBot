@@ -150,7 +150,7 @@ const localisedLogging = (error, localArgs, globalDetails, trace = undefined) =>
 
   const path = filePath === "unknown" ? filePath : filePath.split("discord_bot/")[1]
   const fn = functionName === "unknown" ? functionName : functionName.replace("Object", path.split('/').pop().split('.js')[0])
-  const slashCommand = path === "unknown" ? slashCommand : path.split('/')[0] === 'commands'
+  const slashCommand = path === "unknown" ? path : path.split('/')[0] === 'commands'
 
   return logger.child({
     slashCommand,
