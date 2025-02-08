@@ -3,18 +3,9 @@ const { PermissionFlagsBits } = require('discord.js');
 const sessionManager = process.env.SESSION_MANAGER
 const session = sessionManager ? sessionManager.split('/')[0] : "unknown_session"
 
-// console.log("-------------------- PROCESS.ENV --------------------")
-// const keys = Object.keys(process.env)
-// keys.forEach((key) => {
-//   console.log(key)
-//   console.log(process.env[key])
-// })
-
 const defaultPinoConf = {
   messageKey: 'msg'
 }
-
-// console.log(session, "<<< session")
 
 const PinoLevelToSeverityLookup = {
   trace: 'DEBUG',
