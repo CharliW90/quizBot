@@ -6,14 +6,21 @@ The [bot](/discord_bot/readme.md) is essentially a collection of ['slash-command
 
 `npm run deploy` triggers our deploy script in our package.json file, which in turn executes both: `node deploy-commands.js` and `node index.js`.
 
-us-east1-b
-e2-micro
-google-logging-enabled: true
+A google cloud Compute Engine (GCE) instance set up to utilise free tier, as below, should be adequate for deploying this bot as a Docker image.  It may be easiest to docker push your image to a suitable Google Artifact Registry, and then in the Artifact Registry UI navigate to this pushed image in your repository, and from the actions menu for the image choose 'Deploy to GCE' - you can then set up that GCE per the below recommendations, or as you see fit.
 
-process.env:
-{
-  SESSION_MANAGER: google_cloud/quizbot
-}
+> us-east1-b
+>
+> e2-micro
+> 
+> Boot disK
+>
+> _Recommended:_ a cos image ([Container Optimized OS](https://cloud.google.com/container-optimized-os/docs))
+>
+> Metadata:
+> `google-logging-enabled: true`
+> 
+> Environment variables:
+> `SESSION_MANAGER: google_cloud/quizbot`
 
 ## database (firestore)
 
