@@ -4,6 +4,7 @@ const { localisedLogging } = require('../../logging');
 
 exports.check = async () => {
   logger = localisedLogging(new Error(), arguments, this)
+  // v4 - this feature becomes redundant - deprecate the whole thing eventually - short term implement a little check here?
   const config = {
     headers: { Authorization: `Bearer ${apiPasskey}` }
   }

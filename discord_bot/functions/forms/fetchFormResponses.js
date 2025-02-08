@@ -7,10 +7,13 @@ const { localisedLogging } = require('../../logging');
 
 exports.fetch = async (roundNumber) => {
   logger = localisedLogging(new Error(), arguments, this)
+  // v4 - code below this point needs to be overhauled
   const config = {
     headers: { Authorization: `Bearer ${apiPasskey}` }
   }
   return axios.get(`${apiEndpoint}/responses/${roundNumber}`, config)
+  // v4 - code below this point can remain the same, as long as we align our interaction to return a similar response
+  // i.e. res.data: [array of rounds]
   .then(res => {
     if(res.data === undefined || res.data.length < 1){
       throw {message: `forms API response was ${JSON.stringify(res.data)}`, code: 404, loc: "fetchFormResponses.js/fetch():response"}
