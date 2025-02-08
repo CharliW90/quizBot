@@ -6,3 +6,5 @@ package-lock.json
 gha-creds-*.json
 __dev__/
 .vscode/
+cloud_app/
+site/
