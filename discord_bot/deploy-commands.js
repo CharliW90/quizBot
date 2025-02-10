@@ -2,9 +2,11 @@ const { REST, Routes } = require('discord.js');
 const { clientId, guildId, token } = require('./config.json');
 const fs = require('node:fs');
 const path = require('node:path');
-const {localisedLogging} = require('./logging')
+const { localisedLogging } = require('./logging')
 
 const logger = localisedLogging(new Error(), arguments, this)
+
+logger.info("Finding and loading slash-commands...")
 
 const commands = [];
 // fetch all the command folders from the commands directory
@@ -20,16 +22,16 @@ for (const folder of commandFolders) {
 		const filePath = path.join(commandsPath, file);
 		const command = require(filePath);
 		if ('data' in command && 'execute' in command) {
-      logger.debug({msg: `command loaded (${command.data.name}):`, filePath, command})
+			logger.debug({ msg: `command loaded (${command.data.name}):`, filePath, command })
 			commands.push(command.data.toJSON());
-      logger.info(`loaded command /${command.data.name}`)
+			logger.info(`Loaded command /${command.data.name}`)
 		} else {
-      logger.debug({msg: `command not loaded:`, filePath, command})
+			logger.debug({ msg: `command not loaded:`, filePath, command })
 			logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
 		}
 	}
 }
-logger.debug({msg: `commands:`, commands})
+logger.debug({ msg: `commands:`, commands })
 
 // construct and prepare an instance of the REST module
 const rest = new REST().setToken(token);
@@ -37,16 +39,16 @@ const rest = new REST().setToken(token);
 // deploy commands
 (async () => {
 	try {
-		logger.info(`Started refreshing ${commands.length} application (/) commands.`);
+		logger.info(`Started refreshing ${commands.length} loaded commands.`);
 		// The put method is used to fully refresh all commands in the guild with the current set
 		const data = await rest.put(
 			// Routes.applicationGuildCommands(clientId, guildId), // uncomment this to be private (commands only available on development server)
-      Routes.applicationCommands(clientId),  // uncomment this to be public (all commands become available to all servers)
+			Routes.applicationCommands(clientId),  // uncomment this to be public (all commands become available to all servers)
 			{ body: commands },
 		);
-		logger.info(`Successfully reloaded ${data.length} application (/) commands.`);
-    logger.debug({msg: `client updated with reloaded slash command data:`, data})
-	} catch(error) {
-		logger.error({msg: "catch(error)", error});
+		logger.info(`Successfully refreshed ${data.length} application slash-commands.`);
+		logger.debug({ msg: `client updated with reloaded slash command data:`, data })
+	} catch (error) {
+		logger.error({ msg: "catch(error)", error });
 	}
 })();
