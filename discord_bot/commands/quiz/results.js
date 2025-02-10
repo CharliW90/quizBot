@@ -1,4 +1,4 @@
-const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
+const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, MessageFlags, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
 const { summarise } = require('../../functions/forms/fetchFormResponses.js');
 const { followUp, hold } = require('../../functions/forms/holdFormResponses.js');
 const { indexRounds, getResponseFromFirestore, indexQuizzes } = require('../../functions/firestore');
@@ -78,7 +78,7 @@ module.exports = {
     const userResponse = await interaction.reply({  // reply to the user asking which round they want
       content: 'Choose which round of answers to handle',
       components: [row1, row2],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     const collectorFilter = i => i.user.id === interaction.user.id;

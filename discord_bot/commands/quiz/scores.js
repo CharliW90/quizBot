@@ -1,4 +1,4 @@
-const { ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
+const { MessageFlags, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
 const { indexRounds, indexQuizzes, addScoreboardToFirestore } = require('../../functions/firestore');
 const { quizDate } = require('../../database');
 const scoreboardGenerator = require('../../functions/quiz/scoreboardGenerator');
@@ -62,7 +62,7 @@ module.exports = {
     const userResponse = await interaction.reply({  // reply to the user asking which round they want
       content: `There are ${response.length} rounds stored - are you ready to generate the scoreboard?`,
       components: [row],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     const collectorFilter = i => i.user.id === interaction.user.id;

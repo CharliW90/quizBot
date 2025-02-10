@@ -1,4 +1,4 @@
-const { ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+const { MessageFlags, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
 const { recordTeam, getUserTeamNames } = require('../../functions/firestore');
 const { localisedLogging } = require('../../logging');
 
@@ -113,7 +113,7 @@ module.exports = {
     const row = new ActionRowBuilder()
       .addComponents(confirm, cancel)
       
-    const confirmation = await interaction.reply({content: 'Please review your draft team registration, and confirm the details for me',embeds: [confirmation_screen], components: [row], ephemeral: true});
+    const confirmation = await interaction.reply({content: 'Please review your draft team registration, and confirm the details for me',embeds: [confirmation_screen], components: [row], flags: MessageFlags.Ephemeral});
 
     const collectorFilter = i => i.user.id === interaction.user.id || captain.user.id;
 

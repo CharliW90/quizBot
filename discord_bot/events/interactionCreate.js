@@ -1,4 +1,4 @@
-const { Events } = require('discord.js');
+const { MessageFlags, Events } = require('discord.js');
 const { localisedLogging } = require('../logging');
 const crypto = require('crypto');
 const prepQuizEnvironment = require('../functions/quiz/prepQuizEnvironment');
@@ -34,9 +34,9 @@ module.exports = {
         return;
       }
 			if (interaction.replied || interaction.deferred) {
-				await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+				await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
 			} else {
-				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+				await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
 			}
 		}
 	},

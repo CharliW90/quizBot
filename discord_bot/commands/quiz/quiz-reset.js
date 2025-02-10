@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require("discord.js");
 const quizReset = require("../../functions/quiz/quizReset");
 const { findCategoryChannel } = require("../../functions/discord");
 
@@ -49,7 +49,7 @@ module.exports = {
     const row = new ActionRowBuilder()
       .addComponents(confirm, cancel)
 
-    const confirmation = await interaction.reply({embeds: [confirmation_screen], components: [row], ephemeral: true});
+    const confirmation = await interaction.reply({embeds: [confirmation_screen], components: [row], flags: MessageFlags.Ephemeral});
 
     const collectorFilter = i => i.user.id === interaction.user.id;
 

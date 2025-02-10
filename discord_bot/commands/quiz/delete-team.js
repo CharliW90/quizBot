@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ButtonStyle, ButtonBuilder, ActionRowBuilder } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, ButtonStyle, ButtonBuilder, ActionRowBuilder } = require("discord.js");
 const { findRole } = require("../../functions/discord");
 const teamDelete = require("../../functions/quiz/teamDelete");
 const { localisedLogging, throttledLogger } = require("../../logging");
@@ -53,7 +53,7 @@ module.exports = {
     const row = new ActionRowBuilder()
       .addComponents(confirm, cancel)
 
-    const confirmation = await interaction.reply({content: `Are you sure you want to delete ${response}??`, components: [row], ephemeral: true});
+    const confirmation = await interaction.reply({content: `Are you sure you want to delete ${response}??`, components: [row], flags: MessageFlags.Ephemeral});
     
     const collectorFilter = i => i.user.id === interaction.user.id;
 
