@@ -1,11 +1,19 @@
 // Require the necessary discord.js classes
 const fs = require('node:fs');
 const path = require('node:path');
+const {SecretManagerServiceClient} = require('@google-cloud/secret-manager');
+const {projectId, secretsFile} = process.env
 const { localisedLogging } = require('./logging')
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { token } = require('./config.json');
 
 const logger = localisedLogging(new Error(), arguments, this)
+
+// Fetch config json
+const secretsClient = new SecretManagerServiceClient();
+const [version] = await secretsClient.accessSecretVersion({ name: `projects/${projectId}/secrets/${secretsFile}` });
+const configFile = version.payload.data;
+logger.info({msg: `secretsManager payload received: v.${configFile.versionFlag}`})
 
 // Create a new client instance
 logger.info("Creating new Client instance...")
