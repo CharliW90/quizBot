@@ -1,6 +1,8 @@
 const axios = require('axios');
 const { EmbedBuilder } = require('discord.js');
-const { apiEndpoint, apiPasskey } = require('../../config.json');
+const baseConfig = require('../../config.json')
+const apiPasskey = process.env.api_url || baseConfig.apiPasskey;
+const apiEndpoint = process.env.api_url || baseConfig.apiEndpoint
 const { parse } = require('./parseFormResponses');
 const { hold } = require('./holdFormResponses');
 const { localisedLogging } = require('../../logging');
