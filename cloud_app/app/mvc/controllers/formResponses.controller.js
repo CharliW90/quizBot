@@ -62,7 +62,8 @@ exports.listResponses = (req, res, next) => {
 }
 
 exports.newFetch = (req, res, next) => {
-  const attempt = fetch();
+  const {roundNumber} = req.params;
+  const attempt = fetch(roundNumber);
   if(attempt){
     res.status(200).send("Attempted to fetch - check logs");
   } else {
