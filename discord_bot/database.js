@@ -1,11 +1,11 @@
-const { serviceAccount } = require('./config.json');
+const { googleApiAccess } = require('./config.json');
 const firebase = require('firebase-admin');
 const { localisedLogging } = require('./logging');
 
 const logger = localisedLogging(new Error(), arguments, this)
 
 firebase.initializeApp({
-  credential: firebase.credential.cert(serviceAccount)
+  credential: firebase.credential.cert(googleApiAccess.serviceAccount)
 });
 logger.debug({msg: `initialised firebase:`, firebase})
 
