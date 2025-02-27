@@ -1,12 +1,15 @@
 const axios = require('axios');
 const { EmbedBuilder } = require('discord.js');
-const { apiEndpoint, apiPasskey } = require('../../config.json');
+const configFile = require('../../config.json');
 const { parse } = require('./parseFormResponses');
 const { hold } = require('./holdFormResponses');
 const { localisedLogging } = require('../../logging');
 
 exports.fetch = async (roundNumber) => {
   logger = localisedLogging(new Error(), arguments, this)
+  const apiPasskey = process.env.apiPasskey ? process.env.apiPasskey : configFile.apiPasskey
+  const apiEndpoint = process.env.apiEndpoint ? process.env.apiEndpoint : configFile.apiEndpoint
+  logger.info(`Using apiPasskey retrieved from ${process.env.apiPasskey ? "environment variable" : "config.json file"} and apiEndpoint retrieved from ${process.env.apiEndpoint ? "environment variable" : "config.json file"}`)
   const config = {
     headers: { Authorization: `Bearer ${apiPasskey}` }
   }
