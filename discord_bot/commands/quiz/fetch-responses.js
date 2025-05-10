@@ -104,14 +104,23 @@ module.exports = {
         .catch((error) => {
           // if error is internal logic error handling (i.e. custom error type of {code, message})
           if(error.code && error.message){
+            // if fetch found no form, or no data
+            if(error.code == 404){
+              logger.error({...error})
+              interaction.channel.send({content: `Error ${error.code}: ${error.message}`})
+            } else
             // if error is that forms are still open
             if(error?.details?.data?.error?.code == 409){
               const nestedError = error?.details?.data?.error
               logger.error({...nestedError})
               interaction.channel.send({content: `Error ${nestedError.code}: ${nestedError.reason}`})
+            } else {
+              logger.error({...error})
+              const { code, message, loc, ...other } = error
+              const location = loc ? `\n----${loc}` : ""
+              const details = length(Object.keys(other)) > 0 ? `${location}\n----${JSON.stringify(other)}` : location
+              interaction.channel.send({content: `--Error ${code}: ${message}${details}`})
             }
-            logger.error({...error})
-            interaction.channel.send({content: `${JSON.stringify(error)}`})
           } else {
             // entirely unexpected error
             throw error
