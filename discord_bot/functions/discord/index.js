@@ -14,6 +14,7 @@ const findTextChannel = require("./findTextChannel");
 const findVoiceChannel = require("./findVoiceChannel");
 const roleAssign = require("./roleAssign");
 const roleRemove = require("./roleRemove");
+const sendErrorMessage = require("./sendErrorMessageAsReply")
 
 module.exports = {
   createCategoryChannel,
@@ -31,5 +32,6 @@ module.exports = {
   findTextChannel,
   findVoiceChannel,
   roleAssign,
-  roleRemove
+  roleRemove,
+  sendErrorMessage
 }
