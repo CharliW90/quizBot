@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, MessageFlags } = require("discord.js");
 const { findAdmins, findRole, roleRemove, findTextChannel } = require("../../functions/discord");
 const { getTeam } = require("../../functions/firestore");
 
@@ -10,7 +10,7 @@ module.exports = {
     .setDMPermission(true),
 
   async execute(interaction) {
-    await interaction.deferReply({ephemeral: true});
+    await interaction.deferReply({flags: MessageFlags.Ephemeral});
     const admins = await findAdmins(interaction.guild).response.admins;
 
     //if the user is  an admin, then this is the wrong command

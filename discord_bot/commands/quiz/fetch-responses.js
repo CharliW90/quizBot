@@ -1,4 +1,4 @@
-const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
+const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActionRowBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const { fetch, summarise } = require('../../functions/forms/fetchFormResponses.js');
 const { followUp } = require('../../functions/forms/holdFormResponses.js');
 
@@ -53,7 +53,7 @@ module.exports = {
     const userResponse = await interaction.reply({  // reply to the user asking which round they want
       content: 'Choose which round of answers to fetch',
       components: [row1, row2],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     const collectorFilter = i => i.user.id === interaction.user.id;

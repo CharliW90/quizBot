@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, EmbedBuilder, MessageFlags } = require("discord.js");
 const { indexRounds, indexResponsesTeams, correctResponseInFirestore, setTeamsAliases } = require("../../functions/firestore");
 const { localisedLogging, throttledLogger } = require("../../logging");
 const crypto = require('crypto');
@@ -93,7 +93,7 @@ module.exports = {
       const cancelRow = new ActionRowBuilder()
         .addComponents(cancel);
 
-      const details = await interaction.reply({content: "What is the correct team name?", components: [teamsDropdownRow, cancelRow], ephemeral: true});
+      const details = await interaction.reply({content: "What is the correct team name?", components: [teamsDropdownRow, cancelRow], flags: MessageFlags.Ephemeral});
       logger.debug({msg: "details = interaction.reply", details})
       const collectorFilter = i => i.user.id === interaction.user.id;
       try {
