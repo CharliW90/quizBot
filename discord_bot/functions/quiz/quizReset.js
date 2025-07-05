@@ -52,7 +52,12 @@ module.exports = (guild, blame='unknown') => {
   .then(({error, response}) => {
     logger.debug({error, response, deletions})
     if(error){
-      logger.info(`Firestore reset returned error:\n${JSON.stringify(error)}`)
+      logger.info(`
+        Firestore reset returned error:
+        ${JSON.stringify(error)}
+        This error can be safely ignored if there was no quiz today.
+      `.trim())
+      deletions["Firestore Mapping"] = 0;
     } else  {
       if(response.mappings.length > 0){
         deletions["Firestore Mapping"] = response.mappings;
