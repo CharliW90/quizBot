@@ -6,6 +6,10 @@ exports.parse = (data) => {
     return {error, response: null};
   }
 
+  if(data.error){
+    return {error: data.error, response: null}
+  }
+
   if(!data.roundDetails && !data.results) {
     const details = {data, loc: "parseFormResponses.js/parse()"};
     const error = {message: `forms API data malformed`, code: 400, details};
