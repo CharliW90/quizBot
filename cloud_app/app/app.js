@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit')
 const portal = require('./adminPortal.js');
 const { fetchResponse, fetchAllResponses, listResponses } = require('./mvc/controllers/formResponses.controller.js');
 const { checker } = require('./mvc/controllers/health.controller.js');
@@ -8,6 +9,11 @@ const { checkPermission } = require('./mvc/controllers/permissions.controller.js
 const app = express();
 
 app.use(express.json());
+
+const rateLimiter = rateLimit({
+  legacyHeaders: false;
+  standardHeaders: true;
+})
 
 app.get('/health',  (req, res) => {
   res.status(200).send('pong');
@@ -41,7 +47,7 @@ app.get('/api/responses/:roundNumber', fetchResponse);
 
 app.get('/api/responses/', listResponses);
 
-app.get('/api/passcheck', passcheck);
+app.get('/api/passcheck', rateLimiter, passcheck);
 
 app.get('/test/statusCodes/:code', (req, res) => {
   const {code} = req.params;

@@ -42,8 +42,24 @@ exports.checkForPassword = (password) => {
 }
 
 exports.newPassword = () => {
+  if(livePasswords.length > 25){
+    return false
+  } else {
+    const key = Date.now().toString();
+    const newSecurityKey = new SecurityKey(key);
+    livePasswords.push(newSecurityKey);
+    return `${newSecurityKey.id}-${md5(key)}`;
+  }
   const key = Date.now().toString();
   const newSecurityKey = new SecurityKey(key);
   livePasswords.push(newSecurityKey);
   return `${newSecurityKey.id}-${md5(key)}`;
+}
+
+exports.count = () => {
+  return livePasswords.length
+}
+
+exports.hardReset = () => {
+  livePasswords.length = 0;
 }

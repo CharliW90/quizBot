@@ -186,6 +186,14 @@ Content-Type: application/json
   },
 ]
 ```
+
+```http
+200 OK
+{
+    error: {
+
+}
+```
 </details>
 
 ### GET /api/responses/:roundNumber
@@ -262,9 +270,22 @@ This endpoint is under development.
 
 ### GET /api/passcheck
 
+Responds with whether or not a passkey is valid - once checked, the passkey is no longer valid, so exposing it as plaintext in the response is not a problem.  The endpoint always responds with a 200:OK regardless of the validity of the passkey.
+
 <details>
 <summary>Example Responses:</summary>
 
+Examples of both a positive and negative response, when called with a passkey of `36b8f84d-df4e-4d49-b662-bcde71a8764f`
+
+```http
+200 OK
+36b8f84d-df4e-4d49-b662-bcde71a8764f
+```
+
+```http
+200 OK
+incorrect passkey token
+```
 
 </details>
 

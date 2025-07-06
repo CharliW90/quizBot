@@ -2,7 +2,7 @@ const { newPassword } = require("../../utility/hotPass.js");
 const { checkPermissions } = require("../models/permissions.model.js");
 
 const scriptUrl = `https://script.google.com/macros/s/${process.env.webAppUrl}/exec`
-const reAuth = `https://script.google.com/u/1/home/projects/${process.env.scriptId}/edit`
+const reAuth = `https://script.google.com/u/1/home/projects/${process.env.scriptId}/exec`
 
 exports.checkPermission = (req, res, next) => {
   // Create a new temporary password so that the apps script can check that the response came from this app
