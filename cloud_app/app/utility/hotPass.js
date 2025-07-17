@@ -50,10 +50,6 @@ exports.newPassword = () => {
     livePasswords.push(newSecurityKey);
     return `${newSecurityKey.id}-${md5(key)}`;
   }
-  const key = Date.now().toString();
-  const newSecurityKey = new SecurityKey(key);
-  livePasswords.push(newSecurityKey);
-  return `${newSecurityKey.id}-${md5(key)}`;
 }
 
 exports.count = () => {
