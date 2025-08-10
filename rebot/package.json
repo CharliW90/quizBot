@@ -1,11 +1,10 @@
 {
   "name": "rebot",
-  "version": "2.0.0",
+  "version": "0.1.0",
   "description": "A lightweight companion bot, for helping to manage the Compute Engine Discord bot, designed to be deployed to Cloud Run",
   "main": "index.js",
   "scripts": {
-    "test": "jest ./__tests__",
-    "deploy": "node deploy-commands.js && node index.js"
+    "deploy": "node api/discord.js"
   },
   "keywords": [
     "discord",
@@ -16,9 +15,13 @@
   "author": "Charli Williams",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^14.14.1"
+    "@google-cloud/compute": "^6.1.0",
+    "discord.js": "^14.21.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "jest": "^30.0.2"
+  },
+  "overrides": {
+    "glob": "10.4.2"
   }
 }
