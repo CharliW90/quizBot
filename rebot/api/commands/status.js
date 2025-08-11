@@ -19,11 +19,11 @@ module.exports = {
       };
 
       logger.info(`Engine Interaction Status Check returned: ${response}`);
-      await interaction.reply(response.message);
+      await interaction.editReply(response.message);
       return;
     } catch(error){
       logger.error(error);
-      await interaction.reply(`Sorry - I encountered an error.  Please check the logs for further details.`);
+      await interaction.editReply(`Sorry - I encountered an error.  Please check the logs for further details.`);
       return;
     }
 	},

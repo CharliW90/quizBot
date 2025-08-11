@@ -27,13 +27,13 @@ module.exports = {
         case "STAGING":
           situation = `Bot is ${status} - please wait for this action to complete before attempting to shutdown.`
           logger.warn(situation);
-          interaction.reply(situation);
+          interaction.editReply(situation);
           return;
         case "STOPPING":
         case "TERMINATED":
           situation = `Bot is already ${status}.`;
           logger.warn(situation);
-          interaction.reply(situation);
+          interaction.editReply(situation);
           return;
         case "SUSPENDED":
         case "RUNNING":
@@ -42,7 +42,7 @@ module.exports = {
         default:
           situation = `ERROR: Bot status reported as ${status} - no known process in place for starting from this status.`;
           logger.error(situation)
-          interaction.reply(situation)
+          interaction.editReply(situation)
           return;
       }
 
@@ -53,11 +53,11 @@ module.exports = {
 
       logger.info(`Engine Interaction '${action}' returned: ${response}`);
 
-      interaction.reply(response.message);
+      interaction.editReply(response.message);
       return;
     } catch(error){
       logger.error(error);
-      interaction.reply(`Sorry - I encountered an error.  Please check the logs for further details.`);
+      interaction.editReply(`Sorry - I encountered an error.  Please check the logs for further details.`);
       return;
     }
 	},

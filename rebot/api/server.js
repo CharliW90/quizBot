@@ -21,17 +21,17 @@ app.post('/interactions', verifyKeyMiddleware(publicKey), async (req, res) => {
     }
 
     try {
-      await command.execute(interaction);
+      await interaction.deferReply();
 
-      return res.status(200).send({
-        type: 4, // 4 is for CHANNEL_MESSAGE_WITH_SOURCE
-        data: {
-          content: 'Command acknowledged.'
-        }
-      });
+      await command.execute(interaction);
     } catch (error) {
       logger.error(error);
-      return res.status(500).send('There was an error while executing this command.');
+
+      if (interaction.deferred) {
+        await interaction.editReply({ content: 'There was an error while executing this command.' });
+      } else {
+        await interaction.reply({ content: 'There was an error while executing this command.' });
+      }
     }
   }
 
