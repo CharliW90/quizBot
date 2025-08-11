@@ -4,7 +4,7 @@
   "description": "A lightweight companion bot, for helping to manage the Compute Engine Discord bot, designed to be deployed to Cloud Run",
   "main": "index.js",
   "scripts": {
-    "deploy": "node api/discord.js"
+    "deploy": "node api/server.js"
   },
   "keywords": [
     "discord",
@@ -16,7 +16,9 @@
   "license": "ISC",
   "dependencies": {
     "@google-cloud/compute": "^6.1.0",
-    "discord.js": "^14.21.0"
+    "discord-interactions": "^4.3.0",
+    "discord.js": "^14.21.0",
+    "express": "^5.1.0"
   },
   "devDependencies": {
     "jest": "^30.0.2"
