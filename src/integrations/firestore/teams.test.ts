@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createTeam, getTeam, listTeams, deleteTeam } from "./teams.js";
+import { createTeam, getTeam, listTeams, deleteTeam, updateTeam } from "./teams.js";
 
 function mockFirestore() {
   const store: Record<string, Record<string, unknown>> = {};
@@ -12,6 +12,10 @@ function mockFirestore() {
       exists: path in store,
       data: () => store[path] ?? undefined,
     })),
+    update: vi.fn(async (data: Record<string, unknown>) => {
+      if (!(path in store)) throw new Error("NOT_FOUND");
+      store[path] = { ...store[path], ...data };
+    }),
     delete: vi.fn(async () => {
       delete store[path];
     }),
@@ -160,6 +164,42 @@ describe("teams", () => {
 
     it("returns an error when team does not exist", async () => {
       const result = await deleteTeam(db as any, "guild-1", "2026-06-06", "Ghost");
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toContain("not found");
+      }
+    });
+  });
+
+  describe("updateTeam", () => {
+    it("updates only the specified fields", async () => {
+      db._store["guilds/guild-1/quizzes/2026-06-06/teams/Foxes"] = {
+        name: "Foxes",
+        captain: "user-1",
+        members: ["user-1", "user-2"],
+        roleId: "r1",
+        textChannelId: "t1",
+        voiceChannelId: "v1",
+        color: "#f00",
+      };
+
+      const result = await updateTeam(db as any, "guild-1", "2026-06-06", "Foxes", {
+        captain: "user-2",
+        color: "#0f0",
+      });
+
+      expect(result.ok).toBe(true);
+      const stored = db._store["guilds/guild-1/quizzes/2026-06-06/teams/Foxes"];
+      expect(stored.captain).toBe("user-2");
+      expect(stored.color).toBe("#0f0");
+      expect(stored.members).toEqual(["user-1", "user-2"]);
+    });
+
+    it("returns an error when team does not exist", async () => {
+      const result = await updateTeam(db as any, "guild-1", "2026-06-06", "Nobody", {
+        captain: "user-9",
+      });
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
