@@ -81,3 +81,23 @@ export async function deleteTeam(
   await docRef.delete();
   return ok(undefined);
 }
+
+export async function updateTeam(
+  db: Firestore,
+  guildId: string,
+  quizDate: string,
+  teamName: string,
+  fields: Partial<Omit<Team, "name" | "registeredAt">>
+): Promise<Result<void>> {
+  const docRef = db
+    .collection(`guilds/${guildId}/quizzes/${quizDate}/teams`)
+    .doc(teamName);
+
+  const snapshot = await docRef.get();
+  if (!snapshot.exists) {
+    return err(`Team "${teamName}" not found`);
+  }
+
+  await docRef.update(fields);
+  return ok(undefined);
+}
