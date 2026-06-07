@@ -1,8 +1,4 @@
-node_modules
+node_modules/
+dist/
 .env
-config.json
-package-lock.json
-.clasp.json
-gha-creds-*.json
-__dev__/
-.vscode/
+*.js.map
