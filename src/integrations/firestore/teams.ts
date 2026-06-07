@@ -49,3 +49,35 @@ export async function getTeam(
 
   return ok(snapshot.data() as Team);
 }
+
+export async function listTeams(
+  db: Firestore,
+  guildId: string,
+  quizDate: string
+): Promise<Result<Team[]>> {
+  const snapshot = await db
+    .collection(`guilds/${guildId}/quizzes/${quizDate}/teams`)
+    .get();
+
+  const teams = snapshot.docs.map((doc) => doc.data() as Team);
+  return ok(teams);
+}
+
+export async function deleteTeam(
+  db: Firestore,
+  guildId: string,
+  quizDate: string,
+  teamName: string
+): Promise<Result<void>> {
+  const docRef = db
+    .collection(`guilds/${guildId}/quizzes/${quizDate}/teams`)
+    .doc(teamName);
+
+  const snapshot = await docRef.get();
+  if (!snapshot.exists) {
+    return err(`Team "${teamName}" not found`);
+  }
+
+  await docRef.delete();
+  return ok(undefined);
+}

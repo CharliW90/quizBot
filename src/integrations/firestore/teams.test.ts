@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createTeam, getTeam } from "./teams.js";
-
-// We'll mock Firestore by creating a fake that mimics its interface.
-// Think of this like a stub implementation of a trait in Scala.
+import { createTeam, getTeam, listTeams, deleteTeam } from "./teams.js";
 
 function mockFirestore() {
   const store: Record<string, Record<string, unknown>> = {};
@@ -15,10 +12,23 @@ function mockFirestore() {
       exists: path in store,
       data: () => store[path] ?? undefined,
     })),
+    delete: vi.fn(async () => {
+      delete store[path];
+    }),
   });
 
   const collection = (collectionPath: string) => ({
     doc: (id: string) => doc(`${collectionPath}/${id}`),
+    get: vi.fn(async () => {
+      const prefix = collectionPath + "/";
+      const docs = Object.entries(store)
+        .filter(([key]) => key.startsWith(prefix))
+        .map(([key, value]) => ({
+          id: key.slice(prefix.length),
+          data: () => value,
+        }));
+      return { docs, empty: docs.length === 0 };
+    }),
   });
 
   return { collection, doc, _store: store };
@@ -81,6 +91,75 @@ describe("teams", () => {
 
     it("returns an error when team does not exist", async () => {
       const result = await getTeam(db as any, "guild-1", "2026-06-06", "Nobody");
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toContain("not found");
+      }
+    });
+  });
+
+  describe("listTeams", () => {
+    it("returns all teams for a quiz session", async () => {
+      db._store["guilds/guild-1/quizzes/2026-06-06/teams/Alpha"] = {
+        name: "Alpha",
+        captain: "user-1",
+        members: ["user-1"],
+        roleId: "r1",
+        textChannelId: "t1",
+        voiceChannelId: "v1",
+        color: "#aaa",
+      };
+      db._store["guilds/guild-1/quizzes/2026-06-06/teams/Beta"] = {
+        name: "Beta",
+        captain: "user-2",
+        members: ["user-2"],
+        roleId: "r2",
+        textChannelId: "t2",
+        voiceChannelId: "v2",
+        color: "#bbb",
+      };
+
+      const result = await listTeams(db as any, "guild-1", "2026-06-06");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toHaveLength(2);
+        expect(result.data.map((t) => t.name)).toContain("Alpha");
+        expect(result.data.map((t) => t.name)).toContain("Beta");
+      }
+    });
+
+    it("returns an empty array when no teams exist", async () => {
+      const result = await listTeams(db as any, "guild-1", "2026-06-06");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual([]);
+      }
+    });
+  });
+
+  describe("deleteTeam", () => {
+    it("removes the team from the store", async () => {
+      db._store["guilds/guild-1/quizzes/2026-06-06/teams/Doomed"] = {
+        name: "Doomed",
+        captain: "user-1",
+        members: ["user-1"],
+        roleId: "r1",
+        textChannelId: "t1",
+        voiceChannelId: "v1",
+        color: "#000",
+      };
+
+      const result = await deleteTeam(db as any, "guild-1", "2026-06-06", "Doomed");
+
+      expect(result.ok).toBe(true);
+      expect(db._store["guilds/guild-1/quizzes/2026-06-06/teams/Doomed"]).toBeUndefined();
+    });
+
+    it("returns an error when team does not exist", async () => {
+      const result = await deleteTeam(db as any, "guild-1", "2026-06-06", "Ghost");
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
