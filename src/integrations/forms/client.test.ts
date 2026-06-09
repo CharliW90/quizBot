@@ -23,6 +23,11 @@ vi.mock("../../utils/logger", () => ({
   logger: { info: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock("../../utils/result", () => ({
+  ok: (data: unknown) => ({ ok: true, data }),
+  err: (error: unknown) => ({ ok: false, error }),
+}));
+
 describe("createFormsClient", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -40,11 +45,12 @@ describe("createFormsClient", () => {
     });
   });
 
-  it("exposes getForm and listResponses methods", async () => {
+  it("exposes getForm, isFormClosed, and listResponses methods", async () => {
     const { createFormsClient } = await import("./client.js");
     const client = createFormsClient();
 
     expect(client.getForm).toBeInstanceOf(Function);
+    expect(client.isFormClosed).toBeInstanceOf(Function);
     expect(client.listResponses).toBeInstanceOf(Function);
   });
 
@@ -61,19 +67,65 @@ describe("createFormsClient", () => {
     expect(result).toEqual({ formId: "abc" });
   });
 
-  it("listResponses calls forms.responses.list with the formId", async () => {
+  it("isFormClosed returns true when form state is CLOSED", async () => {
+    const { createFormsClient } = await import("./client.js");
+    const client = createFormsClient();
+
+    const form = { formId: "abc", settings: { state: "CLOSED" } };
+    expect(client.isFormClosed(form as any)).toBe(true);
+  });
+
+  it("isFormClosed returns false when form state is not CLOSED", async () => {
+    const { createFormsClient } = await import("./client.js");
+    const client = createFormsClient();
+
+    const form = { formId: "abc", settings: { state: "OPEN" } };
+    expect(client.isFormClosed(form as any)).toBe(false);
+  });
+
+  it("isFormClosed returns false when settings are absent", async () => {
+    const { createFormsClient } = await import("./client.js");
+    const client = createFormsClient();
+
+    const form = { formId: "abc" };
+    expect(client.isFormClosed(form as any)).toBe(false);
+  });
+
+  it("listResponses returns responses when form is closed", async () => {
     const { createFormsClient } = await import("./client.js");
     const client = createFormsClient();
 
     const formsApi = google.forms({ version: "v1" });
+    vi.mocked(formsApi.forms.get).mockResolvedValue({
+      data: { formId: "abc", settings: { state: "CLOSED" } },
+    } as never);
     vi.mocked(formsApi.forms.responses.list).mockResolvedValue({
       data: { responses: [{ responseId: "r1" }] },
     } as never);
 
     const result = await client.listResponses("abc");
 
-    expect(formsApi.forms.responses.list).toHaveBeenCalledWith({ formId: "abc" });
-    expect(result).toEqual([{ responseId: "r1" }]);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual([{ responseId: "r1" }]);
+    }
+  });
+
+  it("listResponses returns error when form is still open", async () => {
+    const { createFormsClient } = await import("./client.js");
+    const client = createFormsClient();
+
+    const formsApi = google.forms({ version: "v1" });
+    vi.mocked(formsApi.forms.get).mockResolvedValue({
+      data: { formId: "abc", settings: { state: "OPEN" } },
+    } as never);
+
+    const result = await client.listResponses("abc");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("still accepting responses");
+    }
   });
 
   it("listResponses returns empty array when no responses exist", async () => {
@@ -81,12 +133,18 @@ describe("createFormsClient", () => {
     const client = createFormsClient();
 
     const formsApi = google.forms({ version: "v1" });
+    vi.mocked(formsApi.forms.get).mockResolvedValue({
+      data: { formId: "abc", settings: { state: "CLOSED" } },
+    } as never);
     vi.mocked(formsApi.forms.responses.list).mockResolvedValue({
       data: { responses: undefined },
     } as never);
 
     const result = await client.listResponses("abc");
 
-    expect(result).toEqual([]);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual([]);
+    }
   });
 });
