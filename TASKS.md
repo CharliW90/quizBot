@@ -103,3 +103,6 @@ Status key: `[ ]` todo, `[~]` in progress, `[x]` done
 - [ ] 7.3 — Historical stats / all-time leaderboards
 - [ ] 7.4 — Multi-guild support
 - [ ] 7.5 — Automated form creation (Google Forms API supports this)
+- [ ] 7.6 — Open/close form functions (toggle form accepting responses via Forms API)
+- [ ] 7.7 — `/form open <round>` and `/form close <round>` commands
+- [ ] 7.8 — `/form next` command (close current round's form, open the next round's form)

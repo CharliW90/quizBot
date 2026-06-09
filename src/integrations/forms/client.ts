@@ -1,5 +1,6 @@
 import { google, forms_v1 } from "googleapis";
 import { logger } from "../../utils/logger.js";
+import { ok, err, type Result } from "../../utils/result.js";
 
 export function createFormsClient() {
   const auth = new google.auth.GoogleAuth({
@@ -17,11 +18,22 @@ export function createFormsClient() {
     return response.data;
   };
 
-  const listResponses = async (formId: string): Promise<forms_v1.Schema$FormResponse[]> => {
-    logger.info({ formId }, "Fetching form responses");
-    const response = await formsApi.forms.responses.list({ formId });
-    return response.data.responses ?? [];
+  const isFormClosed = (form: forms_v1.Schema$Form): boolean => {
+    const state = (form.settings as Record<string, unknown>)?.state;
+    return state === "CLOSED";
   };
 
-  return { getForm, listResponses };
+  const listResponses = async (formId: string): Promise<Result<forms_v1.Schema$FormResponse[]>> => {
+    logger.info({ formId }, "Fetching form responses");
+
+    const form = await getForm(formId);
+    if (!isFormClosed(form)) {
+      return err("Form is still accepting responses - close it before fetching");
+    }
+
+    const response = await formsApi.forms.responses.list({ formId });
+    return ok(response.data.responses ?? []);
+  };
+
+  return { getForm, isFormClosed, listResponses };
 }
