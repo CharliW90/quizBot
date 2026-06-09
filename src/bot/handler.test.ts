@@ -9,6 +9,7 @@ vi.mock("../utils/logger", () => ({
 
 function mockInteraction(commandName: string, replied = false, deferred = false) {
   return {
+    isAutocomplete: () => false,
     isChatInputCommand: () => true,
     commandName,
     replied,
@@ -19,6 +20,42 @@ function mockInteraction(commandName: string, replied = false, deferred = false)
 }
 
 describe("createInteractionHandler", () => {
+  it("dispatches autocomplete to the command's autocomplete handler", async () => {
+    const autocomplete = vi.fn();
+    const commands = new Collection<string, Command>();
+    commands.set("register", {
+      data: { name: "register" } as unknown as Command["data"],
+      execute: vi.fn(),
+      autocomplete,
+    });
+
+    const handler = createInteractionHandler(commands);
+    const interaction = {
+      isAutocomplete: () => true,
+      commandName: "register",
+    };
+
+    await handler(interaction as never);
+
+    expect(autocomplete).toHaveBeenCalledWith(interaction);
+  });
+
+  it("silently ignores autocomplete for commands without an autocomplete handler", async () => {
+    const commands = new Collection<string, Command>();
+    commands.set("ping", {
+      data: { name: "ping" } as unknown as Command["data"],
+      execute: vi.fn(),
+    });
+
+    const handler = createInteractionHandler(commands);
+    const interaction = {
+      isAutocomplete: () => true,
+      commandName: "ping",
+    };
+
+    await handler(interaction as never);
+  });
+
   it("executes the matching command", async () => {
     const execute = vi.fn();
     const commands = new Collection<string, Command>();
@@ -39,7 +76,7 @@ describe("createInteractionHandler", () => {
     const commands = new Collection<string, Command>();
     const handler = createInteractionHandler(commands);
 
-    const interaction = { isChatInputCommand: () => false };
+    const interaction = { isAutocomplete: () => false, isChatInputCommand: () => false };
     await handler(interaction as never);
   });
 

@@ -6,7 +6,7 @@ export function createBot() {
   const config = loadConfig();
 
   const client = new Client({
-    intents: [GatewayIntentBits.Guilds],
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
   });
 
   const shutdown = () => {
