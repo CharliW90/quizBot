@@ -76,12 +76,14 @@ describe("rounds", () => {
       expect(stored.publishedAt).toBeNull();
     });
 
-    it("overwrites existing round data (re-fetch)", async () => {
+    it("preserves previous fetch in history on re-fetch", async () => {
+      const oldResponses = { "Old Team": { answers: [], score: 5 } };
       db._store["guilds/guild-1/quizzes/2026-06-06/rounds/3"] = {
         formId: "form-abc",
-        responses: {},
+        responses: oldResponses,
         fetchedAt: "2026-06-06T18:00:00Z",
         publishedAt: null,
+        history: [],
       };
 
       const result = await storeRound(db as any, "guild-1", "2026-06-06", {
@@ -93,6 +95,24 @@ describe("rounds", () => {
       expect(result.ok).toBe(true);
       const stored = db._store["guilds/guild-1/quizzes/2026-06-06/rounds/3"];
       expect(stored.responses).toEqual(sampleResponses);
+      expect((stored.history as any[])).toHaveLength(1);
+      expect((stored.history as any[])[0].responses).toEqual(oldResponses);
+      expect((stored.history as any[])[0].fetchedAt).toBe("2026-06-06T18:00:00Z");
+    });
+
+    it("rejects writes when quiz is ended", async () => {
+      db._store["guilds/guild-1/quizzes/2026-06-06"] = { status: "ended" };
+
+      const result = await storeRound(db as any, "guild-1", "2026-06-06", {
+        roundNumber: 1,
+        formId: "form-abc",
+        responses: sampleResponses,
+      });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toContain("ended");
+      }
     });
   });
 
@@ -182,6 +202,23 @@ describe("rounds", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toContain("not found");
+      }
+    });
+
+    it("rejects when quiz is ended", async () => {
+      db._store["guilds/guild-1/quizzes/2026-06-06"] = { status: "ended" };
+      db._store["guilds/guild-1/quizzes/2026-06-06/rounds/1"] = {
+        formId: "f1",
+        responses: sampleResponses,
+        fetchedAt: "2026-06-06T19:00:00Z",
+        publishedAt: null,
+      };
+
+      const result = await publishRound(db as any, "guild-1", "2026-06-06", 1);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toContain("ended");
       }
     });
   });

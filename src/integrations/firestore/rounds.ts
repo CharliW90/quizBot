@@ -1,5 +1,6 @@
 import type { firestore } from "firebase-admin";
 import { ok, err, type Result } from "../../utils/result.js";
+import { checkQuizNotEnded } from "./quiz.js";
 
 export interface Answer {
   answer: string;
@@ -12,12 +13,18 @@ export interface TeamResponse {
   score: number;
 }
 
+export interface HistoryEntry {
+  responses: Record<string, TeamResponse>;
+  fetchedAt: string;
+}
+
 export interface RoundData {
   roundNumber: number;
   formId: string;
   responses: Record<string, TeamResponse>;
   fetchedAt: string;
   publishedAt: string | null;
+  history: HistoryEntry[];
 }
 
 type Firestore = firestore.Firestore;
@@ -32,15 +39,33 @@ export async function storeRound(
   quizDate: string,
   input: { roundNumber: number; formId: string; responses: RoundData["responses"] }
 ): Promise<Result<RoundData>> {
+  const guard = await checkQuizNotEnded(db, guildId, quizDate);
+  if (!guard.ok) return guard;
+
   const docRef = db
     .collection(roundsCollection(guildId, quizDate))
     .doc(String(input.roundNumber));
+
+  const existing = await docRef.get();
+  const history: RoundData["history"] = [];
+
+  if (existing.exists) {
+    const prev = existing.data() as Omit<RoundData, "roundNumber">;
+    if (prev.history) {
+      history.push(...prev.history);
+    }
+    history.unshift({
+      responses: prev.responses,
+      fetchedAt: prev.fetchedAt,
+    });
+  }
 
   const record: Omit<RoundData, "roundNumber"> = {
     formId: input.formId,
     responses: input.responses,
     fetchedAt: new Date().toISOString(),
     publishedAt: null,
+    history,
   };
 
   await docRef.set(record);
@@ -89,6 +114,9 @@ export async function publishRound(
   quizDate: string,
   roundNumber: number
 ): Promise<Result<void>> {
+  const guard = await checkQuizNotEnded(db, guildId, quizDate);
+  if (!guard.ok) return guard;
+
   const docRef = db
     .collection(roundsCollection(guildId, quizDate))
     .doc(String(roundNumber));

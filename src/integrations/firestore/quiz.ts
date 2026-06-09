@@ -9,6 +9,28 @@ export interface Quiz {
 
 type Firestore = firestore.Firestore;
 
+export async function checkQuizNotEnded(
+  db: Firestore,
+  guildId: string,
+  quizDate: string
+): Promise<Result<void>> {
+  const snapshot = await db
+    .collection(`guilds/${guildId}/quizzes`)
+    .doc(quizDate)
+    .get();
+
+  if (!snapshot.exists) {
+    return ok(undefined);
+  }
+
+  const data = snapshot.data() as Omit<Quiz, "date">;
+  if (data.status === "ended") {
+    return err(`Quiz for ${quizDate} has ended - no further updates allowed`);
+  }
+
+  return ok(undefined);
+}
+
 export async function createQuiz(
   db: Firestore,
   guildId: string,

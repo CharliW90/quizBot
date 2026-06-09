@@ -1,5 +1,6 @@
 import type { firestore } from "firebase-admin";
 import { ok, err, type Result } from "../../utils/result.js";
+import { checkQuizNotEnded } from "./quiz.js";
 
 export interface Team {
   name: string;
@@ -24,7 +25,9 @@ export async function createTeam(
   quizDate: string,
   team: Omit<Team, "registeredAt">
 ): Promise<Result<Team>> {
-  const path = teamDocPath(guildId, quizDate, team.name);
+  const guard = await checkQuizNotEnded(db, guildId, quizDate);
+  if (!guard.ok) return guard;
+
   const record: Team = { ...team, registeredAt: new Date().toISOString() };
 
   await db.collection(`guilds/${guildId}/quizzes/${quizDate}/teams`).doc(team.name).set(record);
@@ -69,6 +72,9 @@ export async function deleteTeam(
   quizDate: string,
   teamName: string
 ): Promise<Result<void>> {
+  const guard = await checkQuizNotEnded(db, guildId, quizDate);
+  if (!guard.ok) return guard;
+
   const docRef = db
     .collection(`guilds/${guildId}/quizzes/${quizDate}/teams`)
     .doc(teamName);
@@ -89,6 +95,9 @@ export async function updateTeam(
   teamName: string,
   fields: Partial<Omit<Team, "name" | "registeredAt">>
 ): Promise<Result<void>> {
+  const guard = await checkQuizNotEnded(db, guildId, quizDate);
+  if (!guard.ok) return guard;
+
   const docRef = db
     .collection(`guilds/${guildId}/quizzes/${quizDate}/teams`)
     .doc(teamName);

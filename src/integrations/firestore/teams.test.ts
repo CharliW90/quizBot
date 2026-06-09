@@ -69,6 +69,27 @@ describe("teams", () => {
         color: "#ff5733",
       });
     });
+
+    it("rejects when quiz is ended", async () => {
+      db._store["guilds/guild-1/quizzes/2026-06-06"] = { status: "ended" };
+
+      const team = {
+        name: "Late Entry",
+        captain: "user-1",
+        members: ["user-1"],
+        roleId: "r1",
+        textChannelId: "t1",
+        voiceChannelId: "v1",
+        color: "#000",
+      };
+
+      const result = await createTeam(db as any, "guild-1", "2026-06-06", team);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toContain("ended");
+      }
+    });
   });
 
   describe("getTeam", () => {
