@@ -11,7 +11,7 @@ vi.mock("discord.js", () => {
   };
   return {
     Client: vi.fn(() => mockClient),
-    GatewayIntentBits: { Guilds: 1 },
+    GatewayIntentBits: { Guilds: 1, GuildMembers: 2 },
   };
 });
 
@@ -49,7 +49,7 @@ describe("createBot", () => {
     createBot();
 
     expect(Client).toHaveBeenCalledWith({
-      intents: [GatewayIntentBits.Guilds],
+      intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
     });
   });
 
