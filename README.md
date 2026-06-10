@@ -1,19 +1,58 @@
 # quizBot
 
-At its core this is a Discord bot, built on discord.js, for helping to manage a Discord server running a 'pub quiz' - the bot handles registering teams, providing private channels for team communications, fetching their quiz scores, and informing them of their results.  Achieving this involves a few things:
+> **V4 rewrite in progress.** The current production version lives on the [`v3-stable`](../../tree/v3-stable) branch. That branch is archived and will not receive further updates.
 
-- discord_bot: the discord.js bot that handles slash-commands on a Discord server, and a Firestore noSQL database that stores the relevant data for past and present quizzes
-- cloud_app: an express.js custom API (app) that handles fetching team's responses, and a Google Apps Script (clasp) that makes the Google Forms responses available to the app
-- site: (WIP) a webpage overview of the bot, based primarily on the information stored in Firestore, to aid Admins in managing the quiz
+At its core this is a Discord bot, built on discord.js, for helping to manage a Discord server running a 'pub quiz' - the bot handles registering teams, providing private channels for team communications, fetching their quiz scores from Google Forms, and informing them of their results.
 
 ## the 'Pub Quiz'
 
-This discord bot project arose from my work with a [charity fundraising quiz](https://www.virtual-quizzes.com/), which is streamed on twitch.  The quiz is on the first Friday of every month, at 7:00PM UK time. Everyone is welcome to play along by watching our broadcast on Twitch.tv
+This discord bot project arose from my work with a [charity fundraising quiz](https://www.virtual-quizzes.com/), which is streamed on Twitch. The quiz is on the first Friday of every month, at 7:00PM UK time. Everyone is welcome to play along by watching our broadcast on Twitch.tv
 
-## the Discord Bot
+## V4 Architecture
 
-The [bot](/discord_bot/readme.md) is essentially a collection of ['slash-commands'](/discord_bot/commands/readme.md) and associated [functions](/discord_bot/functions/readme.md) for interacting with the Discord API to manage the Discord server (aka 'guild' in Discord terminology) via [interactions](/discord_bot/events/readme.md).  This is a node.js app that uses discord.js for handling interactions with discord, and firebase for interacting with firestore.  The Discord Bot app is running on a Google Cloud Platform (GCP) project - a Dockerfile packages the app, and this is hosted in the project's Artifact Registry, which is in turn deployed on Google Compute Engine.  An E2.micro Virtual Machine hosts a container, running this Dockerfile image, and has the startup script `docker run -d <registry>/<project>/quizbot/discordbot`
+V4 is a ground-up rewrite — single TypeScript service replacing the old three-service JavaScript stack (discord bot + express API + Google Apps Script).
 
-## the Cloud App
+- **discord_bot**: discord.js bot handling slash-commands on a Discord server, backed by a Firestore database for quiz and team data
+- **forms integration**: direct access to Google Forms API v1 via service account — no more Apps Script middleman, no more custom API, no more single-use passwords
 
-A [custom API](/cloud_app/readme.md) allowing the Discord Bot to access responses submitted via Google Forms.  Comes in two parts: a Google Apps Script (/clasp) which handles authorising access to Google Forms, and then fetches, parses, and returns a JSON response of the submitted forms, and; an express.js API (/app) that uses the MVC model to fetch, query, format and return the JSON responses from the Google Apps Script - includes [custom security](/cloud_app/app/utility/hotPass.js) (single-use, time-sensitive passwords) to ensure that only the Discord Bot can access the Google Forms responses.  The express API app is running on a Google Cloud Platform (GCP) project - a Dockerfile packages the app, and this is hosted in the project's Artifact Registry, which is in turn deployed on Google Cloud Run.
+### Tech Stack
+
+- Language: TypeScript (strict mode)
+- Runtime: Node.js
+- Discord library: discord.js
+- Database: Firestore (Firebase Admin SDK)
+- Forms: Google Forms API v1 (service account, direct access)
+- Hosting: GCE e2-micro (free tier), Docker
+- CI/CD: GitHub Actions
+
+## What changed from V3
+
+| V3 | V4 |
+|----|-----|
+| 3 separate services (bot, express API, Apps Script) | Single TypeScript service |
+| JavaScript, no types | TypeScript strict mode |
+| Apps Script → Express → Bot pipeline for form responses | Bot calls Google Forms API directly |
+| Custom single-use password security between services | Service account auth, no middleman |
+| Unpinned dependencies, no lockfile | Pinned versions, committed lockfile |
+| Fragile interaction timeouts | Deferred replies, proper error handling |
+
+## Running
+
+```bash
+npm install
+npm run build
+npm start
+```
+
+Environment variables (see `.env.example`):
+- `DISCORD_TOKEN` — bot token
+- `DISCORD_CLIENT_ID` — application ID
+- `GUILD_ID` — target server
+- `GOOGLE_APPLICATION_CREDENTIALS` — path to service account JSON
+- `FIREBASE_PROJECT_ID` — Firestore project
+
+## Testing
+
+```bash
+npm test
+```
