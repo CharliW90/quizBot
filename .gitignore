@@ -4,3 +4,4 @@ dist/
 *.env.local
 *.js.map
 CLAUDE.md
+wip-reference-docs/

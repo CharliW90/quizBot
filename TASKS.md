@@ -29,18 +29,18 @@ Status key: `[ ]` todo, `[~]` in progress, `[x]` done
 
 ## Phase 2: Firestore Integration
 
-- [ ] 2.1 — Firebase Admin init (service account from env/mounted secret)
-- [ ] 2.2 — Guild config service (read/write config subcollection)
-- [ ] 2.3 — Teams service (CRUD operations, member lookups)
-- [ ] 2.4 — Quiz session service (create/end/get current quiz by date)
-- [ ] 2.5 — Rounds service (store/retrieve/mark-published round responses)
-- [ ] 2.6 — Scoreboard service (generate, store, retrieve)
-- [ ] 2.7 — Date utility (timezone-aware quiz date derivation, configurable)
-- [ ] 2.8 — Per-user tracking service (record user-team associations per guild/quiz; powers autocomplete and prevents duplicate registration)
-- [ ] 2.9 — Teams Aliases map (store/lookup textified channel names and form-name aliases; used for response matching and collision detection)
-- [ ] 2.10 — Teams Members map (userId -> teamName flat lookup; fast duplicate-member check during registration)
-- [ ] 2.11 — Response history (preserve previous fetches when re-fetching a round; store as current + history array)
-- [ ] 2.12 — Quiz ended guard (all write operations must check quiz session status and reject writes to ended quizzes)
+- [~] 2.1 — Firebase Admin init (service account from env/mounted secret)
+- [~] 2.2 — Guild config service (read/write config subcollection)
+- [~] 2.3 — Teams service (CRUD operations, member lookups)
+- [~] 2.4 — Quiz session service (create/end/get current quiz by date)
+- [~] 2.5 — Rounds service (store/retrieve/mark-published round responses)
+- [~] 2.6 — Scoreboard service (generate, store, retrieve)
+- [~] 2.7 — Date utility (timezone-aware quiz date derivation, configurable)
+- [~] 2.8 — Per-user tracking service (record user-team associations per guild/quiz; powers autocomplete and prevents duplicate registration)
+- [~] 2.9 — Teams Aliases map (store/lookup textified channel names and form-name aliases; used for response matching and collision detection)
+- [~] 2.10 — Teams Members map (userId -> teamName flat lookup; fast duplicate-member check during registration)
+- [~] 2.11 — Response history (preserve previous fetches when re-fetching a round; store as current + history array)
+- [~] 2.12 — Quiz ended guard (all write operations must check quiz session status and reject writes to ended quizzes)
 
 ---
 
