@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ChannelType, PermissionFlagsBits } from "discord.js";
+import type { Command } from "../bot/types.js";
 
 vi.mock("../integrations/firestore/client.js", () => ({
   getDb: vi.fn(() => ({})),
@@ -121,7 +122,7 @@ describe("register command", () => {
 
   describe("autocomplete", () => {
     it("responds with user's former team names filtered by input", async () => {
-      const { default: command } = await import("./register.js");
+      const command = (await import("./register.js")).default as unknown as Command;
       const interaction = {
         options: { getFocused: vi.fn().mockReturnValue("Old") },
         user: { id: "user-1" },
@@ -138,7 +139,7 @@ describe("register command", () => {
     });
 
     it("filters by prefix case-insensitively", async () => {
-      const { default: command } = await import("./register.js");
+      const command = (await import("./register.js")).default as unknown as Command;
       const interaction = {
         options: { getFocused: vi.fn().mockReturnValue("old") },
         user: { id: "user-1" },
@@ -157,7 +158,7 @@ describe("register command", () => {
 
   describe("execute", () => {
     it("replies with error when captain cannot be resolved", async () => {
-      const { default: command } = await import("./register.js");
+      const command = (await import("./register.js")).default as unknown as Command;
       const interaction = mockInteraction();
       interaction.options.getMember = vi.fn().mockReturnValue(null);
       interaction.options.getString = vi.fn().mockReturnValue("Test Team");
@@ -170,7 +171,7 @@ describe("register command", () => {
     });
 
     it("replies with validation errors when team fails validation", async () => {
-      const { default: command } = await import("./register.js");
+      const command = (await import("./register.js")).default as unknown as Command;
       const bot = mockMember("bot-1", { bot: true });
       const captain = mockMember("captain-1");
       const interaction = mockInteraction({ captain, members: [bot] });
@@ -183,7 +184,7 @@ describe("register command", () => {
     });
 
     it("cancels when user clicks cancel button", async () => {
-      const { default: command } = await import("./register.js");
+      const command = (await import("./register.js")).default as unknown as Command;
       const captain = mockMember("captain-1");
       const interaction = mockInteraction({ captain });
       interaction._awaitMessageComponent.mockResolvedValue({ customId: "cancel" });
@@ -196,7 +197,7 @@ describe("register command", () => {
     });
 
     it("handles timeout gracefully", async () => {
-      const { default: command } = await import("./register.js");
+      const command = (await import("./register.js")).default as unknown as Command;
       const captain = mockMember("captain-1");
       const interaction = mockInteraction({ captain });
       interaction._awaitMessageComponent.mockRejectedValue(
@@ -214,7 +215,7 @@ describe("register command", () => {
 
     it("calls registerTeam on confirmation and posts success", async () => {
       const { registerTeam: mockRegister } = await import("../services/register-team.js");
-      const { default: command } = await import("./register.js");
+      const command = (await import("./register.js")).default as unknown as Command;
       const captain = mockMember("captain-1");
       const interaction = mockInteraction({ captain });
 
