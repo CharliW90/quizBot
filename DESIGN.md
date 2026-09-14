@@ -49,10 +49,12 @@ guilds/{guildId}/
 │   │   ├── formId: string
 │   │   ├── responses: { [teamName]: { answers: Answer[], score: number } }
 │   │   ├── publishedAt: timestamp | null
-│   │   └── fetchedAt: timestamp
-│   └── scoreboard/
-│       ├── generated: { [teamName]: { rounds: number[], total: number } }
-│       └── generatedAt: timestamp
+│   │   ├── fetchedAt: timestamp
+│   │   └── history: HistoryEntry[]
+│   ├── maps/
+│   │   ├── teamsAliases: { [alias]: teamName }
+│   │   └── teamsMembers: { [userId]: teamName }
+│   └── scoreboard: { current: { [teamName]: { rounds: number[], total: number } }, history: [] }
 ├── teams/{teamName}/
 │   ├── captain: userId
 │   ├── members: userId[]
@@ -91,13 +93,13 @@ guilds/{guildId}/
 ### Quiz Operations (Admin only)
 | Command | Description |
 |---------|-------------|
-| `/quiz setup` | Configure form IDs for this month's quiz rounds |
-| `/quiz fetch <round\|all>` | Fetch & score responses from Google Forms |
-| `/quiz send <round\|all>` | Send scored results to team channels |
-| `/quiz scoreboard` | Generate and display aggregate leaderboard |
-| `/quiz correct <team-name>` | Fix a team name typo across all rounds |
-| `/quiz end` | Lock the current quiz session |
-| `/quiz reset` | Tear down all teams/channels for next month |
+| `/quiz-setup` | Configure a form ID for a given round number |
+| `/quiz-fetch <round>` | Fetch & store responses from a round's Google Form |
+| `/quiz-send <round>` | Send scored results to team channels |
+| `/quiz-scoreboard` | Generate and display aggregate leaderboard |
+| `/quiz-correct <incorrect> <correct>` | Fix a team name typo across all rounds |
+| `/quiz-end` | Lock the current quiz session |
+| `/quiz-reset` | Tear down all teams/channels for the current quiz |
 
 ### Utility
 | Command | Description |
@@ -116,7 +118,7 @@ V3 used Express on Cloud Run as a bridge to Apps Script. The Google Forms API (v
 Discord interactions must be acknowledged within 3 seconds. For operations that take longer (fetching forms, bulk channel operations), we immediately `deferReply()` and then `editReply()` when done. V3's 10-second timeout was far too short and caused silent failures.
 
 ### 3. Confirmation flows via buttons, not timeouts
-V3 used `awaitMessageComponent` with short timeouts. V4 will use persistent button collectors with sensible timeouts (5 minutes) and explicit cancellation. Interactions that expire gracefully show "timed out" rather than silently dying.
+V3 used `awaitMessageComponent` with short timeouts (10s). V4 uses button collectors with 60-second timeouts and explicit cancellation. Interactions that expire gracefully show "timed out" rather than silently dying.
 
 ### 4. Scoring lives in the bot, not Apps Script
 V3 relied on Google Forms' built-in grading (score per question in the form). V4 reads raw responses and can optionally score them against an answer key stored in Firestore — allowing corrections without re-fetching from Forms. If the form has grading enabled, we can still use those scores as default.
