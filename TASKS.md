@@ -35,7 +35,7 @@ Status key: `[ ]` todo, `[~]` in progress, `[x]` done
 - [x] 2.4 — Quiz session service (create/end/get current quiz by date)
 - [x] 2.5 — Rounds service (store/retrieve/mark-published round responses)
 - [x] 2.6 — Scoreboard service (generate, store, retrieve)
-- [ ] 2.7 — Date utility (timezone-aware quiz date derivation, configurable)
+- [x] 2.7 — Date utility (timezone-aware quiz date derivation, configurable)
 - [x] 2.8 — Per-user tracking service (record user-team associations per guild/quiz; powers autocomplete and prevents duplicate registration)
 - [x] 2.9 — Teams Aliases map (store/lookup textified channel names and form-name aliases; used for response matching and collision detection)
 - [x] 2.10 — Teams Members map (userId -> teamName flat lookup; fast duplicate-member check during registration)
@@ -65,7 +65,7 @@ Status key: `[ ]` todo, `[~]` in progress, `[x]` done
 - [x] 4.8 — `/leave` command (with validation: not captain, not sole member)
 - [x] 4.9 — Autocomplete for team names (from Firestore)
 - [x] 4.10 — Team name normalization (case-insensitive matching, trim whitespace, prevent near-duplicates) [GH #19]
-- [ ] 4.11 — Drift detection: verify role/channel still exist before operating on a team; handle renames gracefully [GH #15] (deferred to Phase 6 polish)
+- [x] 4.11 — Drift detection: verify role/channel still exist before operating on a team; handle renames gracefully [GH #15]
 
 ---
 
@@ -84,10 +84,10 @@ Status key: `[ ]` todo, `[~]` in progress, `[x]` done
 
 ## Phase 6: Migration & Polish
 
-- [ ] 6.0 — `/migrate` command (admin): one-time migration of V3 Firestore data to V4 paths/shapes. Reads `Servers/{id}/Quizzes/{code}/Teams|Rounds|Maps/...`, extracts IDs/names from serialized Discord objects, writes to `guilds/{id}/quizzes/{code}/...` in clean V4 format. Also migrates `Users/` collection for per-user tracking.
-- [ ] 6.1 — `/ping` and `/help` commands
-- [ ] 6.1a — `/status` command: show integration health (Firestore connected, Forms API accessible, bot permissions OK) [GH #26]
-- [ ] 6.2 — Error embeds for all failure modes (permission denied, not found, already exists)
+- [x] 6.0 — `/migrate` command (admin): one-time migration of V3 Firestore data to V4 paths/shapes. Reads `Servers/{id}/Quizzes/{code}/Teams|Rounds|Maps/...`, extracts IDs/names from serialized Discord objects, writes to `guilds/{id}/quizzes/{code}/...` in clean V4 format.
+- [x] 6.1 — `/ping` and `/help` commands
+- [x] 6.1a — `/status` command: show integration health (Firestore connected, Forms API accessible, bot permissions OK) [GH #26]
+- [x] 6.2 — Error embeds for all failure modes (permission denied, not found, already exists)
 - [ ] 6.3 — Integration tests (mock Discord API, real Firestore emulator)
 - [ ] 6.4 — Build and push Docker image to registry
 - [ ] 6.5 — Deploy to GCE e2-micro (docker pull + restart)
