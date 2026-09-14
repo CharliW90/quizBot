@@ -13,12 +13,9 @@ import { getDb } from "../integrations/firestore/client.js";
 import { deleteTeamByRole } from "../services/delete-team.js";
 import { errorEmbed, successEmbed } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
+import { getQuizDate } from "../utils/quiz-date.js";
 
 const CONFIRMATION_TIMEOUT_MS = 60_000;
-
-function getQuizDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 const command: Command = {
   data: new SlashCommandBuilder()

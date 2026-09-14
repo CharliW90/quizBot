@@ -8,11 +8,8 @@ import type { Command } from "../bot/types.js";
 import { getDb } from "../integrations/firestore/client.js";
 import { generateScoreboard } from "../services/generate-scoreboard.js";
 import { errorEmbed } from "../utils/embeds.js";
+import { getQuizDate } from "../utils/quiz-date.js";
 import type { ScoreboardEntry } from "../integrations/firestore/scoreboard.js";
-
-function getQuizDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 const pluralRules = new Intl.PluralRules("en-US", { type: "ordinal" });
 const suffixes: Record<string, string> = { one: "st", two: "nd", few: "rd", other: "th" };

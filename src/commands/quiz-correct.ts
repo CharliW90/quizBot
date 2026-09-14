@@ -9,10 +9,7 @@ import { listRounds } from "../integrations/firestore/rounds.js";
 import { listTeams } from "../integrations/firestore/teams.js";
 import { correctTeamName } from "../services/correct-team-name.js";
 import { errorEmbed, successEmbed } from "../utils/embeds.js";
-
-function getQuizDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+import { getQuizDate } from "../utils/quiz-date.js";
 
 const command: Command = {
   data: new SlashCommandBuilder()

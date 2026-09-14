@@ -9,10 +9,7 @@ import { getDb } from "../integrations/firestore/client.js";
 import { listRounds } from "../integrations/firestore/rounds.js";
 import { sendRound } from "../services/send-round.js";
 import { errorEmbed } from "../utils/embeds.js";
-
-function getQuizDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+import { getQuizDate } from "../utils/quiz-date.js";
 
 const command: Command = {
   data: new SlashCommandBuilder()
