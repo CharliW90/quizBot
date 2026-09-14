@@ -64,7 +64,7 @@ function buildResponse(
       textAnswers: { answers: [{ value: ans.value }] },
     };
   }
-  return { responseId, answers: formattedAnswers, totalScore: String(totalScore) };
+  return { responseId, answers: formattedAnswers, totalScore };
 }
 
 describe("parseFormResponses", () => {
