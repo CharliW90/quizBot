@@ -9,8 +9,6 @@ Status key: `[ ]` todo, `[~]` in progress, `[x]` done
 - [x] 0.1 — Init new TypeScript project (tsconfig, eslint, prettier)
 - [x] 0.2 — Set up package.json with pinned deps (discord.js, firebase-admin, googleapis)
 - [x] 0.3 — Configure project structure (src/, commands/, services/, integrations/, utils/)
-- [ ] 0.4 — Dockerfile (multi-stage build: compile TS → run JS)
-- [ ] 0.5 — GitHub Actions workflow (lint + build + test on push)
 - [x] 0.6 — .env.example and config loading (environment variables, no config.json with secrets)
 
 ---
@@ -88,21 +86,27 @@ Status key: `[ ]` todo, `[~]` in progress, `[x]` done
 - [x] 6.1 — `/ping` and `/help` commands
 - [x] 6.1a — `/status` command: show integration health (Firestore connected, Forms API accessible, bot permissions OK) [GH #26]
 - [x] 6.2 — Error embeds for all failure modes (permission denied, not found, already exists)
-- [ ] 6.3 — Integration tests (mock Discord API, real Firestore emulator)
-- [ ] 6.4 — Build and push Docker image to registry
-- [ ] 6.5 — Deploy to GCE e2-micro (docker pull + restart)
-- [ ] 6.6 — GitHub Actions: automated deploy on merge to main
-- [ ] 6.7 — Smoke test on live Discord server
+---
+
+## Phase 7: Deployment
+
+- [ ] 7.1 — Dockerfile (multi-stage build: compile TS -> run JS)
+- [ ] 7.2 — GitHub Actions workflow (lint + build + test on push)
+- [ ] 7.3 — Integration tests (mock Discord API, real Firestore emulator)
+- [ ] 7.4 — Build and push Docker image to registry
+- [ ] 7.5 — Deploy to GCE e2-micro (docker pull + restart)
+- [ ] 7.6 — GitHub Actions: automated deploy on merge to main
+- [ ] 7.7 — Smoke test on live Discord server
 
 ---
 
-## Phase 7: Future (not blocking launch)
+## Phase 8: Future (not blocking launch)
 
-- [ ] 7.1 — Web dashboard for admins
-- [ ] 7.2 — Score correction at question level
-- [ ] 7.3 — Historical stats / all-time leaderboards
-- [ ] 7.4 — Multi-guild support
-- [ ] 7.5 — Automated form creation (Google Forms API supports this)
-- [ ] 7.6 — Open/close form functions (toggle form accepting responses via Forms API)
-- [ ] 7.7 — `/form open <round>` and `/form close <round>` commands
-- [ ] 7.8 — `/form next` command (close current round's form, open the next round's form)
+- [ ] 8.1 — Web dashboard for admins
+- [ ] 8.2 — Score correction at question level
+- [ ] 8.3 — Historical stats / all-time leaderboards
+- [ ] 8.4 — Multi-guild support
+- [ ] 8.5 — Automated form creation (Google Forms API supports this)
+- [ ] 8.6 — Open/close form functions (toggle form accepting responses via Forms API)
+- [ ] 8.7 — `/form open <round>` and `/form close <round>` commands
+- [ ] 8.8 — `/form next` command (close current round's form, open the next round's form)
