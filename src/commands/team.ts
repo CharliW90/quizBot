@@ -11,6 +11,7 @@ import {
 } from "discord.js";
 import type { Command } from "../bot/types.js";
 import { getDb } from "../integrations/firestore/client.js";
+import { getTeam } from "../integrations/firestore/teams.js";
 import { addMembers, removeMembers, promoteToCaptain } from "../services/team-members.js";
 import { errorEmbed } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
@@ -88,17 +89,23 @@ const command: Command = {
     await interaction.deferReply({ ephemeral: true });
 
     const guild = interaction.guild;
+    const db = getDb();
+    const quizDate = getQuizDate();
     const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) ?? false;
 
-    // Resolve team role
-    let teamInput = interaction.options.getString("team", true);
-    if (!teamInput.includes("Team: ")) {
-      teamInput = `Team: ${teamInput}`;
-    }
+    // Resolve team role - try by name first, fall back to Firestore + stored ID
+    const teamInput = interaction.options.getString("team", true);
+    const teamName = teamInput.replace("Team: ", "");
 
-    const teamRole = guild.roles.cache.find((r) => r.name === teamInput);
+    let teamRole = guild.roles.cache.find((r) => r.name === `Team: ${teamName}`);
     if (!teamRole) {
-      await interaction.editReply({ embeds: [errorEmbed("Team Not Found", `Could not find role "${teamInput}"`)] });
+      const teamResult = await getTeam(db, guild.id, quizDate, teamName);
+      if (teamResult.ok) {
+        teamRole = guild.roles.cache.get(teamResult.data.roleId);
+      }
+    }
+    if (!teamRole) {
+      await interaction.editReply({ embeds: [errorEmbed("Team Not Found", `Could not find team "${teamName}"`)] });
       return;
     }
 
@@ -177,9 +184,6 @@ const command: Command = {
 
       await interaction.editReply({ content: "Updating team...", embeds: [], components: [] });
 
-      const db = getDb();
-      const quizDate = getQuizDate();
-      const teamName = teamRole.name.replace("Team: ", "");
       const ctx = { guild, db, quizDate, teamName, teamRole };
 
       let result;

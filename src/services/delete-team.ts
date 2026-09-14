@@ -4,6 +4,7 @@ import { ok, err, type Result } from "../utils/result.js";
 import { deleteTeam as deleteTeamDoc } from "../integrations/firestore/teams.js";
 import { deleteTeamMembers } from "../integrations/firestore/members.js";
 import { deleteAliasesForTeam } from "../integrations/firestore/aliases.js";
+import type { Team } from "../integrations/firestore/teams.js";
 import { logger } from "../utils/logger.js";
 
 export interface DeleteTeamContext {
@@ -20,17 +21,15 @@ export interface DeleteTeamResult {
 
 export async function deleteTeamByRole(
   ctx: DeleteTeamContext,
-  teamRole: Role
+  teamRole: Role,
+  team: Team
 ): Promise<Result<DeleteTeamResult>> {
-  const teamName = teamRole.name.replace("Team: ", "");
   const guild = ctx.guild;
 
   try {
-    // Find team members before deleting everything
     const teamMembers = guild.members.cache.filter((m) => m.roles.cache.has(teamRole.id));
     const memberIds = teamMembers.map((m) => m.id);
 
-    // Remove roles from all members
     const teamsRole = guild.roles.cache.find((r) => r.name === "Teams");
     const captainRole = guild.roles.cache.find((r) => r.name === "Team Captain");
 
@@ -44,31 +43,20 @@ export async function deleteTeamByRole(
     }
     await Promise.all(roleRemovals);
 
-    // Delete channels
     const deletedChannels: string[] = [];
-    const textChannel = guild.channels.cache.find(
-      (ch) => ch.parentId && ch.name.toLowerCase() === teamName.toLowerCase().replaceAll(" ", "-")
-    );
-    const voiceChannel = guild.channels.cache.find(
-      (ch) => ch.parentId && ch.name.toLowerCase() === teamName.toLowerCase() && ch.isVoiceBased()
-    );
-
-    if (textChannel) {
-      await textChannel.delete();
-      deletedChannels.push(textChannel.name);
-    }
-    if (voiceChannel) {
-      await voiceChannel.delete();
-      deletedChannels.push(voiceChannel.name);
+    for (const channelId of [team.textChannelId, team.voiceChannelId]) {
+      const channel = guild.channels.cache.get(channelId);
+      if (channel) {
+        await channel.delete();
+        deletedChannels.push(channel.name);
+      }
     }
 
-    // Delete role
     await teamRole.delete();
 
-    // Firestore cleanup
     await deleteTeamMembers(ctx.db, guild.id, ctx.quizDate, [...memberIds]);
-    await deleteAliasesForTeam(ctx.db, guild.id, ctx.quizDate, teamName);
-    await deleteTeamDoc(ctx.db, guild.id, ctx.quizDate, teamName);
+    await deleteAliasesForTeam(ctx.db, guild.id, ctx.quizDate, team.name);
+    await deleteTeamDoc(ctx.db, guild.id, ctx.quizDate, team.name);
 
     return ok({
       deletedRole: teamRole.name,

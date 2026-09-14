@@ -3,13 +3,12 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
-  EmbedBuilder,
-  GuildMember,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
 import type { Command } from "../bot/types.js";
 import { getDb } from "../integrations/firestore/client.js";
+import { getTeam } from "../integrations/firestore/teams.js";
 import { deleteTeamByRole } from "../services/delete-team.js";
 import { errorEmbed, successEmbed } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
@@ -51,16 +50,30 @@ const command: Command = {
     }
 
     const guild = interaction.guild;
+    const db = getDb();
+    const quizDate = getQuizDate();
     let teamInput = interaction.options.getString("team", true);
-    if (!teamInput.includes("Team: ")) {
-      teamInput = `Team: ${teamInput}`;
-    }
+    const teamName = teamInput.replace("Team: ", "");
 
-    const teamRole = guild.roles.cache.find((r) => r.name === teamInput);
+    // Try role by name first, then fall back to Firestore + stored ID
+    let teamRole = guild.roles.cache.find((r) => r.name === `Team: ${teamName}`);
     if (!teamRole) {
-      await interaction.reply({ embeds: [errorEmbed("Not Found", `Could not find role "${teamInput}"`)], ephemeral: true });
+      const teamResult = await getTeam(db, guild.id, quizDate, teamName);
+      if (teamResult.ok) {
+        teamRole = guild.roles.cache.get(teamResult.data.roleId);
+      }
+    }
+    if (!teamRole) {
+      await interaction.reply({ embeds: [errorEmbed("Not Found", `Could not find team "${teamName}"`)], ephemeral: true });
       return;
     }
+
+    const teamResult = await getTeam(db, guild.id, quizDate, teamName);
+    if (!teamResult.ok) {
+      await interaction.reply({ embeds: [errorEmbed("Not Found", `Team "${teamName}" not found in database`)], ephemeral: true });
+      return;
+    }
+    const team = teamResult.data;
 
     // Confirmation with danger styling
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -87,9 +100,7 @@ const command: Command = {
 
       await interaction.editReply({ content: "Deleting team...", components: [] });
 
-      const db = getDb();
-      const quizDate = getQuizDate();
-      const result = await deleteTeamByRole({ guild, db, quizDate }, teamRole);
+      const result = await deleteTeamByRole({ guild, db, quizDate }, teamRole, team);
 
       if (!result.ok) {
         await interaction.editReply({ embeds: [errorEmbed("Deletion Failed", result.error)] });
