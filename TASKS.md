@@ -90,12 +90,12 @@ Status key: `[ ]` todo, `[~]` in progress, `[x]` done
 
 ## Phase 7: Deployment
 
-- [ ] 7.1 — Dockerfile (multi-stage build: compile TS -> run JS)
-- [ ] 7.2 — GitHub Actions workflow (lint + build + test on push)
-- [ ] 7.3 — Integration tests (mock Discord API, real Firestore emulator)
-- [ ] 7.4 — Build and push Docker image to registry
-- [ ] 7.5 — Deploy to GCE e2-micro (docker pull + restart)
-- [ ] 7.6 — GitHub Actions: automated deploy on merge to main
+- [x] 7.1 — Dockerfile (multi-stage build: compile TS -> run JS)
+- [x] 7.2 — GitHub Actions CI workflow (lint + typecheck + build + test on push/PR)
+- [x] 7.3 — Integration tests (Firestore emulator via firebase-tools, separate vitest config)
+- [x] 7.4 — Build and push Docker image to Artifact Registry on tagged release
+- [x] 7.5 — Deploy to GCE e2-micro (COS update-container on tagged release)
+- [x] 7.6 — GitHub Actions: deploy workflow triggers on version tags (v*)
 - [ ] 7.7 — Smoke test on live Discord server
 
 ---
