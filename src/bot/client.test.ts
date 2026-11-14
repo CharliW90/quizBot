@@ -25,7 +25,6 @@ vi.mock("../utils/config", () => ({
     DISCORD_CLIENT_ID: "123456",
     GUILD_ID: "789",
     FIREBASE_PROJECT_ID: "test",
-    GOOGLE_APPLICATION_CREDENTIALS: "/fake/path.json",
   }),
 }));
 
