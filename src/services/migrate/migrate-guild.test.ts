@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { migrateGuild, type MigrateResult } from "./migrate-guild.js";
+import { describe, it, expect, vi } from "vitest";
+import { migrateGuild } from "./migrate-guild.js";
 
 function mockFirestore(v3Data: Record<string, Record<string, unknown>>) {
   const store: Record<string, Record<string, unknown>> = {};
@@ -85,7 +85,7 @@ const V3_QUIZ = { date: "2026-09-01", ended: false };
 
 describe("migrateGuild", () => {
   it("migrates teams from V3 to V4 paths", async () => {
-    const { db, store } = mockFirestore({
+    const { db } = mockFirestore({
       [`Servers/${GUILD_ID}/Quizzes/${QUIZ_DATE}`]: V3_QUIZ,
       [`Servers/${GUILD_ID}/Quizzes/${QUIZ_DATE}/Teams/squam fam`]: V3_TEAM_DOC,
       [`Servers/${GUILD_ID}/Quizzes/${QUIZ_DATE}/Rounds/Round 1`]: V3_ROUND_DOC,
@@ -114,7 +114,7 @@ describe("migrateGuild", () => {
   });
 
   it("migrates quiz session status", async () => {
-    const { db, store } = mockFirestore({
+    const { db } = mockFirestore({
       [`Servers/${GUILD_ID}/Quizzes/${QUIZ_DATE}`]: { ...V3_QUIZ, ended: true },
       [`Servers/${GUILD_ID}/Quizzes/${QUIZ_DATE}/Teams/squam fam`]: V3_TEAM_DOC,
       [`Servers/${GUILD_ID}/Quizzes/${QUIZ_DATE}/Rounds/Round 1`]: V3_ROUND_DOC,

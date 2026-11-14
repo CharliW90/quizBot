@@ -1,5 +1,6 @@
 import type { firestore } from "firebase-admin";
-import { ok, err, type Result } from "../utils/result.js";
+import type { forms_v1 } from "googleapis";
+import { err, type Result } from "../utils/result.js";
 import { getFormIds } from "../integrations/firestore/guild-config.js";
 import { storeRound } from "../integrations/firestore/rounds.js";
 import type { RoundData } from "../integrations/firestore/rounds.js";
@@ -9,8 +10,8 @@ import { validateFormStructure } from "../integrations/forms/validator.js";
 type Firestore = firestore.Firestore;
 
 interface FormsClient {
-  getForm: (formId: string) => Promise<any>;
-  listResponses: (formId: string) => Promise<Result<any[]>>;
+  getForm: (formId: string) => Promise<forms_v1.Schema$Form>;
+  listResponses: (formId: string) => Promise<Result<forms_v1.Schema$FormResponse[]>>;
 }
 
 interface FetchRoundInput {

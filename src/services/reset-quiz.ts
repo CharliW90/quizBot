@@ -1,6 +1,6 @@
 import type { firestore } from "firebase-admin";
 import type { Guild } from "discord.js";
-import { ok, err, type Result } from "../utils/result.js";
+import { ok, type Result } from "../utils/result.js";
 import { listTeams, deleteTeam } from "../integrations/firestore/teams.js";
 import { logger } from "../utils/logger.js";
 

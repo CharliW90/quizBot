@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateTeamRegistration, type TeamValidationInput, type ValidationError } from "./validate-team.js";
+import { validateTeamRegistration, type TeamValidationInput } from "./validate-team.js";
 
 function validInput(overrides: Partial<TeamValidationInput> = {}): TeamValidationInput {
   return {

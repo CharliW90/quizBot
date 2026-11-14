@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { resolveTeamResources, type TeamResources } from "./resolve-team.js";
+import { resolveTeamResources } from "./resolve-team.js";
 import type { Team } from "../integrations/firestore/teams.js";
 
 function makeTeam(overrides: Partial<Team> = {}): Team {
