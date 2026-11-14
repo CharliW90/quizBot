@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { getTestDb, clearFirestore, teardown } from "./helpers.js";
+import { describe, it, expect, beforeEach } from "vitest";
+import { getTestDb, clearFirestore } from "./helpers.js";
 import { storeRound, getRound, listRounds, publishRound } from "../integrations/firestore/rounds.js";
 import { createQuiz, endQuiz } from "../integrations/firestore/quiz.js";
 
@@ -21,9 +21,6 @@ describe("rounds (emulator)", () => {
     await clearFirestore();
   });
 
-  afterAll(async () => {
-    await teardown();
-  });
 
   it("stores and retrieves a round", async () => {
     const store = await storeRound(db, GUILD, DATE, {
