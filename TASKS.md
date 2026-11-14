@@ -110,3 +110,4 @@ Status key: `[ ]` todo, `[~]` in progress, `[x]` done
 - [ ] 8.6 — Open/close form functions (toggle form accepting responses via Forms API)
 - [ ] 8.7 — `/form open <round>` and `/form close <round>` commands
 - [ ] 8.8 — `/form next` command (close current round's form, open the next round's form)
+- [ ] 8.9 — Bump all dependencies to latest major versions (vitest 5 needs vi.mock constructor rewrites)
