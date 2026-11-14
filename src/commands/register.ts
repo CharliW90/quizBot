@@ -5,6 +5,7 @@ import {
   ChatInputCommandInteraction,
   EmbedBuilder,
   GuildMember,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
@@ -111,7 +112,7 @@ const command: Command = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild || !interaction.guildId) {
-      await interaction.reply({ content: "This command can only be used in a server.", ephemeral: true });
+      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -119,7 +120,7 @@ const command: Command = {
     const captainMember = interaction.options.getMember("team-captain") as GuildMember | null;
 
     if (!captainMember) {
-      await interaction.reply({ embeds: [errorEmbed("Invalid Captain", "Could not resolve the team captain.")], ephemeral: true });
+      await interaction.reply({ embeds: [errorEmbed("Invalid Captain", "Could not resolve the team captain.")], flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -177,7 +178,7 @@ const command: Command = {
         .join("\n");
       await interaction.reply({
         embeds: [errorEmbed("Registration Not Valid", description)],
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -203,7 +204,7 @@ const command: Command = {
       content: "Please review your draft team registration and confirm the details.",
       embeds: [confirmEmbed],
       components: [row],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     try {

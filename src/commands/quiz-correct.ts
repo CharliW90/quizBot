@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
@@ -87,7 +88,7 @@ const command: Command = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", ephemeral: true });
+      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -105,7 +106,7 @@ const command: Command = {
     });
 
     if (!result.ok) {
-      await interaction.reply({ embeds: [errorEmbed("Correction Error", result.error)], ephemeral: true });
+      await interaction.reply({ embeds: [errorEmbed("Correction Error", result.error)], flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -113,7 +114,7 @@ const command: Command = {
 
     await interaction.reply({
       embeds: [successEmbed("Team Name Corrected", description)],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

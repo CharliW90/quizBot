@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { PermissionFlagsBits } from "discord.js";
+import { MessageFlags, PermissionFlagsBits } from "discord.js";
 import command from "./help.js";
 
 function mockInteraction(hasManageChannels: boolean) {
@@ -28,7 +28,7 @@ describe("/help", () => {
       await command.execute(interaction);
 
       const call = interaction.reply.mock.calls[0][0];
-      expect(call.ephemeral).toBe(true);
+      expect(call.flags).toBe(MessageFlags.Ephemeral);
       expect(call.content).toContain("QUIZBOT(1)");
       expect(call.content).toContain("SYNOPSIS");
       expect(call.content).toContain("GETTING STARTED");
@@ -63,7 +63,7 @@ describe("/help", () => {
       await command.execute(interaction);
 
       const call = interaction.reply.mock.calls[0][0];
-      expect(call.ephemeral).toBe(true);
+      expect(call.flags).toBe(MessageFlags.Ephemeral);
       expect(call.content).toContain("QUIZBOT(1)");
       expect(call.content).toContain("TEAM COMMANDS");
       expect(call.content).toContain("UTILITY COMMANDS");

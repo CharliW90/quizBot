@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { Collection } from "discord.js";
+import { Collection, MessageFlags } from "discord.js";
 import { createInteractionHandler } from "./handler";
 import type { Command } from "./types";
 
@@ -88,7 +88,7 @@ describe("createInteractionHandler", () => {
     await handler(interaction as never);
 
     expect(interaction.reply).toHaveBeenCalledWith(
-      expect.objectContaining({ content: expect.stringContaining("not found"), ephemeral: true }),
+      expect.objectContaining({ content: expect.stringContaining("not found"), flags: MessageFlags.Ephemeral }),
     );
   });
 
@@ -105,7 +105,7 @@ describe("createInteractionHandler", () => {
     await handler(interaction as never);
 
     expect(interaction.reply).toHaveBeenCalledWith(
-      expect.objectContaining({ content: expect.stringContaining("unexpected error"), ephemeral: true }),
+      expect.objectContaining({ content: expect.stringContaining("unexpected error"), flags: MessageFlags.Ephemeral }),
     );
   });
 

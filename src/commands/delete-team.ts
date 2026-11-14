@@ -3,6 +3,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
@@ -45,7 +46,7 @@ const command: Command = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", ephemeral: true });
+      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -64,13 +65,13 @@ const command: Command = {
       }
     }
     if (!teamRole) {
-      await interaction.reply({ embeds: [errorEmbed("Not Found", `Could not find team "${teamName}"`)], ephemeral: true });
+      await interaction.reply({ embeds: [errorEmbed("Not Found", `Could not find team "${teamName}"`)], flags: MessageFlags.Ephemeral });
       return;
     }
 
     const teamResult = await getTeam(db, guild.id, quizDate, teamName);
     if (!teamResult.ok) {
-      await interaction.reply({ embeds: [errorEmbed("Not Found", `Team "${teamName}" not found in database`)], ephemeral: true });
+      await interaction.reply({ embeds: [errorEmbed("Not Found", `Team "${teamName}" not found in database`)], flags: MessageFlags.Ephemeral });
       return;
     }
     const team = teamResult.data;
@@ -84,7 +85,7 @@ const command: Command = {
     const confirmation = await interaction.reply({
       content: `Are you sure you want to completely delete **${teamRole.name}**? This will remove the role, channels, and all Firestore data.`,
       components: [row],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     try {

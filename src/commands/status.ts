@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
@@ -55,7 +56,7 @@ const command: Command = {
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels) as SlashCommandBuilder,
 
   async execute(interaction: ChatInputCommandInteraction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const guild = interaction.guild!;
     const me = guild.members.me!;

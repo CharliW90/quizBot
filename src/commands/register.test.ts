@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { PermissionFlagsBits } from "discord.js";
+import { MessageFlags, PermissionFlagsBits } from "discord.js";
 import type { Command } from "../bot/types.js";
 
 vi.mock("../integrations/firestore/client.js", () => ({
@@ -166,7 +166,7 @@ describe("register command", () => {
       await command.execute(interaction as any);
 
       expect(interaction.reply).toHaveBeenCalledWith(
-        expect.objectContaining({ ephemeral: true })
+        expect.objectContaining({ flags: MessageFlags.Ephemeral })
       );
     });
 
@@ -179,7 +179,7 @@ describe("register command", () => {
       await command.execute(interaction as any);
 
       const replyCall = interaction.reply.mock.calls[0][0];
-      expect(replyCall.ephemeral).toBe(true);
+      expect(replyCall.flags).toBe(MessageFlags.Ephemeral);
       expect(replyCall.embeds[0].data.title).toBe("Registration Not Valid");
     });
 

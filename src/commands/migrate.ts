@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
@@ -22,7 +23,7 @@ const command: Command = {
     ) as unknown as SlashCommandBuilder,
 
   async execute(interaction: ChatInputCommandInteraction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const guildId = interaction.guild!.id;
     const quizDate = interaction.options.getString("quiz_date", true);

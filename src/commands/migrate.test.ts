@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MessageFlags } from "discord.js";
 
 vi.mock("../integrations/firestore/client.js", () => ({
   getDb: vi.fn(() => "mock-db"),
@@ -45,7 +46,7 @@ describe("/migrate", () => {
 
     await command.execute(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalledWith({ ephemeral: true });
+    expect(interaction.deferReply).toHaveBeenCalledWith({ flags: MessageFlags.Ephemeral });
   });
 
   it("calls migrateGuild with the provided date", async () => {

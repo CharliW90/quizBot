@@ -1,4 +1,4 @@
-import { Collection, Interaction } from "discord.js";
+import { Collection, Interaction, MessageFlags } from "discord.js";
 import { logger } from "../utils/logger";
 import type { Command } from "./types";
 
@@ -23,7 +23,7 @@ export function createInteractionHandler(commands: Collection<string, Command>) 
     if (!command) {
       await interaction.reply({
         content: `Command \`${interaction.commandName}\` not found.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -38,7 +38,7 @@ export function createInteractionHandler(commands: Collection<string, Command>) 
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ content });
       } else {
-        await interaction.reply({ content, ephemeral: true });
+        await interaction.reply({ content, flags: MessageFlags.Ephemeral });
       }
     }
   };

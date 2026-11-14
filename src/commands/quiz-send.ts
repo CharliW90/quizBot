@@ -1,6 +1,7 @@
 import {
   ChatInputCommandInteraction,
   EmbedBuilder,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
@@ -53,11 +54,11 @@ const command: Command = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", ephemeral: true });
+      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const roundNumber = interaction.options.getInteger("round", true);
     const db = getDb();

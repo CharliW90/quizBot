@@ -55,7 +55,7 @@ export async function registerTeam(
     // 1. Create team role
     const role = await ctx.guild.roles.create({
       name: `Team: ${input.teamName}`,
-      color: input.color,
+      colors: { primaryColor: input.color },
       hoist: true,
       mentionable: true,
     });
