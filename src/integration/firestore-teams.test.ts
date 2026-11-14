@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { getTestDb, clearFirestore, teardown } from "./helpers.js";
+import { describe, it, expect, beforeEach } from "vitest";
+import { getTestDb, clearFirestore } from "./helpers.js";
 import { createTeam, getTeam, listTeams, updateTeam, deleteTeam } from "../integrations/firestore/teams.js";
 import { createQuiz, endQuiz } from "../integrations/firestore/quiz.js";
 
@@ -24,9 +24,6 @@ describe("teams CRUD (emulator)", () => {
     await clearFirestore();
   });
 
-  afterAll(async () => {
-    await teardown();
-  });
 
   it("creates and retrieves a team", async () => {
     const create = await createTeam(db, GUILD, DATE, makeTeam("Alpha"));

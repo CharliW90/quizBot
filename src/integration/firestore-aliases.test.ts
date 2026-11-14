@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { getTestDb, clearFirestore, teardown } from "./helpers.js";
+import { describe, it, expect, beforeEach } from "vitest";
+import { getTestDb, clearFirestore } from "./helpers.js";
 import { setAlias, getAliases, lookupAlias, deleteAliasesForTeam } from "../integrations/firestore/aliases.js";
 import { createQuiz, endQuiz } from "../integrations/firestore/quiz.js";
 
@@ -12,9 +12,6 @@ describe("aliases map (emulator)", () => {
     await clearFirestore();
   });
 
-  afterAll(async () => {
-    await teardown();
-  });
 
   it("sets and looks up an alias", async () => {
     await setAlias(db, GUILD, DATE, "the quizzicals", "The Quizzicals");

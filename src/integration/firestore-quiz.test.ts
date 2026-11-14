@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { getTestDb, clearFirestore, teardown } from "./helpers.js";
+import { describe, it, expect, beforeEach } from "vitest";
+import { getTestDb, clearFirestore } from "./helpers.js";
 import { createQuiz, getQuiz, listQuizzes, endQuiz } from "../integrations/firestore/quiz.js";
 
 const db = getTestDb();
@@ -10,9 +10,6 @@ describe("quiz lifecycle (emulator)", () => {
     await clearFirestore();
   });
 
-  afterAll(async () => {
-    await teardown();
-  });
 
   it("creates and retrieves a quiz", async () => {
     const create = await createQuiz(db, GUILD, "2026-01-10");
