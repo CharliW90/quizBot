@@ -10,10 +10,7 @@ import { getFormIds } from "../integrations/firestore/guild-config.js";
 import { fetchRound } from "../services/fetch-round.js";
 import { errorEmbed, successEmbed } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
-
-function getQuizDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+import { getQuizDate } from "../utils/quiz-date.js";
 
 const command: Command = {
   data: new SlashCommandBuilder()

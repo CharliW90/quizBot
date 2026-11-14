@@ -18,6 +18,7 @@ import { registerTeam } from "../services/register-team.js";
 import { textifyTeamName } from "../utils/textify.js";
 import { errorEmbed } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
+import { getQuizDate } from "../utils/quiz-date.js";
 
 const COLOUR_CHOICES = [
   { name: "Random (default)", value: "Random" },
@@ -64,10 +65,6 @@ function resolveColour(choice: string): number {
     White: 0xffffff,
   };
   return colours[choice] ?? Math.floor(Math.random() * 0xffffff);
-}
-
-function getQuizDate(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 const command: Command = {

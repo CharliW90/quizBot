@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { deleteTeamByRole, type DeleteTeamContext } from "./delete-team.js";
+import type { Team } from "../integrations/firestore/teams.js";
 
 vi.mock("../integrations/firestore/teams.js", () => ({
   deleteTeam: vi.fn().mockResolvedValue({ ok: true, data: undefined }),
@@ -16,6 +17,16 @@ vi.mock("../integrations/firestore/aliases.js", () => ({
 vi.mock("../utils/logger.js", () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
+
+const TEAM: Team = {
+  name: "Wizards",
+  captain: "m1",
+  members: ["m1", "m2"],
+  roleId: "team-role-id",
+  textChannelId: "text-ch-id",
+  voiceChannelId: "voice-ch-id",
+  color: "#ff0000",
+};
 
 function mockGuild() {
   const teamsRole = { id: "teams-role-id", name: "Teams" };
@@ -49,8 +60,13 @@ function mockGuild() {
     },
   };
 
-  const textChannel = { name: "wizards", parentId: "cat-1", isVoiceBased: () => false, delete: vi.fn().mockResolvedValue(undefined) };
-  const voiceChannel = { name: "Wizards", parentId: "cat-1", isVoiceBased: () => true, delete: vi.fn().mockResolvedValue(undefined) };
+  const textChannel = { id: "text-ch-id", name: "wizards", delete: vi.fn().mockResolvedValue(undefined) };
+  const voiceChannel = { id: "voice-ch-id", name: "Wizards", delete: vi.fn().mockResolvedValue(undefined) };
+
+  const channelMap = new Map<string, object>([
+    ["text-ch-id", textChannel],
+    ["voice-ch-id", voiceChannel],
+  ]);
 
   return {
     guild: {
@@ -67,7 +83,7 @@ function mockGuild() {
       },
       channels: {
         cache: {
-          find: vi.fn((fn: (ch: any) => boolean) => [textChannel, voiceChannel].find(fn)),
+          get: vi.fn((id: string) => channelMap.get(id)),
         },
       },
     },
@@ -86,19 +102,21 @@ describe("deleteTeamByRole", () => {
     const teamRole = { id: "team-role-id", name: "Team: Wizards", delete: vi.fn().mockResolvedValue(undefined) };
     const ctx: DeleteTeamContext = { guild: guild as any, db: {} as any, quizDate: "2026-08-07" };
 
-    const result = await deleteTeamByRole(ctx, teamRole as any);
+    const result = await deleteTeamByRole(ctx, teamRole as any, TEAM);
 
     expect(result.ok).toBe(true);
     expect(teamRole.delete).toHaveBeenCalled();
   });
 
-  it("deletes text and voice channels", async () => {
+  it("deletes text and voice channels by stored ID", async () => {
     const { guild, textChannel, voiceChannel } = mockGuild();
     const teamRole = { id: "team-role-id", name: "Team: Wizards", delete: vi.fn().mockResolvedValue(undefined) };
     const ctx: DeleteTeamContext = { guild: guild as any, db: {} as any, quizDate: "2026-08-07" };
 
-    await deleteTeamByRole(ctx, teamRole as any);
+    await deleteTeamByRole(ctx, teamRole as any, TEAM);
 
+    expect(guild.channels.cache.get).toHaveBeenCalledWith("text-ch-id");
+    expect(guild.channels.cache.get).toHaveBeenCalledWith("voice-ch-id");
     expect(textChannel.delete).toHaveBeenCalled();
     expect(voiceChannel.delete).toHaveBeenCalled();
   });
@@ -108,7 +126,7 @@ describe("deleteTeamByRole", () => {
     const teamRole = { id: "team-role-id", name: "Team: Wizards", delete: vi.fn().mockResolvedValue(undefined) };
     const ctx: DeleteTeamContext = { guild: guild as any, db: {} as any, quizDate: "2026-08-07" };
 
-    await deleteTeamByRole(ctx, teamRole as any);
+    await deleteTeamByRole(ctx, teamRole as any, TEAM);
 
     expect(member1.roles.remove).toHaveBeenCalled();
     expect(member2.roles.remove).toHaveBeenCalled();
@@ -122,7 +140,7 @@ describe("deleteTeamByRole", () => {
     const { deleteTeamMembers } = await import("../integrations/firestore/members.js");
     const { deleteAliasesForTeam } = await import("../integrations/firestore/aliases.js");
 
-    await deleteTeamByRole(ctx, teamRole as any);
+    await deleteTeamByRole(ctx, teamRole as any, TEAM);
 
     expect(deleteTeam).toHaveBeenCalledWith({}, "guild-1", "2026-08-07", "Wizards");
     expect(deleteTeamMembers).toHaveBeenCalled();
@@ -134,7 +152,7 @@ describe("deleteTeamByRole", () => {
     const teamRole = { id: "team-role-id", name: "Team: Wizards", delete: vi.fn().mockResolvedValue(undefined) };
     const ctx: DeleteTeamContext = { guild: guild as any, db: {} as any, quizDate: "2026-08-07" };
 
-    const result = await deleteTeamByRole(ctx, teamRole as any);
+    const result = await deleteTeamByRole(ctx, teamRole as any, TEAM);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -144,12 +162,26 @@ describe("deleteTeamByRole", () => {
     }
   });
 
+  it("gracefully handles already-deleted channels", async () => {
+    const { guild } = mockGuild();
+    guild.channels.cache.get = vi.fn(() => undefined);
+    const teamRole = { id: "team-role-id", name: "Team: Wizards", delete: vi.fn().mockResolvedValue(undefined) };
+    const ctx: DeleteTeamContext = { guild: guild as any, db: {} as any, quizDate: "2026-08-07" };
+
+    const result = await deleteTeamByRole(ctx, teamRole as any, TEAM);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.deletedChannels).toHaveLength(0);
+    }
+  });
+
   it("returns err on failure", async () => {
     const { guild } = mockGuild();
     const teamRole = { id: "team-role-id", name: "Team: Wizards", delete: vi.fn().mockRejectedValue(new Error("No perms")) };
     const ctx: DeleteTeamContext = { guild: guild as any, db: {} as any, quizDate: "2026-08-07" };
 
-    const result = await deleteTeamByRole(ctx, teamRole as any);
+    const result = await deleteTeamByRole(ctx, teamRole as any, TEAM);
 
     expect(result.ok).toBe(false);
   });
