@@ -20,4 +20,6 @@ COPY --from=build /app/dist/ dist/
 
 USER node
 
+ENV NODE_ENV=production
+
 CMD ["node", "dist/index.js"]

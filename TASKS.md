@@ -110,4 +110,8 @@ Status key: `[ ]` todo, `[~]` in progress, `[x]` done
 - [ ] 8.6 — Open/close form functions (toggle form accepting responses via Forms API)
 - [ ] 8.7 — `/form open <round>` and `/form close <round>` commands
 - [ ] 8.8 — `/form next` command (close current round's form, open the next round's form)
-- [ ] 8.9 — Bump all dependencies to latest major versions (vitest 5 needs vi.mock constructor rewrites)
+- [ ] 8.9 — Dependency audit (as of 2026-11-14):
+  - npm major: firebase-admin 13->14, googleapis 144->190, pino 9->10, zod 3->4, eslint 9->10, @eslint/js 9->10, @types/node 22->26, typescript 5->7, vitest 3->5 (needs vi.mock rewrites)
+  - npm minor: discord.js 14.26->14.28, pino-pretty 13.0->13.2, tsx 4.19->4.23, typescript-eslint 8.19->8.72
+  - GitHub Actions: actions/checkout v5->v7, actions/setup-node v5->v7, actions/setup-java v5->v6
+- [ ] 8.10 — Migrate off deprecated `gcloud compute instances update-container` (COS deprecation; GCE itself is fine)
