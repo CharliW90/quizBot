@@ -144,7 +144,7 @@ describe("registerTeam", () => {
   });
 
   it("assigns Teams role to all members", async () => {
-    const { captain, member1, input, ctx } = setup();
+    const { captain, input, ctx } = setup();
     await registerTeam(input, ctx);
 
     const teamsRoleCalls = captain.roles.add.mock.calls.filter(

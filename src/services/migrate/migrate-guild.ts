@@ -2,7 +2,6 @@ import type { firestore } from "firebase-admin";
 import { ok, err, type Result } from "../../utils/result.js";
 import { parseV3Team, type V3Team } from "./parse-v3-team.js";
 import { parseV3Round, type V3Round } from "./parse-v3-round.js";
-import { logger } from "../../utils/logger.js";
 
 type Firestore = firestore.Firestore;
 

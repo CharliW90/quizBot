@@ -6,7 +6,6 @@ import {
   EmbedBuilder,
   GuildMember,
   PermissionFlagsBits,
-  Role,
   SlashCommandBuilder,
 } from "discord.js";
 import type { Command } from "../bot/types.js";

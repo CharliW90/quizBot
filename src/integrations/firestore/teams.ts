@@ -15,10 +15,6 @@ export interface Team {
 
 type Firestore = firestore.Firestore;
 
-function teamDocPath(guildId: string, quizDate: string, teamName: string) {
-  return `guilds/${guildId}/quizzes/${quizDate}/teams/${teamName}`;
-}
-
 export async function createTeam(
   db: Firestore,
   guildId: string,
