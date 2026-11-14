@@ -5,7 +5,6 @@ const envSchema = z.object({
   DISCORD_CLIENT_ID: z.string().min(1),
   GUILD_ID: z.string().min(1),
   FIREBASE_PROJECT_ID: z.string().min(1),
-  GOOGLE_APPLICATION_CREDENTIALS: z.string().min(1),
 });
 
 export type Config = z.infer<typeof envSchema>;

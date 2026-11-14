@@ -25,6 +25,7 @@ export async function loadCommands(
   for (const entry of entries) {
     if (!entry.isFile()) continue;
     if (!entry.name.endsWith(".ts") && !entry.name.endsWith(".js")) continue;
+    if (entry.name.endsWith(".d.ts")) continue;
     if (entry.name.includes(".test.")) continue;
 
     const filePath = join(commandsDir, entry.name);
