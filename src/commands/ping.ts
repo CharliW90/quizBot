@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { Command } from "../bot/types.js";
 
 const command: Command = {
@@ -8,8 +8,8 @@ const command: Command = {
     .setDMPermission(false) as SlashCommandBuilder,
 
   async execute(interaction: ChatInputCommandInteraction) {
-    const sent = await interaction.reply({ content: "Pinging...", ephemeral: true, fetchReply: true });
-    const roundtrip = sent.createdTimestamp - interaction.createdTimestamp;
+    const response = await interaction.reply({ content: "Pinging...", flags: MessageFlags.Ephemeral, withResponse: true });
+    const roundtrip = response.resource!.message!.createdTimestamp - interaction.createdTimestamp;
     const ws = interaction.client.ws.ping;
 
     await interaction.editReply(

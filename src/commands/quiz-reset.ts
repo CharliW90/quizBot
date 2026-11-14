@@ -3,6 +3,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
@@ -25,7 +26,7 @@ const command: Command = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", ephemeral: true });
+      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -36,7 +37,7 @@ const command: Command = {
     const teamCount = teamsResult.ok ? teamsResult.data.length : 0;
 
     if (teamCount === 0) {
-      await interaction.reply({ embeds: [errorEmbed("Nothing to Reset", "No teams found for today's quiz.")], ephemeral: true });
+      await interaction.reply({ embeds: [errorEmbed("Nothing to Reset", "No teams found for today's quiz.")], flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -52,7 +53,7 @@ const command: Command = {
     const confirmation = await interaction.reply({
       content: `**CAUTION: Quiz Reset**\n\nThis will delete **${teamCount} teams** (${teamNames}) - their roles, channels, and Firestore data.\n\nThis cannot be undone.`,
       components: [row],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     try {

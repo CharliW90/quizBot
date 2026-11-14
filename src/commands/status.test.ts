@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MessageFlags } from "discord.js";
 
 vi.mock("../services/check-status.js", () => ({
   checkStatus: vi.fn(),
@@ -59,7 +60,7 @@ describe("/status", () => {
 
     await command.execute(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalledWith({ ephemeral: true });
+    expect(interaction.deferReply).toHaveBeenCalledWith({ flags: MessageFlags.Ephemeral });
   });
 
   it("shows all-healthy status in embed", async () => {

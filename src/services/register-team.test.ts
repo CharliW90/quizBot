@@ -129,7 +129,7 @@ describe("registerTeam", () => {
 
     expect(guild.roles.create).toHaveBeenCalledWith({
       name: "Team: Test Team",
-      color: 0x3498db,
+      colors: { primaryColor: 0x3498db },
       hoist: true,
       mentionable: true,
     });

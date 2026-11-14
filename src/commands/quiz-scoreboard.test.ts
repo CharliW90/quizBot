@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MessageFlags } from "discord.js";
 
 vi.mock("../integrations/firestore/client.js", () => ({
   getDb: vi.fn(() => "mock-db"),
@@ -43,7 +44,7 @@ describe("/quiz scoreboard", () => {
     const interaction = mockInteraction();
     await command.execute(interaction);
 
-    expect(interaction.deferReply).toHaveBeenCalledWith({ ephemeral: true });
+    expect(interaction.deferReply).toHaveBeenCalledWith({ flags: MessageFlags.Ephemeral });
     expect(interaction.channel.send).toHaveBeenCalled();
     const sentEmbed = interaction.channel.send.mock.calls[0][0].embeds[0].data;
     expect(sentEmbed.title).toContain("Scoreboard");

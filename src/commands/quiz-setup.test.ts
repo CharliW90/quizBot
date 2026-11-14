@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MessageFlags } from "discord.js";
 
 vi.mock("../integrations/firestore/client.js", () => ({
   getDb: vi.fn(() => "mock-db"),
@@ -61,7 +62,7 @@ describe("/quiz setup", () => {
 
       expect(mockSetFormId).toHaveBeenCalledWith("mock-db", "guild-1", 1, "form-abc");
       expect(interaction.reply).toHaveBeenCalledWith(
-        expect.objectContaining({ ephemeral: true })
+        expect.objectContaining({ flags: MessageFlags.Ephemeral })
       );
     });
 

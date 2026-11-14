@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MessageFlags } from "discord.js";
 
 vi.mock("../integrations/firestore/client.js", () => ({
   getDb: vi.fn(() => "mock-db"),
@@ -74,7 +75,7 @@ describe("/quiz fetch", () => {
       const interaction = mockInteraction(1);
       await command.execute(interaction);
 
-      expect(interaction.deferReply).toHaveBeenCalledWith({ ephemeral: true });
+      expect(interaction.deferReply).toHaveBeenCalledWith({ flags: MessageFlags.Ephemeral });
       expect(interaction.editReply).toHaveBeenCalled();
       const editCall = interaction.editReply.mock.calls[0][0];
       const description = editCall.embeds[0].data.description;

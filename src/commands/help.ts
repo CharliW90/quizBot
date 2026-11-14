@@ -1,6 +1,7 @@
 import {
   ChatInputCommandInteraction,
   GuildMember,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
@@ -163,7 +164,7 @@ const command: Command = {
   async execute(interaction: ChatInputCommandInteraction) {
     const member = interaction.member as GuildMember;
     const isAdmin = member.permissions.has(PermissionFlagsBits.ManageChannels);
-    await interaction.reply({ content: buildHelp(isAdmin), ephemeral: true });
+    await interaction.reply({ content: buildHelp(isAdmin), flags: MessageFlags.Ephemeral });
   },
 };
 

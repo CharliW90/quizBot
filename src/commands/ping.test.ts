@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
+import { MessageFlags } from "discord.js";
 import command from "./ping.js";
 
 function mockInteraction(wsPing: number, replyTimestamp: number, interactionTimestamp: number) {
   return {
-    reply: vi.fn(async () => ({ createdTimestamp: replyTimestamp })),
+    reply: vi.fn(async () => ({ resource: { message: { createdTimestamp: replyTimestamp } } })),
     editReply: vi.fn(),
     createdTimestamp: interactionTimestamp,
     client: { ws: { ping: wsPing } },
@@ -23,8 +24,8 @@ describe("/ping", () => {
 
     expect(interaction.reply).toHaveBeenCalledWith({
       content: "Pinging...",
-      ephemeral: true,
-      fetchReply: true,
+      flags: MessageFlags.Ephemeral,
+      withResponse: true,
     });
     expect(interaction.editReply).toHaveBeenCalledWith(
       "Pong! Latency: **100ms** | WebSocket: **45ms**"
