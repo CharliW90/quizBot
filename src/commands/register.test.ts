@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ChannelType, PermissionFlagsBits } from "discord.js";
+import { PermissionFlagsBits } from "discord.js";
 import type { Command } from "../bot/types.js";
 
 vi.mock("../integrations/firestore/client.js", () => ({

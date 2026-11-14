@@ -1,5 +1,5 @@
 import type { firestore } from "firebase-admin";
-import { ok, err, type Result } from "../../utils/result.js";
+import { ok, type Result } from "../../utils/result.js";
 
 type Firestore = firestore.Firestore;
 

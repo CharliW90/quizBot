@@ -9,7 +9,7 @@ import { createFormsClient } from "../integrations/forms/client.js";
 import { getFormIds } from "../integrations/firestore/guild-config.js";
 import { fetchRound } from "../services/fetch-round.js";
 import { errorEmbed, successEmbed } from "../utils/embeds.js";
-import { logger } from "../utils/logger.js";
+
 import { getQuizDate } from "../utils/quiz-date.js";
 
 const command: Command = {

@@ -52,7 +52,7 @@ const command: Command = {
     const guild = interaction.guild;
     const db = getDb();
     const quizDate = getQuizDate();
-    let teamInput = interaction.options.getString("team", true);
+    const teamInput = interaction.options.getString("team", true);
     const teamName = teamInput.replace("Team: ", "");
 
     // Try role by name first, then fall back to Firestore + stored ID

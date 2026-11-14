@@ -1,7 +1,7 @@
 import type { firestore } from "firebase-admin";
 import type { Guild } from "discord.js";
 import { EmbedBuilder } from "discord.js";
-import { ok, err, type Result } from "../utils/result.js";
+import { ok, type Result } from "../utils/result.js";
 import { getRound, publishRound } from "../integrations/firestore/rounds.js";
 import type { TeamResponse } from "../integrations/firestore/rounds.js";
 import { getAliases } from "../integrations/firestore/aliases.js";

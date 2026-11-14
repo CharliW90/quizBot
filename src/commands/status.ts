@@ -1,6 +1,5 @@
 import {
   ChatInputCommandInteraction,
-  GuildMember,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
