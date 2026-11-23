@@ -8,6 +8,7 @@ import type { Command } from "../bot/types.js";
 import { getDb } from "../integrations/firestore/client.js";
 import { getFormIds, setFormId } from "../integrations/firestore/guild-config.js";
 import { errorEmbed, successEmbed } from "../utils/embeds.js";
+import { logger } from "../utils/logger.js";
 
 const command: Command = {
   data: new SlashCommandBuilder()
@@ -65,6 +66,8 @@ const command: Command = {
     const roundNumber = interaction.options.getInteger("round", true);
     const formInput = interaction.options.getString("form_id", true);
 
+    logger.info({ roundNumber, formId: formInput, guild: interaction.guildId }, `[quiz-setup] Configuring round ${roundNumber}`);
+
     const db = getDb();
     const result = await setFormId(db, interaction.guild.id, roundNumber, formInput);
 
@@ -80,6 +83,8 @@ const command: Command = {
     const description = overwritten
       ? `Round ${roundNumber} form ID overwritten (was: \`${previousFormId}\`)`
       : `Round ${roundNumber} configured successfully`;
+
+    logger.info({ roundNumber, overwritten }, `[quiz-setup] Round ${roundNumber} configured${overwritten ? " (overwritten)" : ""}`);
 
     await interaction.reply({
       embeds: [successEmbed("Quiz Setup", description)],

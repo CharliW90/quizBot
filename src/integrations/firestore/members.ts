@@ -1,6 +1,7 @@
 import type { firestore } from "firebase-admin";
 import { ok, type Result } from "../../utils/result.js";
 import { checkQuizNotEnded } from "./quiz.js";
+import { logger } from "../../utils/logger.js";
 
 type Firestore = firestore.Firestore;
 
@@ -31,6 +32,8 @@ export async function setTeamMembers(
   } else {
     await docRef.update(updates);
   }
+
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}/maps/teamsMembers`, teamName, memberCount: memberIds.length }, "Firestore: set team members");
 
   return ok(undefined);
 }
@@ -93,5 +96,6 @@ export async function deleteTeamMembers(
   }
 
   await docRef.set(data);
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}/maps/teamsMembers`, deletedCount: memberIds.length }, "Firestore: deleted team members");
   return ok(undefined);
 }

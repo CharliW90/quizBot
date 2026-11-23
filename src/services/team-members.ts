@@ -25,6 +25,7 @@ export async function addMembers(
       roleAssignments.push(...members.map((m) => m.roles.add(teamsRole)));
     }
     await Promise.all(roleAssignments);
+    logger.info({ teamName: ctx.teamName, memberIds: members.map((m) => m.id) }, "[team-members] Added members to roles");
 
     const memberIds = members.map((m) => m.id);
     await setTeamMembers(ctx.db, ctx.guild.id, ctx.quizDate, ctx.teamName.toLowerCase(), memberIds);
@@ -34,6 +35,7 @@ export async function addMembers(
     });
     if (!teamResult.ok) return teamResult;
 
+    logger.info({ teamName: ctx.teamName, addedCount: members.length }, "[team-members] Add members complete");
     return ok(undefined);
   } catch (error) {
     logger.error({ error }, "addMembers failed");
@@ -53,6 +55,7 @@ export async function removeMembers(
       roleRemovals.push(...members.map((m) => m.roles.remove(teamsRole)));
     }
     await Promise.all(roleRemovals);
+    logger.info({ teamName: ctx.teamName, memberIds: members.map((m) => m.id) }, "[team-members] Removed members from roles");
 
     const memberIds = members.map((m) => m.id);
     await deleteTeamMembers(ctx.db, ctx.guild.id, ctx.quizDate, memberIds);
@@ -62,6 +65,7 @@ export async function removeMembers(
       members: remainingIds,
     });
 
+    logger.info({ teamName: ctx.teamName, removedCount: members.length }, "[team-members] Remove members complete");
     return ok(undefined);
   } catch (error) {
     logger.error({ error }, "removeMembers failed");
@@ -85,6 +89,7 @@ export async function promoteToCaptain(
       newCaptain.roles.add(captainRole),
       currentCaptain.roles.remove(captainRole),
     ]);
+    logger.info({ teamName: ctx.teamName, newCaptain: newCaptain.id, oldCaptain: currentCaptain.id }, "[team-members] Captain promoted");
 
     await updateTeam(ctx.db, ctx.guild.id, ctx.quizDate, ctx.teamName, {
       captain: newCaptain.id,

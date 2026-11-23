@@ -1,5 +1,6 @@
 import type { firestore } from "firebase-admin";
 import { ok, type Result } from "../../utils/result.js";
+import { logger } from "../../utils/logger.js";
 
 type Firestore = firestore.Firestore;
 
@@ -80,6 +81,7 @@ export async function addTeamMember(
     }
   }
 
+  logger.info({ path: `users/${userId}`, teamName }, "Firestore: updated user team record");
   return ok(undefined);
 }
 

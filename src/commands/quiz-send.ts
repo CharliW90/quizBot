@@ -10,6 +10,7 @@ import { getDb } from "../integrations/firestore/client.js";
 import { listRounds } from "../integrations/firestore/rounds.js";
 import { sendRound } from "../services/send-round.js";
 import { errorEmbed } from "../utils/embeds.js";
+import { logger } from "../utils/logger.js";
 import { getQuizDate } from "../utils/quiz-date.js";
 
 const command: Command = {
@@ -62,6 +63,9 @@ const command: Command = {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const roundNumber = interaction.options.getInteger("round", true);
+
+    logger.info({ roundNumber, guild: interaction.guildId }, `[quiz-send] Sending round ${roundNumber}`);
+
     const db = getDb();
     const quizDate = getQuizDate();
 
@@ -79,6 +83,10 @@ const command: Command = {
     }
 
     const { successes, failures } = result.data;
+    logger.info(
+      { roundNumber, successes: successes.length, failures: failures.length },
+      `[quiz-send] Round ${roundNumber} sent - ${successes.length} succeeded, ${failures.length} failed`,
+    );
     const embed = new EmbedBuilder()
       .setTitle(`Round ${roundNumber} - Send Results`)
       .setColor(failures.length === 0 ? 0x2ecc71 : successes.length > 0 ? 0xf39c12 : 0xe74c3c);

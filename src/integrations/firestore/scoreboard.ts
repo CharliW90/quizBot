@@ -1,6 +1,7 @@
 import type { firestore } from "firebase-admin";
 import { ok, err, type Result } from "../../utils/result.js";
 import { checkQuizNotEnded } from "./quiz.js";
+import { logger } from "../../utils/logger.js";
 
 type Firestore = firestore.Firestore;
 
@@ -44,6 +45,8 @@ export async function addScoreboard(
   } else {
     await docRef.update({ scoreboard: { current: scoreboard, history: [] } });
   }
+
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}`, teamCount: Object.keys(scoreboard).length }, "Firestore: updated scoreboard");
 
   return ok(undefined);
 }

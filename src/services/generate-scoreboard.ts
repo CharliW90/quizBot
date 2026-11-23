@@ -4,6 +4,7 @@ import { listRounds } from "../integrations/firestore/rounds.js";
 import { getAliases } from "../integrations/firestore/aliases.js";
 import { addScoreboard } from "../integrations/firestore/scoreboard.js";
 import type { ScoreboardEntry } from "../integrations/firestore/scoreboard.js";
+import { logger } from "../utils/logger.js";
 
 type Firestore = firestore.Firestore;
 
@@ -59,6 +60,8 @@ export async function generateScoreboard(
       total: roundScores.reduce((sum, s) => sum + s, 0),
     };
   }
+
+  logger.info({ teamCount: allTeams.size, roundCount: rounds.length }, "[scoreboard] Generated scoreboard");
 
   await addScoreboard(db, guildId, quizDate, scoreboard);
 

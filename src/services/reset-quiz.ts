@@ -21,6 +21,7 @@ interface ResetQuizResult {
 
 export async function resetQuiz(input: ResetQuizInput): Promise<Result<ResetQuizResult>> {
   const { db, guildId, quizDate, guild } = input;
+  logger.info({ guildId, quizDate }, "[reset-quiz] Starting reset");
 
   const teamsResult = await listTeams(db, guildId, quizDate);
   if (!teamsResult.ok) return teamsResult;
@@ -54,7 +55,10 @@ export async function resetQuiz(input: ResetQuizInput): Promise<Result<ResetQuiz
 
     await deleteTeam(db, guildId, quizDate, team.name);
     teamsDeleted++;
+    logger.info({ teamName: team.name }, "[reset-quiz] Cleaned up team");
   }
+
+  logger.info({ rolesDeleted, channelsDeleted, teamsDeleted }, "[reset-quiz] Reset complete");
 
   return ok({ rolesDeleted, channelsDeleted, teamsDeleted });
 }

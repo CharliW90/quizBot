@@ -9,6 +9,7 @@ import { getDb } from "../integrations/firestore/client.js";
 import { createFormsClient } from "../integrations/forms/client.js";
 import { checkStatus, type StatusResult } from "../services/check-status.js";
 import { EmbedBuilder } from "discord.js";
+import { logger } from "../utils/logger.js";
 
 const REQUIRED_PERMISSIONS = ["ManageChannels", "ManageRoles"];
 
@@ -89,6 +90,11 @@ const command: Command = {
       requiredPermissions: REQUIRED_PERMISSIONS,
       uptimeMs: interaction.client.uptime,
     });
+
+    logger.info(
+      { firestore: result.firestore.healthy, forms: result.formsApi.healthy, permissions: result.permissions.healthy },
+      `[status] Health check - Firestore: ${result.firestore.healthy ? "ok" : "down"}, Forms: ${result.formsApi.healthy ? "ok" : "down"}, Permissions: ${result.permissions.healthy ? "ok" : "missing"}`,
+    );
 
     await interaction.editReply({ embeds: [formatResult(result)] });
   },

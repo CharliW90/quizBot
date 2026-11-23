@@ -10,7 +10,7 @@ import { createFormsClient } from "../integrations/forms/client.js";
 import { getFormIds } from "../integrations/firestore/guild-config.js";
 import { fetchRound } from "../services/fetch-round.js";
 import { errorEmbed, successEmbed } from "../utils/embeds.js";
-
+import { logger } from "../utils/logger.js";
 import { getQuizDate } from "../utils/quiz-date.js";
 
 const command: Command = {
@@ -60,6 +60,9 @@ const command: Command = {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const roundNumber = interaction.options.getInteger("round", true);
+
+    logger.info({ roundNumber, guild: interaction.guildId }, `[quiz-fetch] Fetching round ${roundNumber}`);
+
     const db = getDb();
     const formsClient = createFormsClient();
     const quizDate = getQuizDate();
@@ -78,6 +81,7 @@ const command: Command = {
     }
 
     const teamCount = Object.keys(result.data.responses).length;
+    logger.info({ roundNumber, teamCount }, `[quiz-fetch] Round ${roundNumber} fetched - ${teamCount} responses stored`);
     const description = `Round ${roundNumber} fetched - ${teamCount} team response${teamCount !== 1 ? "s" : ""} stored.`;
 
     await interaction.editReply({

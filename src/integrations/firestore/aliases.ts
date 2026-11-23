@@ -1,6 +1,7 @@
 import type { firestore } from "firebase-admin";
 import { ok, type Result } from "../../utils/result.js";
 import { checkQuizNotEnded } from "./quiz.js";
+import { logger } from "../../utils/logger.js";
 
 type Firestore = firestore.Firestore;
 
@@ -26,6 +27,8 @@ export async function setAlias(
   } else {
     await docRef.update({ [alias]: teamName });
   }
+
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}/maps/teamsAliases`, alias, teamName }, "Firestore: set alias");
 
   return ok(undefined);
 }
@@ -91,5 +94,6 @@ export async function deleteAliasesForTeam(
   }
 
   await docRef.set(updated);
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}/maps/teamsAliases`, teamName, deletedCount: deletedAliases.length }, "Firestore: deleted aliases for team");
   return ok(deletedAliases);
 }

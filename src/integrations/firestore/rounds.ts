@@ -1,6 +1,7 @@
 import type { firestore } from "firebase-admin";
 import { ok, err, type Result } from "../../utils/result.js";
 import { checkQuizNotEnded } from "./quiz.js";
+import { logger } from "../../utils/logger.js";
 
 export interface Answer {
   answer: string;
@@ -67,6 +68,7 @@ export async function storeRound(
   };
 
   await docRef.set(record);
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}/rounds/${input.roundNumber}`, teamCount: Object.keys(input.responses).length }, "Firestore: stored round");
   return ok({ ...record, roundNumber: input.roundNumber });
 }
 
@@ -121,5 +123,6 @@ export async function publishRound(
   }
 
   await docRef.update({ publishedAt: new Date().toISOString() });
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}/rounds/${roundNumber}` }, "Firestore: published round");
   return ok(undefined);
 }

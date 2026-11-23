@@ -10,6 +10,7 @@ import { listRounds } from "../integrations/firestore/rounds.js";
 import { listTeams } from "../integrations/firestore/teams.js";
 import { correctTeamName } from "../services/correct-team-name.js";
 import { errorEmbed, successEmbed } from "../utils/embeds.js";
+import { logger } from "../utils/logger.js";
 import { getQuizDate } from "../utils/quiz-date.js";
 
 const command: Command = {
@@ -95,6 +96,9 @@ const command: Command = {
 
     const incorrectName = interaction.options.getString("incorrect", true);
     const correctName = interaction.options.getString("correct", true);
+
+    logger.info({ incorrectName, correctName, guild: interaction.guildId }, `[quiz-correct] Correcting "${incorrectName}" to "${correctName}"`);
+
     const db = getDb();
     const quizDate = getQuizDate();
 
@@ -113,6 +117,11 @@ const command: Command = {
       });
       return;
     }
+
+    logger.info(
+      { incorrectName, correctName, roundsCorrected: result.data.roundsCorrected },
+      `[quiz-correct] Corrected "${incorrectName}" to "${correctName}" in ${result.data.roundsCorrected} round(s)`,
+    );
 
     const description = `"${incorrectName}" renamed to "${correctName}" in ${result.data.roundsCorrected} round${result.data.roundsCorrected !== 1 ? "s" : ""}. Alias saved for future fetches.`;
 

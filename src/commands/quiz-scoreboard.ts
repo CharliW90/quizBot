@@ -9,6 +9,7 @@ import type { Command } from "../bot/types.js";
 import { getDb } from "../integrations/firestore/client.js";
 import { generateScoreboard } from "../services/generate-scoreboard.js";
 import { errorEmbed } from "../utils/embeds.js";
+import { logger } from "../utils/logger.js";
 import { getQuizDate } from "../utils/quiz-date.js";
 import type { ScoreboardEntry } from "../integrations/firestore/scoreboard.js";
 
@@ -72,12 +73,17 @@ const command: Command = {
     const db = getDb();
     const quizDate = getQuizDate();
 
+    logger.info({ quizDate, guild: interaction.guildId }, `[quiz-scoreboard] Generating scoreboard for ${quizDate}`);
+
     const result = await generateScoreboard({ db, guildId: interaction.guild.id, quizDate });
 
     if (!result.ok) {
       await interaction.editReply({ embeds: [errorEmbed("Scoreboard Error", result.error)] });
       return;
     }
+
+    const teamCount = Object.keys(result.data).length;
+    logger.info({ quizDate, teamCount }, `[quiz-scoreboard] Scoreboard generated with ${teamCount} teams`);
 
     const embed = buildLeaderboardEmbed(result.data);
 

@@ -42,6 +42,7 @@ export async function deleteTeamByRole(
       roleRemovals.push(...captains.map((m) => m.roles.remove(captainRole)));
     }
     await Promise.all(roleRemovals);
+    logger.info({ teamName: team.name, memberCount: teamMembers.size }, "[delete-team] Removed roles from members");
 
     const deletedChannels: string[] = [];
     for (const channelId of [team.textChannelId, team.voiceChannelId]) {
@@ -51,12 +52,15 @@ export async function deleteTeamByRole(
         deletedChannels.push(channel.name);
       }
     }
+    logger.info({ teamName: team.name, deletedChannels }, "[delete-team] Deleted channels");
 
     await teamRole.delete();
+    logger.info({ teamName: team.name, roleId: teamRole.id }, "[delete-team] Deleted team role");
 
     await deleteTeamMembers(ctx.db, guild.id, ctx.quizDate, [...memberIds]);
     await deleteAliasesForTeam(ctx.db, guild.id, ctx.quizDate, team.name);
     await deleteTeamDoc(ctx.db, guild.id, ctx.quizDate, team.name);
+    logger.info({ teamName: team.name }, "[delete-team] Firestore cleanup complete");
 
     return ok({
       deletedRole: teamRole.name,
