@@ -94,6 +94,18 @@ describe("addMembers", () => {
     expect(setTeamMembers).toHaveBeenCalledWith({}, "guild-1", "2026-08-07", "wizards", ["m1"]);
   });
 
+  it("returns err when updateTeam fails", async () => {
+    const ctx = mockContext();
+    const member = mockMember("m1");
+    const { updateTeam } = await import("../../src/integrations/firestore/teams.js");
+    (updateTeam as any).mockResolvedValueOnce({ ok: false, error: "quiz ended" });
+
+    const result = await addMembers(ctx, [member as any]);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe("quiz ended");
+  });
+
   it("returns err on role assignment failure", async () => {
     const ctx = mockContext();
     const member = mockMember("m1");
@@ -103,6 +115,29 @@ describe("addMembers", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toBe("Missing permissions");
+  });
+
+  it("returns generic message when non-Error is thrown", async () => {
+    const ctx = mockContext();
+    const member = mockMember("m1");
+    member.roles.add = vi.fn().mockRejectedValue("string error");
+
+    const result = await addMembers(ctx, [member as any]);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe("Failed to add members");
+  });
+
+  it("skips Teams role assignment when Teams role does not exist", async () => {
+    const ctx = mockContext();
+    (ctx.guild.roles.cache.find as any) = vi.fn().mockReturnValue(undefined);
+    const member = mockMember("m1");
+
+    const result = await addMembers(ctx, [member as any]);
+
+    expect(result.ok).toBe(true);
+    expect(member.roles.add).toHaveBeenCalledTimes(1);
+    expect(member.roles.add).toHaveBeenCalledWith(ctx.teamRole);
   });
 });
 
@@ -140,6 +175,28 @@ describe("removeMembers", () => {
 
     expect(deleteTeamMembers).toHaveBeenCalledWith({}, "guild-1", "2026-08-07", ["m1"]);
   });
+
+  it("returns err on role removal failure", async () => {
+    const ctx = mockContext();
+    const member = mockMember("m1");
+    member.roles.remove = vi.fn().mockRejectedValue(new Error("Missing permissions"));
+
+    const result = await removeMembers(ctx, [member as any]);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe("Missing permissions");
+  });
+
+  it("returns generic message when non-Error is thrown", async () => {
+    const ctx = mockContext();
+    const member = mockMember("m1");
+    member.roles.remove = vi.fn().mockRejectedValue("string error");
+
+    const result = await removeMembers(ctx, [member as any]);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe("Failed to remove members");
+  });
 });
 
 describe("promoteToCaptain", () => {
@@ -168,6 +225,30 @@ describe("promoteToCaptain", () => {
     expect(updateTeam).toHaveBeenCalledWith({}, "guild-1", "2026-08-07", "Wizards", {
       captain: "new",
     });
+  });
+
+  it("returns err on role assignment failure", async () => {
+    const ctx = mockContext();
+    const oldCaptain = mockMember("old");
+    const newCaptain = mockMember("new");
+    newCaptain.roles.add = vi.fn().mockRejectedValue(new Error("Discord API error"));
+
+    const result = await promoteToCaptain(ctx, oldCaptain as any, newCaptain as any);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe("Discord API error");
+  });
+
+  it("returns generic message when non-Error is thrown", async () => {
+    const ctx = mockContext();
+    const oldCaptain = mockMember("old");
+    const newCaptain = mockMember("new");
+    newCaptain.roles.add = vi.fn().mockRejectedValue("string error");
+
+    const result = await promoteToCaptain(ctx, oldCaptain as any, newCaptain as any);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe("Failed to promote captain");
   });
 
   it("returns err if captain role not found", async () => {

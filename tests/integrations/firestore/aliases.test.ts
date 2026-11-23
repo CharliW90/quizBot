@@ -115,6 +115,19 @@ describe("aliases", () => {
       }
     });
 
+    it("returns null when doc exists but alias key is not present", async () => {
+      db._store["guilds/guild-1/quizzes/2026-06-06/maps/teamsAliases"] = {
+        "other-team": "Other Team",
+      };
+
+      const result = await lookupAlias(db as any, "guild-1", "2026-06-06", "unknown-alias");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeNull();
+      }
+    });
+
     it("returns the team name for a known alias", async () => {
       db._store["guilds/guild-1/quizzes/2026-06-06/maps/teamsAliases"] = {
         "quizzly-bears": "Quizzly Bears!",

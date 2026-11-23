@@ -126,6 +126,68 @@ describe("users", () => {
       expect(guildData.usersTeams).toEqual(["The Quizzicals"]);
     });
 
+    it("updates server info when guild name has changed", async () => {
+      db._store["users/user-1"] = {
+        currentName: "Cool User",
+        initialName: "Cool User",
+        username: "cooluser",
+      };
+      db._store["users/user-1/servers/guild-1"] = {
+        usersTeams: ["Old Team"],
+        server: {
+          name: "Old Server Name",
+          owner: "owner-1",
+          initialName: "Old Server Name",
+          initialOwner: "owner-1",
+        },
+      };
+
+      await addTeamMember(
+        db as any,
+        "user-1",
+        "cooluser",
+        "Cool User",
+        "guild-1",
+        "New Server Name",
+        "owner-1",
+        "New Team",
+      );
+
+      const guildData = db._store["users/user-1/servers/guild-1"];
+      expect((guildData as any)["server.name"]).toBe("New Server Name");
+    });
+
+    it("updates server info when guild owner has changed", async () => {
+      db._store["users/user-1"] = {
+        currentName: "Cool User",
+        initialName: "Cool User",
+        username: "cooluser",
+      };
+      db._store["users/user-1/servers/guild-1"] = {
+        usersTeams: ["Old Team"],
+        server: {
+          name: "Quiz Server",
+          owner: "old-owner",
+          initialName: "Quiz Server",
+          initialOwner: "old-owner",
+        },
+      };
+
+      await addTeamMember(
+        db as any,
+        "user-1",
+        "cooluser",
+        "Cool User",
+        "guild-1",
+        "Quiz Server",
+        "new-owner",
+        "New Team",
+      );
+
+      const guildData = db._store["users/user-1/servers/guild-1"];
+      expect((guildData as any)["server.owner"]).toBe("new-owner");
+    });
+
     it("updates display name when it has changed", async () => {
       db._store["users/user-1"] = {
         currentName: "Old Name",

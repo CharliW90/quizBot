@@ -1,23 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MessageFlags } from "discord.js";
+import type { StatusResult } from "../../src/services/check-status.js";
+
+let checkStatusResult: StatusResult;
 
 vi.mock("../../src/services/check-status.js", () => ({
-  checkStatus: vi.fn(),
+  checkStatus: vi.fn(async (deps: any) => {
+    await deps.pingFirestore().catch(() => {});
+    await deps.pingFormsApi().catch(() => {});
+    return checkStatusResult;
+  }),
 }));
 
 vi.mock("../../src/integrations/firestore/client.js", () => ({
-  getDb: vi.fn(() => "mock-db"),
+  getDb: vi.fn(() => ({ listCollections: vi.fn().mockResolvedValue([]) })),
 }));
 
 vi.mock("../../src/integrations/forms/client.js", () => ({
-  createFormsClient: vi.fn(() => ({ getForm: vi.fn() })),
+  createFormsClient: vi.fn(() => ({ getForm: vi.fn().mockResolvedValue({}) })),
 }));
 
-import { checkStatus } from "../../src/services/check-status.js";
 import command from "../../src/commands/status.js";
-import type { StatusResult } from "../../src/services/check-status.js";
-
-const mockCheckStatus = vi.mocked(checkStatus);
 
 function mockInteraction(botPermissions: string[]) {
   return {
@@ -47,6 +50,7 @@ const allHealthy: StatusResult = {
 describe("/status", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    checkStatusResult = allHealthy;
   });
 
   it("has correct metadata", () => {
@@ -55,7 +59,6 @@ describe("/status", () => {
   });
 
   it("defers reply as ephemeral", async () => {
-    mockCheckStatus.mockResolvedValue(allHealthy);
     const interaction = mockInteraction(["ManageChannels", "ManageRoles"]);
 
     await command.execute(interaction);
@@ -64,7 +67,6 @@ describe("/status", () => {
   });
 
   it("shows all-healthy status in embed", async () => {
-    mockCheckStatus.mockResolvedValue(allHealthy);
     const interaction = mockInteraction(["ManageChannels", "ManageRoles"]);
 
     await command.execute(interaction);
@@ -82,13 +84,12 @@ describe("/status", () => {
   });
 
   it("shows failure status with red embed when something is down", async () => {
-    const unhealthy: StatusResult = {
+    checkStatusResult = {
       firestore: { healthy: false, reason: "Connection refused" },
       formsApi: { healthy: true },
       permissions: { healthy: true, granted: ["ManageChannels", "ManageRoles"], missing: [] },
       uptime: "5m",
     };
-    mockCheckStatus.mockResolvedValue(unhealthy);
     const interaction = mockInteraction(["ManageChannels", "ManageRoles"]);
 
     await command.execute(interaction);
@@ -99,14 +100,30 @@ describe("/status", () => {
     expect(embed.data.color).toBe(0xe74c3c);
   });
 
+  it("shows failure reason when Google Forms is down", async () => {
+    checkStatusResult = {
+      firestore: { healthy: true },
+      formsApi: { healthy: false, reason: "Auth token expired" },
+      permissions: { healthy: true, granted: ["ManageChannels", "ManageRoles"], missing: [] },
+      uptime: "10m",
+    };
+    const interaction = mockInteraction(["ManageChannels", "ManageRoles"]);
+
+    await command.execute(interaction);
+
+    const embed = interaction.editReply.mock.calls[0][0].embeds[0];
+    const desc = embed.data.description;
+    expect(desc).toContain("Auth token expired");
+    expect(embed.data.color).toBe(0xe74c3c);
+  });
+
   it("shows missing permissions", async () => {
-    const missingPerms: StatusResult = {
+    checkStatusResult = {
       firestore: { healthy: true },
       formsApi: { healthy: true },
       permissions: { healthy: false, granted: ["ManageChannels"], missing: ["ManageRoles"] },
       uptime: "1m",
     };
-    mockCheckStatus.mockResolvedValue(missingPerms);
     const interaction = mockInteraction(["ManageChannels"]);
 
     await command.execute(interaction);

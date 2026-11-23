@@ -84,6 +84,50 @@ describe("validateFormStructure", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("treats undefined items as empty", () => {
+    const form: forms_v1.Schema$Form = {
+      formId: "f1",
+      info: { title: "Empty" },
+    };
+
+    const result = validateFormStructure(form);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toContain("no items");
+  });
+
+  it("skips non-question items in the scored questions loop", () => {
+    const form: forms_v1.Schema$Form = {
+      formId: "f1",
+      info: { title: "Round 1" },
+      items: [
+        textItem("q1", "Team Name"),
+        { itemId: "divider", title: "Section Divider" },
+        textItem("q2", "Question 1", { points: 2 }),
+      ],
+    };
+
+    const result = validateFormStructure(form);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("does not treat a paragraph question without 'feedback' in title as feedback", () => {
+    const form: forms_v1.Schema$Form = {
+      formId: "f1",
+      info: { title: "Round 1" },
+      items: [
+        textItem("q1", "Team Name"),
+        textItem("q2", "Question 1", { points: 2 }),
+        textItem("q3", "Any comments?", { paragraph: true }),
+      ],
+    };
+
+    const result = validateFormStructure(form);
+
+    expect(result.ok).toBe(true);
+  });
+
   it("fails if form has no items", () => {
     const form: forms_v1.Schema$Form = {
       formId: "f1",
@@ -108,6 +152,30 @@ describe("validateFormStructure", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toContain("first item");
+  });
+
+  it("handles items with no title in the isFeedback check", () => {
+    const form: forms_v1.Schema$Form = {
+      formId: "f1",
+      info: { title: "Round 1" },
+      items: [
+        textItem("q1", "Team Name"),
+        {
+          itemId: "q2",
+          questionItem: {
+            question: {
+              questionId: "q2",
+              grading: { pointValue: 2 },
+              textQuestion: { paragraph: true },
+            },
+          },
+        },
+      ],
+    };
+
+    const result = validateFormStructure(form);
+
+    expect(result.ok).toBe(true);
   });
 
   it("fails if there are no scored questions", () => {

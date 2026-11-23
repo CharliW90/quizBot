@@ -142,6 +142,33 @@ describe("generateScoreboard", () => {
     }
   });
 
+  it("falls back to empty aliases when getAliases fails", async () => {
+    mockListRounds.mockResolvedValue({
+      ok: true,
+      data: [
+        {
+          roundNumber: 1,
+          responses: {
+            "The Foxes": { answers: [], score: 10 },
+          },
+        },
+      ],
+    });
+    mockGetAliases.mockResolvedValue({ ok: false, error: "db error" });
+    mockAddScoreboard.mockResolvedValue({ ok: true, data: undefined });
+
+    const result = await generateScoreboard({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data["The Foxes"].total).toBe(10);
+    }
+  });
+
   it("returns error when listRounds fails", async () => {
     mockListRounds.mockResolvedValue({ ok: false, error: "db error" });
 

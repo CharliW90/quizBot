@@ -40,6 +40,23 @@ describe("createInteractionHandler", () => {
     expect(autocomplete).toHaveBeenCalledWith(interaction);
   });
 
+  it("logs and swallows errors from autocomplete handlers", async () => {
+    const commands = new Collection<string, Command>();
+    commands.set("register", {
+      data: { name: "register" } as unknown as Command["data"],
+      execute: vi.fn(),
+      autocomplete: vi.fn().mockRejectedValue(new Error("autocomplete boom")),
+    });
+
+    const handler = createInteractionHandler(commands);
+    const interaction = {
+      isAutocomplete: () => true,
+      commandName: "register",
+    };
+
+    await handler(interaction as never);
+  });
+
   it("silently ignores autocomplete for commands without an autocomplete handler", async () => {
     const commands = new Collection<string, Command>();
     commands.set("ping", {

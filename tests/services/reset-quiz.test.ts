@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { resetQuiz } from "../../src/services/reset-quiz.js";
 
+vi.mock("../../src/utils/logger.js", () => ({
+  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+}));
+
 const mockListTeams = vi.fn();
 const mockDeleteTeam = vi.fn();
 
@@ -86,6 +90,54 @@ describe("resetQuiz", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.rolesDeleted).toBe(0);
+      expect(result.data.channelsDeleted).toBe(0);
+      expect(result.data.teamsDeleted).toBe(1);
+    }
+  });
+
+  it("continues when role.delete() throws", async () => {
+    const failingRole = { id: "r1", name: "Team: Broken", delete: vi.fn().mockRejectedValue(new Error("Missing perms")) };
+    mockListTeams.mockResolvedValue({
+      ok: true,
+      data: [{ name: "Broken", textChannelId: "c1", voiceChannelId: "v1", roleId: "r1" }],
+    });
+    mockDeleteTeam.mockResolvedValue({ ok: true, data: undefined });
+
+    const guild = mockGuild({ roles: [failingRole], channels: [] });
+
+    const result = await resetQuiz({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      guild,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.rolesDeleted).toBe(0);
+      expect(result.data.teamsDeleted).toBe(1);
+    }
+  });
+
+  it("continues when channel.delete() throws", async () => {
+    const failingChannel = { id: "c1", name: "broken", delete: vi.fn().mockRejectedValue(new Error("Missing perms")) };
+    mockListTeams.mockResolvedValue({
+      ok: true,
+      data: [{ name: "Broken", textChannelId: "c1", voiceChannelId: "v1", roleId: "r1" }],
+    });
+    mockDeleteTeam.mockResolvedValue({ ok: true, data: undefined });
+
+    const guild = mockGuild({ roles: [], channels: [failingChannel] });
+
+    const result = await resetQuiz({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      guild,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
       expect(result.data.channelsDeleted).toBe(0);
       expect(result.data.teamsDeleted).toBe(1);
     }

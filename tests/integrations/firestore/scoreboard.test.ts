@@ -75,6 +75,28 @@ describe("scoreboard", () => {
       expect((stored.scoreboard as any).history).toEqual([oldScores]);
     });
 
+    it("initializes history when previous scoreboard has no history field", async () => {
+      const oldScores = {
+        "Team A": { rounds: [10], total: 10 },
+      };
+      db._store["guilds/guild-1/quizzes/2026-06-06"] = {
+        status: "active",
+        createdAt: "2026-06-06T18:00:00Z",
+        scoreboard: { current: oldScores },
+      };
+
+      const newScores = {
+        "Team A": { rounds: [10, 8], total: 18 },
+      };
+
+      const result = await addScoreboard(db as any, "guild-1", "2026-06-06", newScores);
+
+      expect(result.ok).toBe(true);
+      const stored = db._store["guilds/guild-1/quizzes/2026-06-06"];
+      expect((stored.scoreboard as any).current).toEqual(newScores);
+      expect((stored.scoreboard as any).history).toEqual([oldScores]);
+    });
+
     it("returns error when quiz does not exist", async () => {
       const result = await addScoreboard(db as any, "guild-1", "2026-06-06", {});
 

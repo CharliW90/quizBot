@@ -189,6 +189,17 @@ describe("teams", () => {
       expect(db._store["guilds/guild-1/quizzes/2026-06-06/teams/Doomed"]).toBeUndefined();
     });
 
+    it("rejects when quiz is ended", async () => {
+      db._store["guilds/guild-1/quizzes/2026-06-06"] = { status: "ended" };
+
+      const result = await deleteTeam(db as any, "guild-1", "2026-06-06", "Doomed");
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toContain("ended");
+      }
+    });
+
     it("returns an error when team does not exist", async () => {
       const result = await deleteTeam(db as any, "guild-1", "2026-06-06", "Ghost");
 
@@ -221,6 +232,19 @@ describe("teams", () => {
       expect(stored.captain).toBe("user-2");
       expect(stored.color).toBe("#0f0");
       expect(stored.members).toEqual(["user-1", "user-2"]);
+    });
+
+    it("rejects when quiz is ended", async () => {
+      db._store["guilds/guild-1/quizzes/2026-06-06"] = { status: "ended" };
+
+      const result = await updateTeam(db as any, "guild-1", "2026-06-06", "Foxes", {
+        captain: "user-9",
+      });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toContain("ended");
+      }
     });
 
     it("returns an error when team does not exist", async () => {

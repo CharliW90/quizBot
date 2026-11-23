@@ -237,6 +237,37 @@ describe("/team", () => {
       ]);
     });
 
+    it("treats null memberPermissions as non-admin in autocomplete", async () => {
+      const teamRoleA = { id: "r1", name: "Team: Alphas" };
+      const allRoles = [teamRoleA];
+
+      const interaction = {
+        options: { getFocused: vi.fn().mockReturnValue("") },
+        guild: {
+          roles: {
+            cache: {
+              filter: vi.fn((pred: any) => allRoles.filter(pred)),
+            },
+          },
+        },
+        member: {
+          roles: {
+            cache: {
+              has: vi.fn((id: string) => id === "r1"),
+            },
+          },
+        },
+        memberPermissions: null,
+        respond: vi.fn().mockResolvedValue(undefined),
+      };
+
+      await command.autocomplete!(interaction as any);
+
+      expect(interaction.respond).toHaveBeenCalledWith([
+        { name: "Alphas", value: "Team: Alphas" },
+      ]);
+    });
+
     it("only shows teams the captain belongs to when not admin", async () => {
       const teamRoleA = { id: "r1", name: "Team: Alphas" };
       const teamRoleB = { id: "r2", name: "Team: Bravos" };
@@ -471,6 +502,39 @@ describe("/team", () => {
       });
     });
 
+    it("shows Unknown captain when captainRole does not exist in guild", async () => {
+      const member = mockMember("m1");
+      const interaction = mockInteraction("add-member", { members: [member] });
+      interaction.guild.roles.cache.find = vi.fn().mockImplementation((pred: any) => {
+        if (pred(TEAM_ROLE)) return TEAM_ROLE;
+        return undefined;
+      });
+
+      await command.execute(interaction);
+
+      const confirmEdit = interaction.editReply.mock.calls[0][0];
+      const embed = confirmEdit.embeds?.[0];
+      if (embed?.data?.fields) {
+        const captainField = embed.data.fields.find((f: any) => f.name === "Captain");
+        expect(captainField.value).toBe("Unknown");
+      }
+      expect(interaction.editReply).toHaveBeenCalledWith(
+        expect.objectContaining({ content: "Done." }),
+      );
+    });
+
+    it("uses subcommand name as-is for unknown subcommands in confirmation", async () => {
+      const member = mockMember("m1");
+      const interaction = mockInteraction("custom-action", { members: [member] });
+
+      await command.execute(interaction);
+
+      const confirmEdit = interaction.editReply.mock.calls[0][0];
+      const embed = confirmEdit.embeds[0];
+      const fieldNames = embed.data.fields.map((f: any) => f.name);
+      expect(fieldNames).toContain("custom-action");
+    });
+
     it("cancels when user clicks cancel", async () => {
       const interaction = mockInteraction("add-member");
       interaction._awaitMessageComponent.mockResolvedValue({ customId: "cancel" });
@@ -501,6 +565,27 @@ describe("/team", () => {
           content: expect.stringContaining("Timed out"),
           embeds: [],
           components: [],
+        }),
+      );
+    });
+
+    it("treats null memberPermissions as non-admin in execute", async () => {
+      const interaction = mockInteraction("add-member", {
+        isAdmin: false,
+        isCaptain: false,
+        hasTeamRole: false,
+      });
+      interaction.memberPermissions = null;
+
+      await command.execute(interaction);
+
+      expect(interaction.editReply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          embeds: [
+            expect.objectContaining({
+              data: expect.objectContaining({ title: "Permission Denied" }),
+            }),
+          ],
         }),
       );
     });

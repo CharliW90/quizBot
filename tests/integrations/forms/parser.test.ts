@@ -216,6 +216,149 @@ describe("parseFormResponses", () => {
     expect(result.results["Spacey Team"]).toBeDefined();
   });
 
+  it("throws when first item has no questionId", () => {
+    const form = buildForm([{ itemId: "header", title: "Section Header" }]);
+
+    expect(() => parseFormResponses(form, [], 1)).toThrow(
+      "First form item is not a question",
+    );
+  });
+
+  it("uses 'Unknown' when team name answer is missing", () => {
+    const form = buildForm([textItem("q1", "Team Name"), textItem("q2", "Q1", 2)]);
+
+    const responses: forms_v1.Schema$FormResponse[] = [
+      {
+        responseId: "r1",
+        answers: {
+          q2: {
+            questionId: "q2",
+            grade: { score: 1, correct: true },
+            textAnswers: { answers: [{ value: "Answer" }] },
+          },
+        },
+      },
+    ];
+
+    const result = parseFormResponses(form, responses, 1);
+
+    expect(result.results["Unknown"]).toBeDefined();
+    expect(result.results["Unknown"].score).toBe(1);
+  });
+
+  it("uses empty string when answer text is missing for a scored question", () => {
+    const form = buildForm([textItem("q1", "Team Name"), textItem("q2", "Q1", 2)]);
+
+    const responses: forms_v1.Schema$FormResponse[] = [
+      {
+        responseId: "r1",
+        answers: {
+          q1: {
+            questionId: "q1",
+            textAnswers: { answers: [{ value: "Team A" }] },
+          },
+        },
+      },
+    ];
+
+    const result = parseFormResponses(form, responses, 1);
+
+    expect(result.results["Team A"].answers[0].answer).toBe("");
+    expect(result.results["Team A"].answers[0].score).toBe(0);
+  });
+
+  it("handles response with undefined answers object", () => {
+    const form = buildForm([textItem("q1", "Team Name"), textItem("q2", "Q1", 2)]);
+
+    const responses: forms_v1.Schema$FormResponse[] = [
+      { responseId: "r1" },
+    ];
+
+    const result = parseFormResponses(form, responses, 1);
+
+    expect(result.results["Unknown"]).toBeDefined();
+  });
+
+  it("skips items without a questionId in scored questions", () => {
+    const form = buildForm([
+      textItem("q1", "Team Name"),
+      { itemId: "divider", title: "Section Break", questionItem: { question: {} } },
+      textItem("q2", "Q1", 2),
+    ]);
+
+    const responses = [
+      buildResponse("r1", { q1: { value: "Team A" }, q2: { value: "Yes", score: 2, correct: true } }, 2),
+    ];
+
+    const result = parseFormResponses(form, responses, 1);
+
+    expect(result.roundDetails.questions).toBe(1);
+  });
+
+  it("does not treat a non-paragraph question with 'feedback' in title as feedback", () => {
+    const form = buildForm([
+      textItem("q1", "Team Name"),
+      textItem("q2", "Feedback score", 3),
+    ]);
+
+    const responses = [
+      buildResponse("r1", {
+        q1: { value: "Team A" },
+        q2: { value: "Great", score: 3, correct: true },
+      }, 3),
+    ];
+
+    const result = parseFormResponses(form, responses, 1);
+
+    expect(result.roundDetails.questions).toBe(1);
+    expect(result.results["Team A"].answers).toHaveLength(1);
+  });
+
+  it("handles form with no items property", () => {
+    const form: forms_v1.Schema$Form = {
+      formId: "form1",
+      info: { title: "Round 1" },
+    };
+
+    expect(() => parseFormResponses(form, [], 1)).toThrow(
+      "First form item is not a question",
+    );
+  });
+
+  it("does not treat paragraph question as feedback when title is undefined", () => {
+    const item: forms_v1.Schema$Item = {
+      itemId: "q3",
+      questionItem: {
+        question: {
+          questionId: "q3",
+          grading: { pointValue: 2 },
+          textQuestion: { paragraph: true },
+        },
+      },
+    };
+
+    const form = buildForm([
+      textItem("q1", "Team Name"),
+      item,
+    ]);
+
+    const responses = [
+      buildResponse(
+        "r1",
+        {
+          q1: { value: "Team A" },
+          q3: { value: "Long answer", score: 2, correct: true },
+        },
+        2,
+      ),
+    ];
+
+    const result = parseFormResponses(form, responses, 1);
+
+    expect(result.roundDetails.questions).toBe(1);
+    expect(result.results["Team A"].answers).toHaveLength(1);
+  });
+
   it("handles multiple teams", () => {
     const form = buildForm([textItem("q1", "Team Name"), textItem("q2", "Q1", 2)]);
 
