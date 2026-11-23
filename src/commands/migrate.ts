@@ -12,39 +12,30 @@ import { errorEmbed, successEmbed } from "../utils/embeds.js";
 const command: Command = {
   data: new SlashCommandBuilder()
     .setName("migrate")
-    .setDescription("One-time migration of V3 quiz data to V4 format")
+    .setDescription("One-time migration of all V3 quiz and user data to V4 format")
     .setDMPermission(false)
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addStringOption((opt) =>
-      opt
-        .setName("quiz_date")
-        .setDescription("Quiz date to migrate (YYYY-MM-DD)")
-        .setRequired(true),
-    ) as unknown as SlashCommandBuilder,
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const guildId = interaction.guild!.id;
-    const quizDate = interaction.options.getString("quiz_date", true);
     const db = getDb();
 
-    const result = await migrateGuild(db, guildId, quizDate);
+    const result = await migrateGuild(db, guildId);
 
     if (!result.ok) {
       await interaction.editReply({ embeds: [errorEmbed("Migration Error", result.error)] });
       return;
     }
 
-    const { teamsMigrated, roundsMigrated, aliasesMigrated, membersMigrated, quizStatus } =
-      result.data;
+    const { quizzesMigrated, totalTeams, totalRounds, usersMigrated } = result.data;
 
     const summary = [
-      `**Quiz date:** ${quizDate} (${quizStatus})`,
-      `**Teams:** ${teamsMigrated}`,
-      `**Rounds:** ${roundsMigrated}`,
-      `**Aliases:** ${aliasesMigrated ? "migrated" : "none found"}`,
-      `**Members map:** ${membersMigrated ? "migrated" : "none found"}`,
+      `**Quizzes migrated:** ${quizzesMigrated}`,
+      `**Total teams:** ${totalTeams}`,
+      `**Total rounds:** ${totalRounds}`,
+      `**Users migrated:** ${usersMigrated}`,
     ].join("\n");
 
     await interaction.editReply({
