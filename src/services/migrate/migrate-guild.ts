@@ -6,78 +6,120 @@ import { parseV3Round, type V3Round } from "./parse-v3-round.js";
 type Firestore = firestore.Firestore;
 
 export interface MigrateResult {
-  teamsMigrated: number;
-  roundsMigrated: number;
-  aliasesMigrated: boolean;
-  membersMigrated: boolean;
-  quizStatus: string;
+  quizzesMigrated: number;
+  totalTeams: number;
+  totalRounds: number;
+  usersMigrated: number;
 }
 
 export async function migrateGuild(
   db: Firestore,
   guildId: string,
-  quizDate: string,
 ): Promise<Result<MigrateResult>> {
-  const v3QuizPath = `Servers/${guildId}/Quizzes/${quizDate}`;
-  const v4QuizPath = `guilds/${guildId}/quizzes/${quizDate}`;
+  // Step A - Migrate all quizzes
+  const v3QuizzesSnap = await db.collection(`Servers/${guildId}/Quizzes`).get();
 
-  // 1. Check V3 quiz exists
-  const v3QuizSnap = await db.doc(v3QuizPath).get();
-  if (!v3QuizSnap.exists) {
-    return err(`V3 quiz not found at ${v3QuizPath}`);
+  if (v3QuizzesSnap.empty) {
+    return err(`No V3 quiz data found for guild ${guildId}`);
   }
 
-  const v3Quiz = v3QuizSnap.data() as { ended?: boolean; date?: string };
-  const status = v3Quiz.ended ? "ended" : "active";
+  let quizzesMigrated = 0;
+  let totalTeams = 0;
+  let totalRounds = 0;
 
-  // 2. Write V4 quiz session
-  await db.doc(v4QuizPath).set({
-    status,
-    createdAt: "migrated",
-  });
+  for (const quizDoc of v3QuizzesSnap.docs) {
+    const quizDate = quizDoc.id;
+    const v3Quiz = quizDoc.data() as { ended?: boolean; date?: string };
+    const status = v3Quiz.ended ? "ended" : "active";
+    const v3QuizPath = `Servers/${guildId}/Quizzes/${quizDate}`;
+    const v4QuizPath = `guilds/${guildId}/quizzes/${quizDate}`;
 
-  // 3. Migrate teams
-  const v3TeamsSnap = await db.collection(`${v3QuizPath}/Teams`).get();
-  let teamsMigrated = 0;
+    // Write V4 quiz session doc
+    await db.doc(v4QuizPath).set({
+      status,
+      createdAt: "migrated",
+    });
 
-  for (const doc of v3TeamsSnap.docs) {
-    const v3Team = doc.data() as V3Team;
-    const v4Team = parseV3Team(v3Team);
-    await db.doc(`${v4QuizPath}/teams/${doc.id}`).set(v4Team);
-    teamsMigrated++;
+    // Migrate teams
+    const v3TeamsSnap = await db.collection(`${v3QuizPath}/Teams`).get();
+    for (const teamDoc of v3TeamsSnap.docs) {
+      const v3Team = teamDoc.data() as V3Team;
+      const v4Team = parseV3Team(v3Team);
+      await db.doc(`${v4QuizPath}/teams/${teamDoc.id}`).set(v4Team);
+      totalTeams++;
+    }
+
+    // Migrate rounds
+    const v3RoundsSnap = await db.collection(`${v3QuizPath}/Rounds`).get();
+    for (const roundDoc of v3RoundsSnap.docs) {
+      const v3Round = roundDoc.data() as V3Round;
+      const v4Round = parseV3Round(roundDoc.id, v3Round);
+      await db.doc(`${v4QuizPath}/rounds/${v4Round.roundNumber}`).set(v4Round);
+      totalRounds++;
+    }
+
+    // Migrate maps
+    const v3AliasSnap = await db.doc(`${v3QuizPath}/Maps/Teams Aliases`).get();
+    if (v3AliasSnap.exists) {
+      await db.doc(`${v4QuizPath}/maps/teamsAliases`).set(v3AliasSnap.data()!);
+    }
+
+    const v3MembersSnap = await db.doc(`${v3QuizPath}/Maps/Teams Members`).get();
+    if (v3MembersSnap.exists) {
+      await db.doc(`${v4QuizPath}/maps/teamsMembers`).set(v3MembersSnap.data()!);
+    }
+
+    quizzesMigrated++;
   }
 
-  // 4. Migrate rounds
-  const v3RoundsSnap = await db.collection(`${v3QuizPath}/Rounds`).get();
-  let roundsMigrated = 0;
+  // Step B - Migrate all users
+  const v3UsersSnap = await db.collection("Users").get();
+  let usersMigrated = 0;
 
-  for (const doc of v3RoundsSnap.docs) {
-    const v3Round = doc.data() as V3Round;
-    const v4Round = parseV3Round(doc.id, v3Round);
-    await db.doc(`${v4QuizPath}/rounds/${v4Round.roundNumber}`).set(v4Round);
-    roundsMigrated++;
-  }
+  for (const userDoc of v3UsersSnap.docs) {
+    const userId = userDoc.id;
+    const v3User = userDoc.data() as {
+      currentName?: string;
+      initialName?: string;
+      username?: string;
+    };
 
-  // 5. Migrate maps
-  let aliasesMigrated = false;
-  const v3AliasSnap = await db.doc(`${v3QuizPath}/Maps/Teams Aliases`).get();
-  if (v3AliasSnap.exists) {
-    await db.doc(`${v4QuizPath}/maps/teamsAliases`).set(v3AliasSnap.data()!);
-    aliasesMigrated = true;
-  }
+    // Write V4 user doc
+    await db.doc(`users/${userId}`).set({
+      currentName: v3User.currentName ?? "",
+      initialName: v3User.initialName ?? "",
+      username: v3User.username ?? "",
+    });
 
-  let membersMigrated = false;
-  const v3MembersSnap = await db.doc(`${v3QuizPath}/Maps/Teams Members`).get();
-  if (v3MembersSnap.exists) {
-    await db.doc(`${v4QuizPath}/maps/teamsMembers`).set(v3MembersSnap.data()!);
-    membersMigrated = true;
+    // Check for guild-specific records
+    const v3ServersSnap = await db.collection(`Users/${userId}/Servers`).get();
+    for (const serverDoc of v3ServersSnap.docs) {
+      // Only migrate records for the current guild
+      if (serverDoc.id !== guildId) continue;
+
+      const v3GuildData = serverDoc.data() as {
+        usersTeams?: string[];
+        serverName?: string;
+      };
+
+      await db.doc(`users/${userId}/servers/${serverDoc.id}`).set({
+        usersTeams: v3GuildData.usersTeams ?? [],
+        server: {
+          name: v3GuildData.serverName ?? "",
+          owner: "",
+          initialName: v3GuildData.serverName ?? "",
+          initialOwner: "",
+        },
+      });
+    }
+
+    usersMigrated++;
   }
 
   return ok({
-    teamsMigrated,
-    roundsMigrated,
-    aliasesMigrated,
-    membersMigrated,
-    quizStatus: status,
+    quizzesMigrated,
+    totalTeams,
+    totalRounds,
+    usersMigrated,
   });
 }

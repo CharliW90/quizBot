@@ -14,15 +14,9 @@ import command from "../../src/commands/migrate.js";
 
 const mockMigrateGuild = vi.mocked(migrateGuild);
 
-function mockInteraction(quizDate: string) {
+function mockInteraction() {
   return {
     guild: { id: "guild-1" },
-    options: {
-      getString: vi.fn((name: string) => {
-        if (name === "quiz_date") return quizDate;
-        return null;
-      }),
-    },
     deferReply: vi.fn(),
     editReply: vi.fn(),
   } as any;
@@ -41,65 +35,64 @@ describe("/migrate", () => {
     mockMigrateGuild.mockResolvedValue({
       ok: true,
       data: {
-        teamsMigrated: 0,
-        roundsMigrated: 0,
-        aliasesMigrated: false,
-        membersMigrated: false,
-        quizStatus: "active",
+        quizzesMigrated: 0,
+        totalTeams: 0,
+        totalRounds: 0,
+        usersMigrated: 0,
       },
     });
-    const interaction = mockInteraction("2026-09-01");
+    const interaction = mockInteraction();
 
     await command.execute(interaction);
 
     expect(interaction.deferReply).toHaveBeenCalledWith({ flags: MessageFlags.Ephemeral });
   });
 
-  it("calls migrateGuild with the provided date", async () => {
+  it("calls migrateGuild with db and guildId only", async () => {
     mockMigrateGuild.mockResolvedValue({
       ok: true,
       data: {
-        teamsMigrated: 2,
-        roundsMigrated: 3,
-        aliasesMigrated: true,
-        membersMigrated: true,
-        quizStatus: "ended",
+        quizzesMigrated: 2,
+        totalTeams: 4,
+        totalRounds: 6,
+        usersMigrated: 10,
       },
     });
-    const interaction = mockInteraction("2026-09-01");
+    const interaction = mockInteraction();
 
     await command.execute(interaction);
 
-    expect(mockMigrateGuild).toHaveBeenCalledWith("mock-db", "guild-1", "2026-09-01");
+    expect(mockMigrateGuild).toHaveBeenCalledWith("mock-db", "guild-1");
   });
 
   it("shows migration summary on success", async () => {
     mockMigrateGuild.mockResolvedValue({
       ok: true,
       data: {
-        teamsMigrated: 2,
-        roundsMigrated: 3,
-        aliasesMigrated: true,
-        membersMigrated: true,
-        quizStatus: "ended",
+        quizzesMigrated: 3,
+        totalTeams: 5,
+        totalRounds: 9,
+        usersMigrated: 12,
       },
     });
-    const interaction = mockInteraction("2026-09-01");
+    const interaction = mockInteraction();
 
     await command.execute(interaction);
 
     const embed = interaction.editReply.mock.calls[0][0].embeds[0];
     expect(embed.data.title).toContain("Migration");
-    expect(embed.data.description).toContain("2");
     expect(embed.data.description).toContain("3");
+    expect(embed.data.description).toContain("5");
+    expect(embed.data.description).toContain("9");
+    expect(embed.data.description).toContain("12");
   });
 
   it("shows error when migration fails", async () => {
     mockMigrateGuild.mockResolvedValue({
       ok: false,
-      error: "V3 quiz not found at Servers/guild-1/Quizzes/2026-09-01",
+      error: "No V3 quiz data found for guild guild-1",
     });
-    const interaction = mockInteraction("2026-09-01");
+    const interaction = mockInteraction();
 
     await command.execute(interaction);
 
