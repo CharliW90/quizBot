@@ -221,4 +221,21 @@ describe("deleteTeamByRole", () => {
 
     expect(result.ok).toBe(false);
   });
+
+  it("returns 'Failed to delete team' when a non-Error is thrown", async () => {
+    const { guild } = mockGuild();
+    const teamRole = {
+      id: "team-role-id",
+      name: "Team: Wizards",
+      delete: vi.fn().mockRejectedValue("string error"),
+    };
+    const ctx: DeleteTeamContext = { guild: guild as any, db: {} as any, quizDate: "2026-08-07" };
+
+    const result = await deleteTeamByRole(ctx, teamRole as any, TEAM);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe("Failed to delete team");
+    }
+  });
 });

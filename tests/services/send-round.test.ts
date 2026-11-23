@@ -228,6 +228,239 @@ describe("sendRound", () => {
     expect(mockPublishRound).not.toHaveBeenCalled();
   });
 
+  it("reports failure when channel.send() throws", async () => {
+    mockGetRound.mockResolvedValue({ ok: true, data: roundData });
+    mockGetAliases.mockResolvedValue({ ok: true, data: {} });
+    mockListTeams.mockResolvedValue({ ok: true, data: teams });
+    mockPublishRound.mockResolvedValue({ ok: true, data: undefined });
+
+    const ch1 = { send: vi.fn().mockRejectedValue(new Error("Cannot send messages")) };
+    const ch2 = { send: vi.fn() };
+    const guild = mockGuild({ "channel-1": ch1, "channel-2": ch2 });
+
+    const result = await sendRound({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      roundNumber: 1,
+      guild,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.successes).toHaveLength(1);
+      expect(result.data.failures).toHaveLength(1);
+      expect(result.data.failures[0].reason).toContain("Failed to send to channel");
+    }
+  });
+
+  it("reports failure when channel exists but has no send method", async () => {
+    mockGetRound.mockResolvedValue({ ok: true, data: roundData });
+    mockGetAliases.mockResolvedValue({ ok: true, data: {} });
+    mockListTeams.mockResolvedValue({ ok: true, data: teams });
+    mockPublishRound.mockResolvedValue({ ok: true, data: undefined });
+
+    const ch1 = { send: vi.fn() };
+    const noSendChannel = { name: "voice-channel" };
+    const guild = {
+      channels: {
+        fetch: vi.fn(async (id: string) => {
+          if (id === "channel-1") return ch1;
+          if (id === "channel-2") return noSendChannel;
+          return null;
+        }),
+      },
+    } as any;
+
+    const result = await sendRound({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      roundNumber: 1,
+      guild,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.successes).toHaveLength(1);
+      expect(result.data.failures).toHaveLength(1);
+      expect(result.data.failures[0].reason).toContain("Text channel no longer exists");
+    }
+  });
+
+  it("reports failure when channel fetch returns null", async () => {
+    mockGetRound.mockResolvedValue({ ok: true, data: roundData });
+    mockGetAliases.mockResolvedValue({ ok: true, data: {} });
+    mockListTeams.mockResolvedValue({ ok: true, data: teams });
+    mockPublishRound.mockResolvedValue({ ok: true, data: undefined });
+
+    const ch1 = { send: vi.fn() };
+    const guild = {
+      channels: {
+        fetch: vi.fn(async (id: string) => {
+          if (id === "channel-1") return ch1;
+          return null;
+        }),
+      },
+    } as any;
+
+    const result = await sendRound({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      roundNumber: 1,
+      guild,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.failures).toHaveLength(1);
+      expect(result.data.failures[0].reason).toContain("Text channel no longer exists");
+    }
+  });
+
+  it("uses singular pt for score of 1 and shows incorrect icon", async () => {
+    const singularRound: RoundData = {
+      ...roundData,
+      responses: {
+        "The Foxes": { answers: [{ answer: "Nope", score: 1, correct: false }], score: 1 },
+      },
+    };
+
+    mockGetRound.mockResolvedValue({ ok: true, data: singularRound });
+    mockGetAliases.mockResolvedValue({ ok: true, data: {} });
+    mockListTeams.mockResolvedValue({ ok: true, data: [teams[0]] });
+    mockPublishRound.mockResolvedValue({ ok: true, data: undefined });
+
+    const ch1 = { send: vi.fn() };
+    const guild = mockGuild({ "channel-1": ch1 });
+
+    await sendRound({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      roundNumber: 1,
+      guild,
+    });
+
+    const embed = ch1.send.mock.calls[0][0].embeds[0];
+    const desc = embed.data.description;
+    expect(desc).toContain("1pt)");
+    expect(desc).not.toContain("pts");
+    expect(desc).toContain("❌");
+  });
+
+  it("falls back to default color when team color is invalid", async () => {
+    const badColorTeam: Team[] = [
+      { ...teams[0], color: "not-a-color" },
+    ];
+
+    mockGetRound.mockResolvedValue({
+      ok: true,
+      data: {
+        ...roundData,
+        responses: {
+          "The Foxes": { answers: [{ answer: "Paris", score: 2, correct: true }], score: 2 },
+        },
+      },
+    });
+    mockGetAliases.mockResolvedValue({ ok: true, data: {} });
+    mockListTeams.mockResolvedValue({ ok: true, data: badColorTeam });
+    mockPublishRound.mockResolvedValue({ ok: true, data: undefined });
+
+    const ch1 = { send: vi.fn() };
+    const guild = mockGuild({ "channel-1": ch1 });
+
+    const result = await sendRound({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      roundNumber: 1,
+      guild,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.successes).toHaveLength(1);
+    }
+  });
+
+  it("proceeds without aliases when getAliases fails", async () => {
+    mockGetRound.mockResolvedValue({ ok: true, data: roundData });
+    mockGetAliases.mockResolvedValue({ ok: false, error: "Alias collection missing" });
+    mockListTeams.mockResolvedValue({ ok: true, data: teams });
+    mockPublishRound.mockResolvedValue({ ok: true, data: undefined });
+
+    const ch1 = { send: vi.fn() };
+    const ch2 = { send: vi.fn() };
+    const guild = mockGuild({ "channel-1": ch1, "channel-2": ch2 });
+
+    const result = await sendRound({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      roundNumber: 1,
+      guild,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.successes).toHaveLength(2);
+    }
+  });
+
+  it("returns error when listTeams fails", async () => {
+    mockGetRound.mockResolvedValue({ ok: true, data: roundData });
+    mockGetAliases.mockResolvedValue({ ok: true, data: {} });
+    mockListTeams.mockResolvedValue({ ok: false, error: "Firestore unavailable" });
+
+    const guild = mockGuild({});
+
+    const result = await sendRound({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      roundNumber: 1,
+      guild,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe("Firestore unavailable");
+    }
+  });
+
+  it("reports Unknown error when channel.send throws a non-Error", async () => {
+    mockGetRound.mockResolvedValue({
+      ok: true,
+      data: {
+        ...roundData,
+        responses: {
+          "The Foxes": { answers: [{ answer: "Paris", score: 2, correct: true }], score: 2 },
+        },
+      },
+    });
+    mockGetAliases.mockResolvedValue({ ok: true, data: {} });
+    mockListTeams.mockResolvedValue({ ok: true, data: [teams[0]] });
+    mockPublishRound.mockResolvedValue({ ok: true, data: undefined });
+
+    const ch1 = { send: vi.fn().mockRejectedValue("string-error") };
+    const guild = mockGuild({ "channel-1": ch1 });
+
+    const result = await sendRound({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      roundNumber: 1,
+      guild,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.failures[0].reason).toContain("Unknown error");
+    }
+  });
+
   it("returns error when round not found", async () => {
     mockGetRound.mockResolvedValue({ ok: false, error: "Round 5 not found" });
 

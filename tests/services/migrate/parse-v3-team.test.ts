@@ -95,6 +95,23 @@ describe("parseV3Team", () => {
     expect(result.registeredAt).toBe(new Date(1788538397045).toISOString());
   });
 
+  it("falls back to current date when createdTimestamp is missing", () => {
+    const v3 = {
+      ...V3_TEAM,
+      roles: {
+        ...V3_TEAM.roles,
+        teamRole: { ...V3_TEAM.roles.teamRole, createdTimestamp: undefined },
+      },
+    };
+
+    const before = new Date().toISOString();
+    const result = parseV3Team(v3);
+    const after = new Date().toISOString();
+
+    expect(result.registeredAt! >= before).toBe(true);
+    expect(result.registeredAt! <= after).toBe(true);
+  });
+
   it("deduplicates members when captain is also in members array", () => {
     const v3 = {
       ...V3_TEAM,

@@ -76,6 +76,18 @@ describe("createBot", () => {
     expect(process.on).toHaveBeenCalledWith("SIGTERM", expect.any(Function));
   });
 
+  it("logs undefined tag when client.user is null on ready", async () => {
+    const { createBot } = await import("../../src/bot/client.js");
+    const bot = createBot();
+    (bot.client as any).user = null;
+    await bot.login();
+
+    const readyHandler = (bot.client.once as any).mock.calls.find(
+      (c: any[]) => c[0] === "ready",
+    )[1];
+    readyHandler();
+  });
+
   it("calls client.destroy() on shutdown", async () => {
     const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => undefined as never);
     const { createBot } = await import("../../src/bot/client.js");

@@ -238,6 +238,27 @@ describe("/leave", () => {
     expect(interaction._teamChannel.send).not.toHaveBeenCalled();
   });
 
+  it("omits remaining members field when no other members remain", async () => {
+    mockRemoveMembers.mockResolvedValue({ ok: true, data: undefined });
+    const interaction = mockInteraction();
+
+    const captain = mockGuildMember("captain-1", { teamRole: true, captainRole: true });
+    const member = interaction.member;
+    const twoMemberCollection = new Collection<string, any>([
+      ["user-1", member],
+      ["captain-1", captain],
+    ]);
+    interaction.guild.members.cache.filter = vi.fn().mockReturnValue(twoMemberCollection);
+    interaction._awaitMessageComponent.mockResolvedValue({ customId: "confirm" });
+
+    await command.execute(interaction);
+
+    const confirmEdit = interaction.editReply.mock.calls[0][0];
+    const embed = confirmEdit.embeds[0];
+    const fieldNames = embed.data.fields.map((f: any) => f.name);
+    expect(fieldNames).not.toContain("Remaining Members");
+  });
+
   it("shows error when removeMembers fails", async () => {
     mockRemoveMembers.mockResolvedValue({ ok: false, error: "Firestore error" });
     const interaction = mockInteraction();
@@ -283,5 +304,19 @@ describe("/leave", () => {
 
     const lastEdit = interaction.editReply.mock.calls.at(-1)[0];
     expect(lastEdit.embeds[0].data.title).toBe("Error");
+  });
+
+  it("shows Unknown captain when captainRole does not exist in guild", async () => {
+    mockRemoveMembers.mockResolvedValue({ ok: true, data: undefined });
+    const interaction = mockInteraction();
+    interaction.guild.roles.cache.find = vi.fn().mockReturnValue(undefined);
+    interaction._awaitMessageComponent.mockResolvedValue({ customId: "confirm" });
+
+    await command.execute(interaction);
+
+    const confirmEdit = interaction.editReply.mock.calls[0][0];
+    const embed = confirmEdit.embeds[0];
+    const captainField = embed.data.fields.find((f: any) => f.name === "Captain");
+    expect(captainField.value).toBe("Unknown");
   });
 });

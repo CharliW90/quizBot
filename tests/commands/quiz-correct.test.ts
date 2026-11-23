@@ -65,6 +65,21 @@ describe("/quiz correct", () => {
       expect(replyCall.embeds[0].data.description).toContain("3");
     });
 
+    it("uses singular grammar for 1 round corrected", async () => {
+      mockCorrectTeamName.mockResolvedValue({
+        ok: true,
+        data: { roundsCorrected: 1 },
+      });
+
+      const interaction = mockInteraction({ incorrect: "Typo", correct: "Fixed" });
+      await command.execute(interaction);
+
+      const replyCall = interaction.reply.mock.calls[0][0];
+      const desc = replyCall.embeds[0].data.description;
+      expect(desc).toContain("1 round.");
+      expect(desc).not.toContain("rounds.");
+    });
+
     it("replies with error on failure", async () => {
       mockCorrectTeamName.mockResolvedValue({
         ok: false,
@@ -177,5 +192,81 @@ describe("/quiz correct", () => {
       expect(response.map((r: any) => r.value)).toContain("The Foxes");
       expect(response.map((r: any) => r.value)).toContain("Piston Broke");
     });
+
+    it("falls back to empty set when teamsResult fails while building incorrect suggestions", async () => {
+      mockListRounds.mockResolvedValue({
+        ok: true,
+        data: [
+          {
+            roundNumber: 1,
+            formId: "f1",
+            responses: { "Team A": { answers: [], score: 5 } },
+            fetchedAt: "2026-06-06T19:00:00Z",
+            publishedAt: null,
+            history: [],
+          },
+        ],
+      });
+      mockListTeams.mockResolvedValue({ ok: false, error: "Firestore error" });
+
+      const interaction = {
+        guildId: "guild-1",
+        options: {
+          getFocused: vi.fn(() => ({ name: "incorrect", value: "" })),
+        },
+        respond: vi.fn(),
+      } as any;
+
+      await command.autocomplete!(interaction);
+
+      const response = interaction.respond.mock.calls[0][0];
+      expect(response).toHaveLength(1);
+      expect(response[0].value).toBe("Team A");
+    });
+
+    it("responds with empty list when roundsResult fails for 'incorrect' field", async () => {
+      mockListRounds.mockResolvedValue({ ok: false, error: "Firestore error" });
+      mockListTeams.mockResolvedValue({ ok: true, data: [] });
+
+      const interaction = {
+        guildId: "guild-1",
+        options: {
+          getFocused: vi.fn(() => ({ name: "incorrect", value: "" })),
+        },
+        respond: vi.fn(),
+      } as any;
+
+      await command.autocomplete!(interaction);
+
+      expect(interaction.respond).toHaveBeenCalledWith([]);
+    });
+
+    it("responds with empty list when teamsResult fails for 'correct' field", async () => {
+      mockListTeams.mockResolvedValue({ ok: false, error: "Firestore error" });
+
+      const interaction = {
+        guildId: "guild-1",
+        options: {
+          getFocused: vi.fn(() => ({ name: "correct", value: "" })),
+        },
+        respond: vi.fn(),
+      } as any;
+
+      await command.autocomplete!(interaction);
+
+      expect(interaction.respond).toHaveBeenCalledWith([]);
+    });
+  });
+
+  it("replies with server-only message when guild is null", async () => {
+    const interaction = mockInteraction({ incorrect: "Nope", correct: "Whatever" });
+    interaction.guild = null;
+
+    await command.execute(interaction);
+
+    expect(interaction.reply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "This command can only be used in a server." }),
+    );
+    expect(mockCorrectTeamName).not.toHaveBeenCalled();
   });
 });

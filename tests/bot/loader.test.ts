@@ -61,6 +61,30 @@ describe("loadCommands", () => {
     expect(commands.size).toBe(0);
   });
 
+  it("skips .d.ts declaration files", async () => {
+    const { readdirSync } = await import("node:fs");
+    vi.mocked(readdirSync).mockReturnValue([
+      { name: "ping.d.ts", isFile: () => true, isDirectory: () => false },
+    ] as unknown as ReturnType<typeof readdirSync>);
+
+    const { loadCommands } = await import("../../src/bot/loader.js");
+    const commands = await loadCommands("/fake/commands");
+
+    expect(commands.size).toBe(0);
+  });
+
+  it("skips directories", async () => {
+    const { readdirSync } = await import("node:fs");
+    vi.mocked(readdirSync).mockReturnValue([
+      { name: "subdir", isFile: () => false, isDirectory: () => true },
+    ] as unknown as ReturnType<typeof readdirSync>);
+
+    const { loadCommands } = await import("../../src/bot/loader.js");
+    const commands = await loadCommands("/fake/commands");
+
+    expect(commands.size).toBe(0);
+  });
+
   it("skips non-ts files", async () => {
     const { readdirSync } = await import("node:fs");
     vi.mocked(readdirSync).mockReturnValue([

@@ -77,7 +77,13 @@ const command: Command = {
         await db.listCollections();
       },
       pingFormsApi: async () => {
-        await formsClient.getForm("__ping__");
+        try {
+          await formsClient.getForm("__ping__");
+        } catch (e: unknown) {
+          const code = (e as { code?: number }).code;
+          if (code === 404) return;
+          throw e;
+        }
       },
       botPermissions,
       requiredPermissions: REQUIRED_PERMISSIONS,

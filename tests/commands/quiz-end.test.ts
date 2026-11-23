@@ -91,4 +91,26 @@ describe("/quiz end", () => {
     const lastEdit = interaction.editReply.mock.calls.at(-1)[0];
     expect(lastEdit.embeds[0].data.title).toContain("Error");
   });
+
+  it("replies with server-only message when guild is null", async () => {
+    const interaction = mockInteraction("confirm");
+    interaction.guild = null;
+
+    await command.execute(interaction);
+
+    expect(interaction.reply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "This command can only be used in a server." }),
+    );
+    expect(mockEndQuiz).not.toHaveBeenCalled();
+  });
+
+  it("handles unexpected errors in catch block", async () => {
+    const interaction = mockInteraction("error");
+    interaction._reply.awaitMessageComponent.mockRejectedValue(new Error("Something unexpected"));
+
+    await command.execute(interaction);
+
+    const lastEdit = interaction.editReply.mock.calls.at(-1)[0];
+    expect(lastEdit.embeds[0].data.title).toContain("Error");
+  });
 });

@@ -84,4 +84,32 @@ describe("/quiz scoreboard", () => {
     expect(editCall.embeds[0].data.title).toContain("Error");
     expect(interaction.channel.send).not.toHaveBeenCalled();
   });
+
+  it("replies with server-only message when guild is null", async () => {
+    const interaction = mockInteraction();
+    interaction.guild = null;
+
+    await command.execute(interaction);
+
+    expect(interaction.reply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "This command can only be used in a server." }),
+    );
+    expect(mockGenerateScoreboard).not.toHaveBeenCalled();
+  });
+
+  it("skips channel.send when channel lacks send method", async () => {
+    mockGenerateScoreboard.mockResolvedValue({
+      ok: true,
+      data: {
+        "The Foxes": { rounds: [10], total: 10 },
+      },
+    });
+
+    const interaction = mockInteraction();
+    interaction.channel = {};
+
+    await command.execute(interaction);
+
+    expect(interaction.deleteReply).toHaveBeenCalled();
+  });
 });

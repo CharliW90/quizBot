@@ -115,6 +115,55 @@ describe("parseV3Round", () => {
     expect(result.responses["test team"].answers[0].answer).toBe("Keanu Reeves: The Matrix");
   });
 
+  it("returns roundNumber 0 when doc name has no round number", () => {
+    const result = parseV3Round("SomethingElse", V3_ROUND);
+    expect(result.roundNumber).toBe(0);
+  });
+
+  it("defaults totalScore and maxScore to 0 when no Total Score field exists", () => {
+    const noTotal = {
+      ...V3_ROUND,
+      current: {
+        teams: ["test team"],
+        embeds: [
+          {
+            author: { name: "Round 1" },
+            color: 0,
+            fields: [
+              { name: "Question 1", value: "Paris :white_check_mark:" },
+              { name: "Question 2", value: "Berlin :x:" },
+            ],
+          },
+        ],
+      },
+    };
+
+    const result = parseV3Round("Round 1", noTotal);
+    expect(result.responses["test team"].score).toBe(0);
+    expect(result.responses["test team"].answers[0].score).toBe(1);
+    expect(result.responses["test team"].answers[1].score).toBe(0);
+  });
+
+  it("uses scorePerCorrect of 1 when questionCount is 0", () => {
+    const noQuestions = {
+      ...V3_ROUND,
+      current: {
+        teams: ["test team"],
+        embeds: [
+          {
+            author: { name: "Round 1" },
+            color: 0,
+            fields: [{ name: "Total Score", value: "0 / 0" }],
+          },
+        ],
+      },
+    };
+
+    const result = parseV3Round("Round 1", noQuestions);
+    expect(result.responses["test team"].score).toBe(0);
+    expect(result.responses["test team"].answers).toEqual([]);
+  });
+
   it("preserves history from V3 as-is", () => {
     const withHistory = {
       ...V3_ROUND,

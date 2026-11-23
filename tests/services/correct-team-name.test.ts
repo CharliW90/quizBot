@@ -148,6 +148,36 @@ describe("correctTeamName", () => {
     expect(mockStoreRound).toHaveBeenCalledTimes(1);
   });
 
+  it("returns error when storeRound fails mid-correction", async () => {
+    mockListRounds.mockResolvedValue({
+      ok: true,
+      data: [
+        {
+          roundNumber: 1,
+          formId: "f1",
+          responses: { "Bad Name": { answers: [], score: 3 } },
+          fetchedAt: "2026-06-06T19:00:00Z",
+          publishedAt: null,
+          history: [],
+        },
+      ],
+    });
+    mockStoreRound.mockResolvedValue({ ok: false, error: "write failed" });
+
+    const result = await correctTeamName({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      incorrectName: "Bad Name",
+      correctName: "Good Name",
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe("write failed");
+    }
+  });
+
   it("returns error when listRounds fails", async () => {
     mockListRounds.mockResolvedValue({ ok: false, error: "db error" });
 

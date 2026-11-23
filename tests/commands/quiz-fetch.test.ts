@@ -83,6 +83,29 @@ describe("/quiz fetch", () => {
       expect(description).toContain("Round 1");
     });
 
+    it("uses singular grammar for 1 team response", async () => {
+      mockFetchRound.mockResolvedValue({
+        ok: true,
+        data: {
+          roundNumber: 1,
+          formId: "form-abc",
+          responses: {
+            "The Foxes": { answers: [], score: 5 },
+          },
+          fetchedAt: "2026-06-06T19:00:00Z",
+          publishedAt: null,
+          history: [],
+        },
+      });
+
+      const interaction = mockInteraction(1);
+      await command.execute(interaction);
+
+      const description = interaction.editReply.mock.calls[0][0].embeds[0].data.description;
+      expect(description).toContain("1 team response ");
+      expect(description).not.toContain("responses");
+    });
+
     it("reports error from fetchRound", async () => {
       mockFetchRound.mockResolvedValue({
         ok: false,

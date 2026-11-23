@@ -239,6 +239,42 @@ describe("/delete-team", () => {
       expect(interaction.deleteReply).toHaveBeenCalled();
     });
 
+    it("shows 'none found' when no channels were deleted", async () => {
+      const interaction = mockInteraction();
+      interaction._confirmation.awaitMessageComponent.mockResolvedValue({ customId: "delete" });
+      mockDeleteTeamByRole.mockResolvedValue({
+        ok: true,
+        data: {
+          deletedRole: "Team: The Foxes",
+          deletedChannels: [],
+          removedMemberCount: 2,
+        },
+      });
+
+      await command.execute(interaction);
+
+      const sendCall = interaction.channel.send.mock.calls[0][0];
+      expect(sendCall.embeds[0].data.description).toContain("none found");
+    });
+
+    it("skips channel send when interaction.channel is null", async () => {
+      const interaction = mockInteraction();
+      interaction.channel = null;
+      interaction._confirmation.awaitMessageComponent.mockResolvedValue({ customId: "delete" });
+      mockDeleteTeamByRole.mockResolvedValue({
+        ok: true,
+        data: {
+          deletedRole: "Team: The Foxes",
+          deletedChannels: ["foxes-text"],
+          removedMemberCount: 2,
+        },
+      });
+
+      await command.execute(interaction);
+
+      expect(interaction.deleteReply).toHaveBeenCalled();
+    });
+
     it("shows error when deleteTeamByRole fails", async () => {
       const interaction = mockInteraction();
       interaction._confirmation.awaitMessageComponent.mockResolvedValue({ customId: "delete" });

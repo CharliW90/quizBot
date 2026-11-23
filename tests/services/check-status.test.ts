@@ -74,6 +74,16 @@ describe("checkStatus", () => {
     expect(result.uptime).toBe("0m");
   });
 
+  it("reports 'Unknown error' when ping rejects with a non-Error", async () => {
+    const deps = makeDeps({
+      pingFirestore: vi.fn().mockRejectedValue("string error"),
+    });
+
+    const result = await checkStatus(deps);
+
+    expect(result.firestore).toEqual({ healthy: false, reason: "Unknown error" });
+  });
+
   it("handles both integrations failing simultaneously", async () => {
     const deps = makeDeps({
       pingFirestore: vi.fn().mockRejectedValue(new Error("timeout")),

@@ -266,6 +266,19 @@ describe("registerTeam", () => {
       expect(guild._mocks.createdVoiceChannel.delete).toHaveBeenCalled();
     });
 
+    it("continues rollback when a resource.delete() throws", async () => {
+      const { guild, input, ctx } = setup();
+      guild.channels.cache.find = vi.fn().mockReturnValue(undefined);
+      guild._mocks.createdRole.delete = vi.fn().mockRejectedValue(new Error("Discord 500"));
+
+      const result = await registerTeam(input, ctx);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toContain("not found");
+      }
+    });
+
     it("rolls back when role creation throws", async () => {
       const { guild, input, ctx } = setup();
       guild.roles.create = vi.fn().mockRejectedValue(new Error("Discord API error"));
@@ -277,6 +290,36 @@ describe("registerTeam", () => {
         expect(result.error).toBe("Discord API error");
       }
     });
+  });
+
+  it("omits bot role from channel permissions when bot role is not found", async () => {
+    const { guild, input, ctx } = setup();
+    guild.roles.cache.find = vi.fn((fn: (r: any) => boolean) => {
+      const roles = [
+        { name: "Teams", id: "teams-role-id" },
+        { name: "Team Captain", id: "captain-role-id" },
+      ];
+      return roles.find(fn);
+    });
+
+    const result = await registerTeam(input, ctx);
+
+    expect(result.ok).toBe(true);
+    const textChannelCall = guild.channels.create.mock.calls[0][0];
+    const overwriteIds = textChannelCall.permissionOverwrites.map((o: any) => o.id);
+    expect(overwriteIds).not.toContain("bot-role-id");
+  });
+
+  it("returns generic message when non-Error is thrown", async () => {
+    const { guild, input, ctx } = setup();
+    guild.roles.create = vi.fn().mockRejectedValue("string error");
+
+    const result = await registerTeam(input, ctx);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe("Registration failed");
+    }
   });
 
   describe("alias handling", () => {
