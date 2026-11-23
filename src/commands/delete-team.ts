@@ -24,7 +24,11 @@ const command: Command = {
     .setDMPermission(false)
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
     .addStringOption((opt) =>
-      opt.setName("team").setDescription("The team to delete").setRequired(true).setAutocomplete(true)
+      opt
+        .setName("team")
+        .setDescription("The team to delete")
+        .setRequired(true)
+        .setAutocomplete(true),
     ) as unknown as SlashCommandBuilder,
 
   async autocomplete(interaction) {
@@ -32,21 +36,22 @@ const command: Command = {
     const guild = interaction.guild!;
 
     const teamRoles = guild.roles.cache.filter((r) => r.name.startsWith("Team: "));
-    const filtered = teamRoles.filter((r) =>
-      r.name.toLowerCase().includes(focused.toLowerCase())
-    );
+    const filtered = teamRoles.filter((r) => r.name.toLowerCase().includes(focused.toLowerCase()));
 
     await interaction.respond(
       [...filtered.values()].slice(0, 25).map((r) => ({
         name: r.name.replace("Team: ", ""),
         value: r.name,
-      }))
+      })),
     );
   },
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: "This command can only be used in a server.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -65,21 +70,30 @@ const command: Command = {
       }
     }
     if (!teamRole) {
-      await interaction.reply({ embeds: [errorEmbed("Not Found", `Could not find team "${teamName}"`)], flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        embeds: [errorEmbed("Not Found", `Could not find team "${teamName}"`)],
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
     const teamResult = await getTeam(db, guild.id, quizDate, teamName);
     if (!teamResult.ok) {
-      await interaction.reply({ embeds: [errorEmbed("Not Found", `Team "${teamName}" not found in database`)], flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        embeds: [errorEmbed("Not Found", `Team "${teamName}" not found in database`)],
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
     const team = teamResult.data;
 
     // Confirmation with danger styling
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setCustomId("delete").setLabel("Delete Team").setStyle(ButtonStyle.Danger),
-      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Secondary)
+      new ButtonBuilder()
+        .setCustomId("delete")
+        .setLabel("Delete Team")
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Secondary),
     );
 
     const confirmation = await interaction.reply({
@@ -126,7 +140,10 @@ const command: Command = {
         await interaction.editReply({ content: "Timed out.", components: [] });
       } else {
         logger.error({ error: e }, "Delete-team command error");
-        await interaction.editReply({ embeds: [errorEmbed("Error", "Something went wrong.")], components: [] });
+        await interaction.editReply({
+          embeds: [errorEmbed("Error", "Something went wrong.")],
+          components: [],
+        });
       }
     }
   },

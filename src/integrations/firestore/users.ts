@@ -35,7 +35,7 @@ export async function addTeamMember(
   guildId: string,
   guildName: string,
   guildOwnerId: string,
-  teamName: string
+  teamName: string,
 ): Promise<Result<void>> {
   const userRef = db.doc(userDocPath(userId));
   const userSnapshot = await userRef.get();
@@ -86,7 +86,7 @@ export async function addTeamMember(
 export async function getUserTeamNames(
   db: Firestore,
   userId: string,
-  guildId: string
+  guildId: string,
 ): Promise<Result<string[]>> {
   const userRef = db.doc(userDocPath(userId));
   const userSnapshot = await userRef.get();

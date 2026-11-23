@@ -22,11 +22,16 @@ const command: Command = {
     .setName("quiz-reset")
     .setDescription("Delete all team roles, channels, and Firestore data for today's quiz")
     .setDMPermission(false)
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels) as unknown as SlashCommandBuilder,
+    .setDefaultMemberPermissions(
+      PermissionFlagsBits.ManageChannels,
+    ) as unknown as SlashCommandBuilder,
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: "This command can only be used in a server.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -37,17 +42,21 @@ const command: Command = {
     const teamCount = teamsResult.ok ? teamsResult.data.length : 0;
 
     if (teamCount === 0) {
-      await interaction.reply({ embeds: [errorEmbed("Nothing to Reset", "No teams found for today's quiz.")], flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        embeds: [errorEmbed("Nothing to Reset", "No teams found for today's quiz.")],
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
-    const teamNames = teamsResult.ok
-      ? teamsResult.data.map((t) => t.name).join(", ")
-      : "";
+    const teamNames = teamsResult.ok ? teamsResult.data.map((t) => t.name).join(", ") : "";
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setCustomId("confirm").setLabel("Reset Everything").setStyle(ButtonStyle.Danger),
-      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Secondary)
+      new ButtonBuilder()
+        .setCustomId("confirm")
+        .setLabel("Reset Everything")
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Secondary),
     );
 
     const confirmation = await interaction.reply({
@@ -77,7 +86,10 @@ const command: Command = {
       });
 
       if (!result.ok) {
-        await interaction.editReply({ embeds: [errorEmbed("Reset Error", result.error)], components: [] });
+        await interaction.editReply({
+          embeds: [errorEmbed("Reset Error", result.error)],
+          components: [],
+        });
         return;
       }
 
@@ -98,7 +110,10 @@ const command: Command = {
         await interaction.editReply({ content: "Timed out.", components: [] });
       } else {
         logger.error({ error: e }, "Quiz-reset command error");
-        await interaction.editReply({ embeds: [errorEmbed("Error", "Something went wrong.")], components: [] });
+        await interaction.editReply({
+          embeds: [errorEmbed("Error", "Something went wrong.")],
+          components: [],
+        });
       }
     }
   },

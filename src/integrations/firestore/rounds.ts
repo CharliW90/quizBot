@@ -37,14 +37,12 @@ export async function storeRound(
   db: Firestore,
   guildId: string,
   quizDate: string,
-  input: { roundNumber: number; formId: string; responses: RoundData["responses"] }
+  input: { roundNumber: number; formId: string; responses: RoundData["responses"] },
 ): Promise<Result<RoundData>> {
   const guard = await checkQuizNotEnded(db, guildId, quizDate);
   if (!guard.ok) return guard;
 
-  const docRef = db
-    .collection(roundsCollection(guildId, quizDate))
-    .doc(String(input.roundNumber));
+  const docRef = db.collection(roundsCollection(guildId, quizDate)).doc(String(input.roundNumber));
 
   const existing = await docRef.get();
   const history: RoundData["history"] = [];
@@ -76,7 +74,7 @@ export async function getRound(
   db: Firestore,
   guildId: string,
   quizDate: string,
-  roundNumber: number
+  roundNumber: number,
 ): Promise<Result<RoundData>> {
   const snapshot = await db
     .collection(roundsCollection(guildId, quizDate))
@@ -94,11 +92,9 @@ export async function getRound(
 export async function listRounds(
   db: Firestore,
   guildId: string,
-  quizDate: string
+  quizDate: string,
 ): Promise<Result<RoundData[]>> {
-  const snapshot = await db
-    .collection(roundsCollection(guildId, quizDate))
-    .get();
+  const snapshot = await db.collection(roundsCollection(guildId, quizDate)).get();
 
   const rounds = snapshot.docs.map((doc) => ({
     ...(doc.data() as Omit<RoundData, "roundNumber">),
@@ -112,14 +108,12 @@ export async function publishRound(
   db: Firestore,
   guildId: string,
   quizDate: string,
-  roundNumber: number
+  roundNumber: number,
 ): Promise<Result<void>> {
   const guard = await checkQuizNotEnded(db, guildId, quizDate);
   if (!guard.ok) return guard;
 
-  const docRef = db
-    .collection(roundsCollection(guildId, quizDate))
-    .doc(String(roundNumber));
+  const docRef = db.collection(roundsCollection(guildId, quizDate)).doc(String(roundNumber));
 
   const snapshot = await docRef.get();
   if (!snapshot.exists) {

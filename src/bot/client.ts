@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits } from "discord.js";
-import { loadConfig } from "../utils/config";
-import { logger } from "../utils/logger";
+import { loadConfig } from "../utils/config.js";
+import { logger } from "../utils/logger.js";
 
 export function createBot() {
   const config = loadConfig();

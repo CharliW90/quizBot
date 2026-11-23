@@ -1,4 +1,4 @@
-export { createBot } from "./client";
-export { loadCommands } from "./loader";
-export { createInteractionHandler } from "./handler";
-export type { Command } from "./types";
+export { createBot } from "./client.js";
+export { loadCommands } from "./loader.js";
+export { createInteractionHandler } from "./handler.js";
+export type { Command } from "./types.js";

@@ -22,7 +22,7 @@ export async function addScoreboard(
   db: Firestore,
   guildId: string,
   quizDate: string,
-  scoreboard: Record<string, ScoreboardEntry>
+  scoreboard: Record<string, ScoreboardEntry>,
 ): Promise<Result<void>> {
   const guard = await checkQuizNotEnded(db, guildId, quizDate);
   if (!guard.ok) return guard;
@@ -51,7 +51,7 @@ export async function addScoreboard(
 export async function getScoreboard(
   db: Firestore,
   guildId: string,
-  quizDate: string
+  quizDate: string,
 ): Promise<Result<Record<string, ScoreboardEntry> | null>> {
   const docRef = db.doc(quizDocPath(guildId, quizDate));
   const snapshot = await docRef.get();

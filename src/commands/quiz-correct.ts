@@ -23,14 +23,14 @@ const command: Command = {
         .setName("incorrect")
         .setDescription("The wrong team name (as it appears in responses)")
         .setRequired(true)
-        .setAutocomplete(true)
+        .setAutocomplete(true),
     )
     .addStringOption((opt) =>
       opt
         .setName("correct")
         .setDescription("The correct team name (as registered)")
         .setRequired(true)
-        .setAutocomplete(true)
+        .setAutocomplete(true),
     ) as unknown as SlashCommandBuilder,
 
   async autocomplete(interaction) {
@@ -49,9 +49,7 @@ const command: Command = {
         return;
       }
 
-      const registeredNames = new Set(
-        teamsResult.ok ? teamsResult.data.map((t) => t.name) : []
-      );
+      const registeredNames = new Set(teamsResult.ok ? teamsResult.data.map((t) => t.name) : []);
 
       const formNames = new Set<string>();
       for (const round of roundsResult.data) {
@@ -88,7 +86,10 @@ const command: Command = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: "This command can only be used in a server.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -106,7 +107,10 @@ const command: Command = {
     });
 
     if (!result.ok) {
-      await interaction.reply({ embeds: [errorEmbed("Correction Error", result.error)], flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        embeds: [errorEmbed("Correction Error", result.error)],
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 

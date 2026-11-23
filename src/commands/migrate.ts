@@ -19,7 +19,7 @@ const command: Command = {
       opt
         .setName("quiz_date")
         .setDescription("Quiz date to migrate (YYYY-MM-DD)")
-        .setRequired(true)
+        .setRequired(true),
     ) as unknown as SlashCommandBuilder,
 
   async execute(interaction: ChatInputCommandInteraction) {
@@ -36,7 +36,8 @@ const command: Command = {
       return;
     }
 
-    const { teamsMigrated, roundsMigrated, aliasesMigrated, membersMigrated, quizStatus } = result.data;
+    const { teamsMigrated, roundsMigrated, aliasesMigrated, membersMigrated, quizStatus } =
+      result.data;
 
     const summary = [
       `**Quiz date:** ${quizDate} (${quizStatus})`,

@@ -58,9 +58,7 @@ export async function checkStatus(deps: StatusDeps): Promise<StatusResult> {
     pingCheck(deps.pingFormsApi),
   ]);
 
-  const missing = deps.requiredPermissions.filter(
-    (p) => !deps.botPermissions.includes(p)
-  );
+  const missing = deps.requiredPermissions.filter((p) => !deps.botPermissions.includes(p));
 
   return {
     firestore,

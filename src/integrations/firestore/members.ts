@@ -13,7 +13,7 @@ export async function setTeamMembers(
   guildId: string,
   quizDate: string,
   teamName: string,
-  memberIds: string[]
+  memberIds: string[],
 ): Promise<Result<void>> {
   const guard = await checkQuizNotEnded(db, guildId, quizDate);
   if (!guard.ok) return guard;
@@ -38,7 +38,7 @@ export async function setTeamMembers(
 export async function getTeamMembers(
   db: Firestore,
   guildId: string,
-  quizDate: string
+  quizDate: string,
 ): Promise<Result<Record<string, string>>> {
   const docRef = db.doc(membersDocPath(guildId, quizDate));
   const snapshot = await docRef.get();
@@ -54,7 +54,7 @@ export async function checkMembersRegistered(
   db: Firestore,
   guildId: string,
   quizDate: string,
-  memberIds: string[]
+  memberIds: string[],
 ): Promise<Result<{ userId: string; teamName: string }[]>> {
   const docRef = db.doc(membersDocPath(guildId, quizDate));
   const snapshot = await docRef.get();
@@ -75,7 +75,7 @@ export async function deleteTeamMembers(
   db: Firestore,
   guildId: string,
   quizDate: string,
-  memberIds: string[]
+  memberIds: string[],
 ): Promise<Result<void>> {
   const guard = await checkQuizNotEnded(db, guildId, quizDate);
   if (!guard.ok) return guard;

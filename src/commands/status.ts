@@ -18,26 +18,33 @@ function statusLine(label: string, healthy: boolean, detail: string): string {
 }
 
 function formatResult(result: StatusResult): EmbedBuilder {
-  const allHealthy = result.firestore.healthy && result.formsApi.healthy && result.permissions.healthy;
+  const allHealthy =
+    result.firestore.healthy && result.formsApi.healthy && result.permissions.healthy;
 
   const lines: string[] = [];
 
-  lines.push(statusLine(
-    "Firestore",
-    result.firestore.healthy,
-    result.firestore.healthy ? "Connected" : result.firestore.reason,
-  ));
+  lines.push(
+    statusLine(
+      "Firestore",
+      result.firestore.healthy,
+      result.firestore.healthy ? "Connected" : result.firestore.reason,
+    ),
+  );
 
-  lines.push(statusLine(
-    "Google Forms",
-    result.formsApi.healthy,
-    result.formsApi.healthy ? "Authenticated" : result.formsApi.reason,
-  ));
+  lines.push(
+    statusLine(
+      "Google Forms",
+      result.formsApi.healthy,
+      result.formsApi.healthy ? "Authenticated" : result.formsApi.reason,
+    ),
+  );
 
   if (result.permissions.healthy) {
     lines.push(statusLine("Permissions", true, "All granted"));
   } else {
-    lines.push(statusLine("Permissions", false, `Missing: ${result.permissions.missing.join(", ")}`));
+    lines.push(
+      statusLine("Permissions", false, `Missing: ${result.permissions.missing.join(", ")}`),
+    );
   }
 
   lines.push(statusLine("Uptime", true, result.uptime));
@@ -66,8 +73,12 @@ const command: Command = {
     const formsClient = createFormsClient();
 
     const result = await checkStatus({
-      pingFirestore: async () => { await db.listCollections(); },
-      pingFormsApi: async () => { await formsClient.getForm("__ping__"); },
+      pingFirestore: async () => {
+        await db.listCollections();
+      },
+      pingFormsApi: async () => {
+        await formsClient.getForm("__ping__");
+      },
       botPermissions,
       requiredPermissions: REQUIRED_PERMISSIONS,
       uptimeMs: interaction.client.uptime,

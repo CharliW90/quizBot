@@ -13,7 +13,7 @@ export async function setAlias(
   guildId: string,
   quizDate: string,
   alias: string,
-  teamName: string
+  teamName: string,
 ): Promise<Result<void>> {
   const guard = await checkQuizNotEnded(db, guildId, quizDate);
   if (!guard.ok) return guard;
@@ -33,7 +33,7 @@ export async function setAlias(
 export async function getAliases(
   db: Firestore,
   guildId: string,
-  quizDate: string
+  quizDate: string,
 ): Promise<Result<Record<string, string>>> {
   const docRef = db.doc(aliasesDocPath(guildId, quizDate));
   const snapshot = await docRef.get();
@@ -49,7 +49,7 @@ export async function lookupAlias(
   db: Firestore,
   guildId: string,
   quizDate: string,
-  alias: string
+  alias: string,
 ): Promise<Result<string | null>> {
   const docRef = db.doc(aliasesDocPath(guildId, quizDate));
   const snapshot = await docRef.get();
@@ -66,7 +66,7 @@ export async function deleteAliasesForTeam(
   db: Firestore,
   guildId: string,
   quizDate: string,
-  teamName: string
+  teamName: string,
 ): Promise<Result<string[]>> {
   const guard = await checkQuizNotEnded(db, guildId, quizDate);
   if (!guard.ok) return guard;

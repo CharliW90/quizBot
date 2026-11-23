@@ -24,7 +24,7 @@ const command: Command = {
         .setDescription("Round number to send")
         .setRequired(true)
         .setMinValue(1)
-        .setAutocomplete(true)
+        .setAutocomplete(true),
     ) as unknown as SlashCommandBuilder,
 
   async autocomplete(interaction) {
@@ -45,16 +45,17 @@ const command: Command = {
         value: r.roundNumber,
       }));
 
-    const filtered = focused
-      ? choices.filter((c) => String(c.value).startsWith(focused))
-      : choices;
+    const filtered = focused ? choices.filter((c) => String(c.value).startsWith(focused)) : choices;
 
     await interaction.respond(filtered.slice(0, 25));
   },
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: "This command can only be used in a server.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 

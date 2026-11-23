@@ -25,10 +25,7 @@ function extractFormId(input: string): Result<string> {
   return ok(input);
 }
 
-export async function getFormIds(
-  db: Firestore,
-  guildId: string
-): Promise<Result<FormIds>> {
+export async function getFormIds(db: Firestore, guildId: string): Promise<Result<FormIds>> {
   const snapshot = await configDoc(db, guildId).get();
   if (!snapshot.exists) {
     return ok({});
@@ -40,7 +37,7 @@ export async function setFormId(
   db: Firestore,
   guildId: string,
   roundNumber: number,
-  rawFormId: string
+  rawFormId: string,
 ): Promise<Result<SetFormIdResult>> {
   if (roundNumber < 1) {
     return err("Round number must be 1 or greater");
@@ -58,17 +55,12 @@ export async function setFormId(
 
   const isOverwrite = String(roundNumber) in existing;
   if (!isOverwrite && roundNumber > maxRound + 1) {
-    return err(
-      `Cannot skip rounds - next available round is ${maxRound + 1}`
-    );
+    return err(`Cannot skip rounds - next available round is ${maxRound + 1}`);
   }
 
   const previousFormId = isOverwrite ? existing[String(roundNumber)] : null;
 
-  await configDoc(db, guildId).set(
-    { [String(roundNumber)]: formId },
-    { merge: true }
-  );
+  await configDoc(db, guildId).set({ [String(roundNumber)]: formId }, { merge: true });
 
   return ok({ overwritten: isOverwrite, previousFormId });
 }

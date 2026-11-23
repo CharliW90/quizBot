@@ -21,17 +21,22 @@ const command: Command = {
     .setName("quiz-end")
     .setDescription("End the current quiz session (prevents further changes)")
     .setDMPermission(false)
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels) as unknown as SlashCommandBuilder,
+    .setDefaultMemberPermissions(
+      PermissionFlagsBits.ManageChannels,
+    ) as unknown as SlashCommandBuilder,
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: "This command can only be used in a server.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder().setCustomId("confirm").setLabel("End Quiz").setStyle(ButtonStyle.Danger),
-      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Secondary)
+      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Secondary),
     );
 
     const quizDate = getQuizDate();
@@ -57,12 +62,20 @@ const command: Command = {
       const result = await endQuiz(db, interaction.guild.id, quizDate);
 
       if (!result.ok) {
-        await interaction.editReply({ embeds: [errorEmbed("End Quiz Error", result.error)], components: [] });
+        await interaction.editReply({
+          embeds: [errorEmbed("End Quiz Error", result.error)],
+          components: [],
+        });
         return;
       }
 
       await interaction.editReply({
-        embeds: [successEmbed("Quiz Ended", `Quiz for ${quizDate} has been ended. No further modifications allowed.`)],
+        embeds: [
+          successEmbed(
+            "Quiz Ended",
+            `Quiz for ${quizDate} has been ended. No further modifications allowed.`,
+          ),
+        ],
         components: [],
       });
     } catch (e: unknown) {
@@ -71,7 +84,10 @@ const command: Command = {
         await interaction.editReply({ content: "Timed out.", components: [] });
       } else {
         logger.error({ error: e }, "Quiz-end command error");
-        await interaction.editReply({ embeds: [errorEmbed("Error", "Something went wrong.")], components: [] });
+        await interaction.editReply({
+          embeds: [errorEmbed("Error", "Something went wrong.")],
+          components: [],
+        });
       }
     }
   },

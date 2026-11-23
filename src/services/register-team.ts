@@ -39,12 +39,11 @@ export interface RegistrationResult {
 }
 
 type Undoable =
-  | { type: "role"; resource: Role }
-  | { type: "channel"; resource: TextChannel | VoiceChannel };
+  { type: "role"; resource: Role } | { type: "channel"; resource: TextChannel | VoiceChannel };
 
 export async function registerTeam(
   input: RegisterTeamInput,
-  ctx: RegisterTeamContext
+  ctx: RegisterTeamContext,
 ): Promise<Result<RegistrationResult>> {
   const history: Undoable[] = [];
   const allMembers = [input.captain, ...input.members];
@@ -76,7 +75,7 @@ export async function registerTeam(
 
     // 3. Find category
     const category = ctx.guild.channels.cache.find(
-      (ch) => ch.name === ctx.categoryName && ch.type === ChannelType.GuildCategory
+      (ch) => ch.name === ctx.categoryName && ch.type === ChannelType.GuildCategory,
     ) as CategoryChannel | undefined;
 
     if (!category) {
@@ -127,11 +126,23 @@ export async function registerTeam(
 
     // 8. Firestore: set alias if textified name differs
     if (textifiedName !== input.teamName.toLowerCase()) {
-      await setAlias(ctx.db, ctx.guild.id, ctx.quizDate, textifiedName, input.teamName.toLowerCase());
+      await setAlias(
+        ctx.db,
+        ctx.guild.id,
+        ctx.quizDate,
+        textifiedName,
+        input.teamName.toLowerCase(),
+      );
     }
 
     // 9. Firestore: set members map
-    await setTeamMembers(ctx.db, ctx.guild.id, ctx.quizDate, input.teamName.toLowerCase(), allMemberIds);
+    await setTeamMembers(
+      ctx.db,
+      ctx.guild.id,
+      ctx.quizDate,
+      input.teamName.toLowerCase(),
+      allMemberIds,
+    );
 
     // 10. Firestore: add each member to user tracking
     const userWrites = allMembers.map((m) =>
@@ -143,8 +154,8 @@ export async function registerTeam(
         ctx.guild.id,
         ctx.guild.name,
         ctx.guild.ownerId,
-        input.teamName
-      )
+        input.teamName,
+      ),
     );
     await Promise.all(userWrites);
 
