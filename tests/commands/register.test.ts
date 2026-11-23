@@ -283,7 +283,7 @@ describe("register command", () => {
 
       await command.execute(interaction as any);
 
-      const lastEdit = interaction.editReply.mock.calls.at(-1)[0];
+      const lastEdit = interaction.editReply.mock.calls.at(-1)![0];
       expect(lastEdit.embeds[0].data.title).toBe("Registration Failed");
     });
 
@@ -296,7 +296,7 @@ describe("register command", () => {
 
       await command.execute(interaction as any);
 
-      const lastEdit = interaction.editReply.mock.calls.at(-1)[0];
+      const lastEdit = interaction.editReply.mock.calls.at(-1)![0];
       expect(lastEdit.embeds[0].data.title).toBe("Unexpected Error");
     });
 
@@ -339,7 +339,7 @@ describe("register command", () => {
         .default as unknown as Command;
       const captain = mockMember("captain-1");
       const interaction = mockInteraction({ captain });
-      interaction.channel = null;
+      interaction.channel = null as any;
 
       await command.execute(interaction as any);
 

@@ -108,8 +108,8 @@ describe("parseV3Team", () => {
     const result = parseV3Team(v3);
     const after = new Date().toISOString();
 
-    expect(result.registeredAt >= before).toBe(true);
-    expect(result.registeredAt <= after).toBe(true);
+    expect(result.registeredAt! >= before).toBe(true);
+    expect(result.registeredAt! <= after).toBe(true);
   });
 
   it("deduplicates members when captain is also in members array", () => {
