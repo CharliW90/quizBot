@@ -20,6 +20,11 @@ vi.mock("../../src/integrations/forms/client.js", () => ({
   createFormsClient: vi.fn(() => ({ getForm: vi.fn().mockResolvedValue({}) })),
 }));
 
+<<<<<<< Updated upstream
+=======
+import { checkStatus } from "../../src/services/check-status.js";
+import { createFormsClient } from "../../src/integrations/forms/client.js";
+>>>>>>> Stashed changes
 import command from "../../src/commands/status.js";
 
 function mockInteraction(botPermissions: string[]) {
@@ -100,6 +105,7 @@ describe("/status", () => {
     expect(embed.data.color).toBe(0xe74c3c);
   });
 
+<<<<<<< Updated upstream
   it("shows failure reason when Google Forms is down", async () => {
     checkStatusResult = {
       firestore: { healthy: true },
@@ -115,6 +121,30 @@ describe("/status", () => {
     const desc = embed.data.description;
     expect(desc).toContain("Auth token expired");
     expect(embed.data.color).toBe(0xe74c3c);
+=======
+  it("treats Forms API 404 as healthy (auth works, ping form doesn't exist)", async () => {
+    const error404 = Object.assign(new Error("Not Found"), { code: 404 });
+    vi.mocked(createFormsClient).mockReturnValue({ getForm: vi.fn().mockRejectedValue(error404) } as any);
+    mockCheckStatus.mockResolvedValue(allHealthy);
+
+    const interaction = mockInteraction(["ManageChannels", "ManageRoles"]);
+    await command.execute(interaction);
+
+    const deps = mockCheckStatus.mock.calls[0][0];
+    await expect(deps.pingFormsApi()).resolves.toBeUndefined();
+  });
+
+  it("propagates Forms API permission errors", async () => {
+    const error403 = Object.assign(new Error("Insufficient Permission"), { code: 403 });
+    vi.mocked(createFormsClient).mockReturnValue({ getForm: vi.fn().mockRejectedValue(error403) } as any);
+    mockCheckStatus.mockResolvedValue(allHealthy);
+
+    const interaction = mockInteraction(["ManageChannels", "ManageRoles"]);
+    await command.execute(interaction);
+
+    const deps = mockCheckStatus.mock.calls[0][0];
+    await expect(deps.pingFormsApi()).rejects.toThrow("Insufficient Permission");
+>>>>>>> Stashed changes
   });
 
   it("shows missing permissions", async () => {
