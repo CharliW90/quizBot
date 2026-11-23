@@ -138,6 +138,11 @@ const command: Command = {
     const db = getDb();
     const quizDate = getQuizDate();
 
+    logger.info(
+      { teamName, captain: captainMember.user.tag, memberCount: allMembers.length, guild: interaction.guildId },
+      `[register] Parsing args - team "${teamName}" (captain: ${captainMember.user.tag}, ${allMembers.length} members)`,
+    );
+
     // Gather validation inputs
     const guild = interaction.guild;
     const existingRoleNames = guild.roles.cache.map((r) => r.name);
@@ -178,6 +183,8 @@ const command: Command = {
     const validationErrors = validateTeamRegistration(validationInput);
 
     if (validationErrors.length > 0) {
+      const reasons = validationErrors.map((e) => e.type);
+      logger.info({ teamName, errors: reasons }, `[register] Validation failed for "${teamName}": ${reasons.join(", ")}`);
       const description = validationErrors
         .map((e) => formatValidationError(e, allMembers))
         .join("\n");
@@ -222,6 +229,7 @@ const command: Command = {
       });
 
       if (reply.customId === "cancel") {
+        logger.info({ teamName }, "[register] User cancelled registration");
         await interaction.editReply({
           content: "Registration cancelled.",
           embeds: [],
@@ -230,6 +238,7 @@ const command: Command = {
         return;
       }
 
+      logger.info({ teamName }, "[register] User confirmed registration");
       await interaction.editReply({ content: "Registering your team...", components: [] });
 
       const result = await registerTeam(
@@ -244,6 +253,8 @@ const command: Command = {
         });
         return;
       }
+
+      logger.info({ teamName, captain: captainMember.user.tag, memberCount: allMembers.length }, `[register] Registration complete for "${teamName}"`);
 
       // Public success message
       const successEmbed = new EmbedBuilder()

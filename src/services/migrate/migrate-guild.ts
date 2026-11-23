@@ -2,6 +2,7 @@ import type { firestore } from "firebase-admin";
 import { ok, err, type Result } from "../../utils/result.js";
 import { parseV3Team, type V3Team } from "./parse-v3-team.js";
 import { parseV3Round, type V3Round } from "./parse-v3-round.js";
+import { logger } from "../../utils/logger.js";
 
 type Firestore = firestore.Firestore;
 
@@ -16,6 +17,8 @@ export async function migrateGuild(
   db: Firestore,
   guildId: string,
 ): Promise<Result<MigrateResult>> {
+  logger.info({ guildId }, "[migrate] Starting full V3 to V4 migration");
+
   // Step A - Migrate all quizzes
   const v3QuizzesSnap = await db.collection(`Servers/${guildId}/Quizzes`).get();
 
@@ -69,6 +72,7 @@ export async function migrateGuild(
       await db.doc(`${v4QuizPath}/maps/teamsMembers`).set(v3MembersSnap.data()!);
     }
 
+    logger.info({ quizDate, teams: v3TeamsSnap.docs.length, rounds: v3RoundsSnap.docs.length }, `[migrate] Migrated quiz ${quizDate}`);
     quizzesMigrated++;
   }
 
@@ -115,6 +119,8 @@ export async function migrateGuild(
 
     usersMigrated++;
   }
+
+  logger.info({ quizzesMigrated, totalTeams, totalRounds, usersMigrated }, "[migrate] Migration complete");
 
   return ok({
     quizzesMigrated,

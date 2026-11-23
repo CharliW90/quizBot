@@ -1,5 +1,6 @@
 import type { firestore } from "firebase-admin";
 import { ok, err, type Result } from "../../utils/result.js";
+import { logger } from "../../utils/logger.js";
 
 type Firestore = firestore.Firestore;
 
@@ -61,6 +62,7 @@ export async function setFormId(
   const previousFormId = isOverwrite ? existing[String(roundNumber)] : null;
 
   await configDoc(db, guildId).set({ [String(roundNumber)]: formId }, { merge: true });
+  logger.info({ path: `guilds/${guildId}/config/forms`, roundNumber, formId }, "Firestore: set form ID");
 
   return ok({ overwritten: isOverwrite, previousFormId });
 }

@@ -1,5 +1,6 @@
 import type { firestore } from "firebase-admin";
 import { ok, err, type Result } from "../../utils/result.js";
+import { logger } from "../../utils/logger.js";
 
 export interface Quiz {
   date: string;
@@ -47,6 +48,7 @@ export async function createQuiz(
   };
 
   await docRef.set(quiz);
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}` }, "Firestore: created quiz");
   return ok(quiz);
 }
 
@@ -94,5 +96,6 @@ export async function endQuiz(
   }
 
   await docRef.update({ status: "ended" });
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}` }, "Firestore: ended quiz");
   return ok(undefined);
 }

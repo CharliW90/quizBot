@@ -1,6 +1,7 @@
 import type { firestore } from "firebase-admin";
 import { ok, err, type Result } from "../../utils/result.js";
 import { checkQuizNotEnded } from "./quiz.js";
+import { logger } from "../../utils/logger.js";
 
 export interface Team {
   name: string;
@@ -27,6 +28,7 @@ export async function createTeam(
   const record: Team = { ...team, registeredAt: new Date().toISOString() };
 
   await db.collection(`guilds/${guildId}/quizzes/${quizDate}/teams`).doc(team.name).set(record);
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}/teams/${team.name}` }, "Firestore: created team");
 
   return ok(record);
 }
@@ -77,6 +79,7 @@ export async function deleteTeam(
   }
 
   await docRef.delete();
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}/teams/${teamName}` }, "Firestore: deleted team");
   return ok(undefined);
 }
 
@@ -98,5 +101,6 @@ export async function updateTeam(
   }
 
   await docRef.update(fields);
+  logger.info({ path: `guilds/${guildId}/quizzes/${quizDate}/teams/${teamName}`, fields: Object.keys(fields) }, "Firestore: updated team");
   return ok(undefined);
 }

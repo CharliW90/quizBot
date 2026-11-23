@@ -7,6 +7,7 @@ import type { TeamResponse } from "../integrations/firestore/rounds.js";
 import { getAliases } from "../integrations/firestore/aliases.js";
 import { listTeams } from "../integrations/firestore/teams.js";
 import type { Team } from "../integrations/firestore/teams.js";
+import { logger } from "../utils/logger.js";
 
 type Firestore = firestore.Firestore;
 
@@ -53,6 +54,7 @@ function buildTeamEmbed(
 
 export async function sendRound(input: SendRoundInput): Promise<Result<SendRoundResult>> {
   const { db, guildId, quizDate, roundNumber, guild } = input;
+  logger.info({ roundNumber, guildId }, "[send-round] Starting send");
 
   const roundResult = await getRound(db, guildId, quizDate, roundNumber);
   if (!roundResult.ok) return roundResult;
@@ -76,35 +78,38 @@ export async function sendRound(input: SendRoundInput): Promise<Result<SendRound
     const team = teamsByName.get(resolvedName);
 
     if (!team) {
-      failures.push({
-        teamName: resolvedName,
-        reason: `"${formName}" not registered - use /quiz correct to fix`,
-      });
+      const reason = `"${formName}" not registered - use /quiz correct to fix`;
+      failures.push({ teamName: resolvedName, reason });
+      logger.warn({ teamName: resolvedName, reason }, "[send-round] Failed to send to team");
       continue;
     }
 
     try {
       const channel = await guild.channels.fetch(team.textChannelId);
       if (!channel || !("send" in channel)) {
-        failures.push({
-          teamName: resolvedName,
-          reason: `Text channel no longer exists or bot cannot access it`,
-        });
+        const reason = "Text channel no longer exists or bot cannot access it";
+        failures.push({ teamName: resolvedName, reason });
+        logger.warn({ teamName: resolvedName, reason }, "[send-round] Failed to send to team");
         continue;
       }
 
       const embed = buildTeamEmbed(resolvedName, roundNumber, response, team.color);
       await channel.send({ embeds: [embed] });
       successes.push({ teamName: resolvedName, formName });
+      logger.info({ teamName: resolvedName, roundNumber }, "[send-round] Sent results to team");
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Unknown error";
-      failures.push({ teamName: resolvedName, reason: `Failed to send to channel: ${message}` });
+      const reason = `Failed to send to channel: ${message}`;
+      failures.push({ teamName: resolvedName, reason });
+      logger.warn({ teamName: resolvedName, reason }, "[send-round] Failed to send to team");
     }
   }
 
   if (successes.length > 0) {
     await publishRound(db, guildId, quizDate, roundNumber);
   }
+
+  logger.info({ roundNumber, successes: successes.length, failures: failures.length }, "[send-round] Send complete");
 
   return ok({ successes, failures });
 }

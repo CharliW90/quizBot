@@ -2,6 +2,7 @@ import type { firestore } from "firebase-admin";
 import { ok, err, type Result } from "../utils/result.js";
 import { listRounds, storeRound } from "../integrations/firestore/rounds.js";
 import { setAlias } from "../integrations/firestore/aliases.js";
+import { logger } from "../utils/logger.js";
 
 type Firestore = firestore.Firestore;
 
@@ -21,6 +22,7 @@ export async function correctTeamName(
   input: CorrectTeamNameInput,
 ): Promise<Result<CorrectTeamNameResult>> {
   const { db, guildId, quizDate, incorrectName, correctName } = input;
+  logger.info({ incorrectName, correctName }, "[correct] Starting team name correction");
 
   const roundsResult = await listRounds(db, guildId, quizDate);
   if (!roundsResult.ok) return roundsResult;
@@ -46,6 +48,8 @@ export async function correctTeamName(
   }
 
   await setAlias(db, guildId, quizDate, incorrectName, correctName);
+
+  logger.info({ incorrectName, correctName, roundsCorrected: affectedRounds.length }, "[correct] Correction complete");
 
   return ok({ roundsCorrected: affectedRounds.length });
 }

@@ -8,6 +8,7 @@ import type { Command } from "../bot/types.js";
 import { getDb } from "../integrations/firestore/client.js";
 import { migrateGuild } from "../services/migrate/migrate-guild.js";
 import { errorEmbed, successEmbed } from "../utils/embeds.js";
+import { logger } from "../utils/logger.js";
 
 const command: Command = {
   data: new SlashCommandBuilder()
@@ -22,6 +23,7 @@ const command: Command = {
     const guildId = interaction.guild!.id;
     const db = getDb();
 
+    logger.info({ guildId }, "[migrate] Starting migration");
     const result = await migrateGuild(db, guildId);
 
     if (!result.ok) {
@@ -30,6 +32,7 @@ const command: Command = {
     }
 
     const { quizzesMigrated, totalTeams, totalRounds, usersMigrated } = result.data;
+    logger.info({ quizzesMigrated, totalTeams, totalRounds, usersMigrated }, "[migrate] Migration complete");
 
     const summary = [
       `**Quizzes migrated:** ${quizzesMigrated}`,

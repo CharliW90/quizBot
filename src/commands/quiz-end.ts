@@ -41,6 +41,8 @@ const command: Command = {
 
     const quizDate = getQuizDate();
 
+    logger.info({ quizDate, guild: interaction.guildId }, `[quiz-end] Ending quiz for ${quizDate}`);
+
     const confirmation = await interaction.reply({
       content: `Are you sure you want to end the quiz for **${quizDate}**? This will prevent any further fetches, corrections, or score updates.`,
       components: [row],
@@ -54,10 +56,12 @@ const command: Command = {
       });
 
       if (reply.customId === "cancel") {
+        logger.info({ quizDate }, "[quiz-end] User cancelled");
         await interaction.editReply({ content: "Cancelled.", components: [] });
         return;
       }
 
+      logger.info({ quizDate }, "[quiz-end] User confirmed");
       const db = getDb();
       const result = await endQuiz(db, interaction.guild.id, quizDate);
 
@@ -69,6 +73,7 @@ const command: Command = {
         return;
       }
 
+      logger.info({ quizDate }, `[quiz-end] Quiz ended for ${quizDate}`);
       await interaction.editReply({
         embeds: [
           successEmbed(

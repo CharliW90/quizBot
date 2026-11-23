@@ -18,6 +18,11 @@ export function createInteractionHandler(commands: Collection<string, Command>) 
 
     if (!interaction.isChatInputCommand()) return;
 
+    logger.info(
+      { command: interaction.commandName, user: interaction.user?.tag, guild: interaction.guildId },
+      `Command invoked: /${interaction.commandName}`,
+    );
+
     const command = commands.get(interaction.commandName);
 
     if (!command) {

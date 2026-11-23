@@ -170,6 +170,11 @@ const command: Command = {
 
     const subcommand = interaction.options.getSubcommand();
 
+    logger.info(
+      { subcommand, teamName, members: members.map((m) => m.user.tag) },
+      `[team] ${subcommand} on "${teamName}" - members: ${members.map((m) => m.user.tag).join(", ")}`,
+    );
+
     // Confirmation embed
     const confirmEmbed = new EmbedBuilder()
       .setColor(teamRole.color)
@@ -203,10 +208,12 @@ const command: Command = {
       );
 
       if (reply.customId === "cancel") {
+        logger.info({ subcommand, teamName }, `[team] User cancelled ${subcommand}`);
         await interaction.editReply({ content: "Action cancelled.", embeds: [], components: [] });
         return;
       }
 
+      logger.info({ subcommand, teamName }, `[team] User confirmed ${subcommand}`);
       await interaction.editReply({ content: "Updating team...", embeds: [], components: [] });
 
       const ctx = { guild, db, quizDate, teamName, teamRole };
@@ -231,6 +238,7 @@ const command: Command = {
         return;
       }
 
+      logger.info({ subcommand, teamName }, `[team] ${subcommand} complete for "${teamName}"`);
       await interaction.editReply({ content: "Done." });
     } catch (e: unknown) {
       const isTimeout = e instanceof Error && e.message.includes("reason: time");

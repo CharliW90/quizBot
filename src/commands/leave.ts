@@ -48,6 +48,7 @@ const command: Command = {
 
     // Find user's team role
     const teamRole = member.roles.cache.find((r) => r.name.startsWith("Team: "));
+    logger.info({ user: interaction.user.tag, team: teamRole?.name ?? "none" }, `[leave] ${interaction.user.tag} attempting to leave ${teamRole?.name ?? "no team"}`);
     if (!teamRole) {
       await interaction.editReply({
         embeds: [errorEmbed("Not In a Team", "You are not currently in a team.")],
@@ -129,10 +130,12 @@ const command: Command = {
       );
 
       if (reply.customId === "cancel") {
+        logger.info({ user: interaction.user.tag, team: teamRole.name }, "[leave] User cancelled");
         await interaction.editReply({ content: "Cancelled.", embeds: [], components: [] });
         return;
       }
 
+      logger.info({ user: interaction.user.tag, team: teamRole.name }, "[leave] User confirmed leave");
       const db = getDb();
       const quizDate = getQuizDate();
       const teamName = teamRole.name.replace("Team: ", "");
@@ -148,6 +151,7 @@ const command: Command = {
         return;
       }
 
+      logger.info({ user: interaction.user.tag, team: teamRole.name }, `[leave] ${interaction.user.tag} left ${teamRole.name}`);
       await interaction.editReply({
         content: `You have left ${teamRole.name}.`,
         embeds: [],

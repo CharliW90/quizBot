@@ -41,6 +41,8 @@ const command: Command = {
     const teamsResult = await listTeams(db, interaction.guild.id, quizDate);
     const teamCount = teamsResult.ok ? teamsResult.data.length : 0;
 
+    logger.info({ quizDate, teamCount, guild: interaction.guildId }, `[quiz-reset] Reset requested for ${quizDate} (${teamCount} teams)`);
+
     if (teamCount === 0) {
       await interaction.reply({
         embeds: [errorEmbed("Nothing to Reset", "No teams found for today's quiz.")],
@@ -72,10 +74,12 @@ const command: Command = {
       });
 
       if (reply.customId === "cancel") {
+        logger.info({ quizDate }, "[quiz-reset] User cancelled");
         await interaction.editReply({ content: "Cancelled.", components: [] });
         return;
       }
 
+      logger.info({ quizDate }, "[quiz-reset] User confirmed reset");
       await interaction.editReply({ content: "Resetting...", components: [] });
 
       const result = await resetQuiz({
@@ -94,6 +98,10 @@ const command: Command = {
       }
 
       const { rolesDeleted, channelsDeleted, teamsDeleted } = result.data;
+      logger.info(
+        { quizDate, rolesDeleted, channelsDeleted, teamsDeleted },
+        `[quiz-reset] Reset complete - ${teamsDeleted} teams, ${rolesDeleted} roles, ${channelsDeleted} channels deleted`,
+      );
       const description = [
         `${teamsDeleted} team${teamsDeleted !== 1 ? "s" : ""} removed from Firestore`,
         `${rolesDeleted} role${rolesDeleted !== 1 ? "s" : ""} deleted`,

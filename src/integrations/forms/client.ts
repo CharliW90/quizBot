@@ -32,7 +32,9 @@ export function createFormsClient() {
     }
 
     const response = await formsApi.forms.responses.list({ formId });
-    return ok(response.data.responses ?? []);
+    const responses = response.data.responses ?? [];
+    logger.info({ formId, responseCount: responses.length }, "Forms: fetched responses");
+    return ok(responses);
   };
 
   return { getForm, isFormClosed, listResponses };

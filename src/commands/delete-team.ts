@@ -61,6 +61,8 @@ const command: Command = {
     const teamInput = interaction.options.getString("team", true);
     const teamName = teamInput.replace("Team: ", "");
 
+    logger.info({ teamName, guild: guild.id }, `[delete-team] Requested deletion of "${teamName}"`);
+
     // Try role by name first, then fall back to Firestore + stored ID
     let teamRole = guild.roles.cache.find((r) => r.name === `Team: ${teamName}`);
     if (!teamRole) {
@@ -109,10 +111,12 @@ const command: Command = {
       });
 
       if (reply.customId === "cancel") {
+        logger.info({ teamName }, "[delete-team] User cancelled deletion");
         await interaction.editReply({ content: "Cancelled.", components: [] });
         return;
       }
 
+      logger.info({ teamName }, "[delete-team] User confirmed deletion");
       await interaction.editReply({ content: "Deleting team...", components: [] });
 
       const result = await deleteTeamByRole({ guild, db, quizDate }, teamRole, team);
@@ -127,6 +131,11 @@ const command: Command = {
         `Channels: ${result.data.deletedChannels.join(", ") || "none found"}`,
         `Members affected: ${result.data.removedMemberCount}`,
       ].join("\n");
+
+      logger.info(
+        { teamName, deletedRole: result.data.deletedRole, deletedChannels: result.data.deletedChannels, removedMembers: result.data.removedMemberCount },
+        `[delete-team] Deletion complete for "${teamName}"`,
+      );
 
       if (interaction.channel && "send" in interaction.channel) {
         await interaction.channel.send({

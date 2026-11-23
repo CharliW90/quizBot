@@ -59,6 +59,7 @@ export async function registerTeam(
       mentionable: true,
     });
     history.push({ type: "role", resource: role });
+    logger.info({ teamName: input.teamName, roleId: role.id }, "[register] Created team role");
 
     // 2. Assign roles
     const teamsRole = ctx.guild.roles.cache.find((r) => r.name === "Teams");
@@ -99,6 +100,7 @@ export async function registerTeam(
       permissionOverwrites,
     });
     history.push({ type: "channel", resource: textChannel as TextChannel });
+    logger.info({ teamName: input.teamName, channelName: textifiedName }, "[register] Created text channel");
 
     // 6. Create voice channel
     const voiceChannel = await ctx.guild.channels.create({
@@ -108,6 +110,7 @@ export async function registerTeam(
       permissionOverwrites,
     });
     history.push({ type: "channel", resource: voiceChannel as VoiceChannel });
+    logger.info({ teamName: input.teamName, channelName: input.teamName }, "[register] Created voice channel");
 
     // 7. Firestore: create team record
     const teamResult = await createTeam(ctx.db, ctx.guild.id, ctx.quizDate, {
@@ -123,6 +126,7 @@ export async function registerTeam(
       await undo(history);
       return teamResult;
     }
+    logger.info({ teamName: input.teamName }, "[register] Firestore team record created");
 
     // 8. Firestore: set alias if textified name differs
     if (textifiedName !== input.teamName.toLowerCase()) {
@@ -159,6 +163,8 @@ export async function registerTeam(
     );
     await Promise.all(userWrites);
 
+    logger.info({ teamName: input.teamName, memberCount: allMembers.length }, "[register] Registration complete");
+
     return ok({
       role,
       textChannel: textChannel as TextChannel,
@@ -174,6 +180,7 @@ export async function registerTeam(
 }
 
 async function undo(history: Undoable[]): Promise<void> {
+  logger.info({ steps: history.length }, "[register] Rolling back registration");
   for (const entry of history.reverse()) {
     try {
       await entry.resource.delete();
