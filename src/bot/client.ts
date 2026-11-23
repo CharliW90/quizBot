@@ -19,7 +19,7 @@ export function createBot() {
   process.on("SIGTERM", shutdown);
 
   const login = async () => {
-    client.once("ready", () => {
+    client.once("clientReady", () => {
       logger.info(`Logged in as ${client.user?.tag}`);
     });
 

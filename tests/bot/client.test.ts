@@ -65,7 +65,7 @@ describe("createBot", () => {
     const bot = createBot();
     await bot.login();
 
-    expect(bot.client.once).toHaveBeenCalledWith("ready", expect.any(Function));
+    expect(bot.client.once).toHaveBeenCalledWith("clientReady", expect.any(Function));
   });
 
   it("registers shutdown handlers for SIGINT and SIGTERM", async () => {
@@ -83,7 +83,7 @@ describe("createBot", () => {
     await bot.login();
 
     const readyHandler = (bot.client.once as any).mock.calls.find(
-      (c: any[]) => c[0] === "ready",
+      (c: any[]) => c[0] === "clientReady",
     )[1];
     readyHandler();
   });
