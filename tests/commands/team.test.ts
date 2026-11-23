@@ -146,7 +146,7 @@ function mockInteraction(
       if (pred(captain)) return captain;
       return undefined;
     }),
-    map: vi.fn((fn: any) => []),
+    map: vi.fn(() => []),
   });
 
   const optionValues: Record<string, any> = {
