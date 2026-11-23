@@ -37,7 +37,7 @@ function buildTeamEmbed(
   teamName: string,
   roundNumber: number,
   response: TeamResponse,
-  color: string
+  color: string,
 ): EmbedBuilder {
   const lines = response.answers.map((a, i) => {
     const icon = a.correct ? "✅" : "❌";
@@ -76,14 +76,20 @@ export async function sendRound(input: SendRoundInput): Promise<Result<SendRound
     const team = teamsByName.get(resolvedName);
 
     if (!team) {
-      failures.push({ teamName: resolvedName, reason: `"${formName}" not registered - use /quiz correct to fix` });
+      failures.push({
+        teamName: resolvedName,
+        reason: `"${formName}" not registered - use /quiz correct to fix`,
+      });
       continue;
     }
 
     try {
       const channel = await guild.channels.fetch(team.textChannelId);
       if (!channel || !("send" in channel)) {
-        failures.push({ teamName: resolvedName, reason: `Text channel no longer exists or bot cannot access it` });
+        failures.push({
+          teamName: resolvedName,
+          reason: `Text channel no longer exists or bot cannot access it`,
+        });
         continue;
       }
 

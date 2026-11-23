@@ -12,12 +12,9 @@ type Firestore = firestore.Firestore;
 export async function checkQuizNotEnded(
   db: Firestore,
   guildId: string,
-  quizDate: string
+  quizDate: string,
 ): Promise<Result<void>> {
-  const snapshot = await db
-    .collection(`guilds/${guildId}/quizzes`)
-    .doc(quizDate)
-    .get();
+  const snapshot = await db.collection(`guilds/${guildId}/quizzes`).doc(quizDate).get();
 
   if (!snapshot.exists) {
     return ok(undefined);
@@ -34,7 +31,7 @@ export async function checkQuizNotEnded(
 export async function createQuiz(
   db: Firestore,
   guildId: string,
-  quizDate: string
+  quizDate: string,
 ): Promise<Result<Quiz>> {
   const docRef = db.collection(`guilds/${guildId}/quizzes`).doc(quizDate);
   const snapshot = await docRef.get();
@@ -56,12 +53,9 @@ export async function createQuiz(
 export async function getQuiz(
   db: Firestore,
   guildId: string,
-  quizDate: string
+  quizDate: string,
 ): Promise<Result<Quiz>> {
-  const snapshot = await db
-    .collection(`guilds/${guildId}/quizzes`)
-    .doc(quizDate)
-    .get();
+  const snapshot = await db.collection(`guilds/${guildId}/quizzes`).doc(quizDate).get();
 
   if (!snapshot.exists) {
     return err(`Quiz for ${quizDate} not found`);
@@ -71,10 +65,7 @@ export async function getQuiz(
   return ok({ ...data, date: quizDate });
 }
 
-export async function listQuizzes(
-  db: Firestore,
-  guildId: string
-): Promise<Result<Quiz[]>> {
+export async function listQuizzes(db: Firestore, guildId: string): Promise<Result<Quiz[]>> {
   const snapshot = await db.collection(`guilds/${guildId}/quizzes`).get();
 
   const quizzes = snapshot.docs.map((doc) => ({
@@ -88,7 +79,7 @@ export async function listQuizzes(
 export async function endQuiz(
   db: Firestore,
   guildId: string,
-  quizDate: string
+  quizDate: string,
 ): Promise<Result<void>> {
   const docRef = db.collection(`guilds/${guildId}/quizzes`).doc(quizDate);
   const snapshot = await docRef.get();

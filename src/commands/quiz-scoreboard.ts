@@ -22,9 +22,7 @@ function ordinal(n: number): string {
 function buildLeaderboardEmbed(scoreboard: Record<string, ScoreboardEntry>): EmbedBuilder {
   const sorted = Object.entries(scoreboard).sort(([, a], [, b]) => b.total - a.total);
 
-  const embed = new EmbedBuilder()
-    .setTitle("Scoreboard")
-    .setColor(0xe511c7);
+  const embed = new EmbedBuilder().setTitle("Scoreboard").setColor(0xe511c7);
 
   let position = 1;
   let i = 0;
@@ -42,9 +40,7 @@ function buildLeaderboardEmbed(scoreboard: Record<string, ScoreboardEntry>): Emb
     const joint = tied.length > 1 ? "joint " : "";
     const header = `${joint}${place} place - ${currentScore} points`;
 
-    const value = tied
-      .map(([name, entry]) => `**${name}**: ${entry.rounds.join(", ")}`)
-      .join("\n");
+    const value = tied.map(([name, entry]) => `**${name}**: ${entry.rounds.join(", ")}`).join("\n");
 
     embed.addFields({ name: header, value });
     position += tied.length;
@@ -58,11 +54,16 @@ const command: Command = {
     .setName("quiz-scoreboard")
     .setDescription("Generate and post the quiz leaderboard")
     .setDMPermission(false)
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels) as unknown as SlashCommandBuilder,
+    .setDefaultMemberPermissions(
+      PermissionFlagsBits.ManageChannels,
+    ) as unknown as SlashCommandBuilder,
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: "This command can only be used in a server.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 

@@ -3,7 +3,12 @@ export { createTeam, getTeam, listTeams, deleteTeam, updateTeam } from "./teams.
 export { createQuiz, getQuiz, listQuizzes, endQuiz, checkQuizNotEnded } from "./quiz.js";
 export { storeRound, getRound, listRounds, publishRound } from "./rounds.js";
 export { setAlias, getAliases, lookupAlias, deleteAliasesForTeam } from "./aliases.js";
-export { setTeamMembers, getTeamMembers, checkMembersRegistered, deleteTeamMembers } from "./members.js";
+export {
+  setTeamMembers,
+  getTeamMembers,
+  checkMembersRegistered,
+  deleteTeamMembers,
+} from "./members.js";
 export { addTeamMember, getUserTeamNames } from "./users.js";
 export { addScoreboard, getScoreboard } from "./scoreboard.js";
 export { getFormIds, setFormId } from "./guild-config.js";

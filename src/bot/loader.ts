@@ -1,8 +1,8 @@
 import { Collection } from "discord.js";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { logger } from "../utils/logger";
-import type { Command } from "./types";
+import { logger } from "../utils/logger.js";
+import type { Command } from "./types.js";
 
 function isValidCommand(value: unknown): value is Command {
   return (
@@ -15,9 +15,7 @@ function isValidCommand(value: unknown): value is Command {
   );
 }
 
-export async function loadCommands(
-  commandsDir: string,
-): Promise<Collection<string, Command>> {
+export async function loadCommands(commandsDir: string): Promise<Collection<string, Command>> {
   const commands = new Collection<string, Command>();
 
   const entries = readdirSync(commandsDir, { withFileTypes: true });
@@ -29,8 +27,8 @@ export async function loadCommands(
     if (entry.name.includes(".test.")) continue;
 
     const filePath = join(commandsDir, entry.name);
-    const module = await import(filePath);
-    const command = module.default;
+    const mod = await import(filePath);
+    const command = mod.default;
 
     if (!isValidCommand(command)) {
       logger.warn(`Skipping ${entry.name}: no valid command export`);

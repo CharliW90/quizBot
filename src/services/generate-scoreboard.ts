@@ -14,7 +14,7 @@ interface GenerateScoreboardInput {
 }
 
 export async function generateScoreboard(
-  input: GenerateScoreboardInput
+  input: GenerateScoreboardInput,
 ): Promise<Result<Record<string, ScoreboardEntry>>> {
   const { db, guildId, quizDate } = input;
 

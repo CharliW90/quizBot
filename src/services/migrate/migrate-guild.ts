@@ -16,7 +16,7 @@ export interface MigrateResult {
 export async function migrateGuild(
   db: Firestore,
   guildId: string,
-  quizDate: string
+  quizDate: string,
 ): Promise<Result<MigrateResult>> {
   const v3QuizPath = `Servers/${guildId}/Quizzes/${quizDate}`;
   const v4QuizPath = `guilds/${guildId}/quizzes/${quizDate}`;

@@ -26,7 +26,10 @@ const command: Command = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: "This command can only be used in a server.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -57,10 +60,12 @@ const command: Command = {
     const roleMembers = guild.members.cache.filter((m) => m.roles.cache.has(teamRole.id));
     if (roleMembers.size < 2) {
       await interaction.editReply({
-        embeds: [errorEmbed(
-          "Would Leave Empty Team",
-          "You are the only member. Ask an admin to use `/delete-team` instead."
-        )],
+        embeds: [
+          errorEmbed(
+            "Would Leave Empty Team",
+            "You are the only member. Ask an admin to use `/delete-team` instead.",
+          ),
+        ],
       });
       return;
     }
@@ -69,10 +74,12 @@ const command: Command = {
     const captainRole = guild.roles.cache.find((r) => r.name === "Team Captain");
     if (captainRole && member.roles.cache.has(captainRole.id)) {
       await interaction.editReply({
-        embeds: [errorEmbed(
-          "Cannot Leave as Captain",
-          "You are the team captain. Use `/team promote-to-captain` first to transfer captaincy, then leave."
-        )],
+        embeds: [
+          errorEmbed(
+            "Cannot Leave as Captain",
+            "You are the team captain. Use `/team promote-to-captain` first to transfer captaincy, then leave.",
+          ),
+        ],
       });
       return;
     }
@@ -90,13 +97,21 @@ const command: Command = {
         { name: "Team", value: teamRole.name },
         { name: "Captain", value: teamCaptain ? `${teamCaptain}` : "Unknown" },
         ...(otherMembers.size > 0
-          ? [{ name: "Remaining Members", value: [...otherMembers.values()].map((m) => `${m}`).join("\n") }]
-          : [])
+          ? [
+              {
+                name: "Remaining Members",
+                value: [...otherMembers.values()].map((m) => `${m}`).join("\n"),
+              },
+            ]
+          : []),
       );
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setCustomId("confirm").setLabel("Leave Team").setStyle(ButtonStyle.Danger),
-      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Secondary)
+      new ButtonBuilder()
+        .setCustomId("confirm")
+        .setLabel("Leave Team")
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Secondary),
     );
 
     await interaction.editReply({
@@ -110,7 +125,7 @@ const command: Command = {
         msg.awaitMessageComponent({
           filter: (i) => i.user.id === interaction.user.id,
           time: CONFIRMATION_TIMEOUT_MS,
-        })
+        }),
       );
 
       if (reply.customId === "cancel") {
@@ -126,11 +141,18 @@ const command: Command = {
       const result = await removeMembers(ctx, [member]);
 
       if (!result.ok) {
-        await interaction.editReply({ embeds: [errorEmbed("Failed", result.error)], components: [] });
+        await interaction.editReply({
+          embeds: [errorEmbed("Failed", result.error)],
+          components: [],
+        });
         return;
       }
 
-      await interaction.editReply({ content: `You have left ${teamRole.name}.`, embeds: [], components: [] });
+      await interaction.editReply({
+        content: `You have left ${teamRole.name}.`,
+        embeds: [],
+        components: [],
+      });
 
       // Notify the team channel
       const teamChannelName = teamName.toLowerCase().replaceAll(" ", "-");
@@ -144,7 +166,10 @@ const command: Command = {
         await interaction.editReply({ content: "Timed out.", embeds: [], components: [] });
       } else {
         logger.error({ error: e }, "Leave command error");
-        await interaction.editReply({ embeds: [errorEmbed("Error", "Something went wrong.")], components: [] });
+        await interaction.editReply({
+          embeds: [errorEmbed("Error", "Something went wrong.")],
+          components: [],
+        });
       }
     }
   },

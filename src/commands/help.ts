@@ -138,7 +138,13 @@ function buildHelp(isAdmin: boolean): string {
   const sections = [HEADER];
 
   if (isAdmin) {
-    sections.push(ADMIN_SYNOPSIS, GETTING_STARTED_ADMIN, TEAM_COMMANDS, ADMIN_TEAM_COMMANDS, QUIZ_COMMANDS);
+    sections.push(
+      ADMIN_SYNOPSIS,
+      GETTING_STARTED_ADMIN,
+      TEAM_COMMANDS,
+      ADMIN_TEAM_COMMANDS,
+      QUIZ_COMMANDS,
+    );
   } else {
     sections.push(PLAYER_SYNOPSIS, GETTING_STARTED_PLAYER, TEAM_COMMANDS);
   }

@@ -32,7 +32,7 @@ export function validateTeamRegistration(input: TeamValidationInput): Validation
   const nameLower = input.teamName.toLowerCase();
   const roleNameWithPrefix = `team: ${nameLower}`;
   const dupedRoles = input.existingRoleNames.filter(
-    (r) => r.toLowerCase() === nameLower || r.toLowerCase() === roleNameWithPrefix
+    (r) => r.toLowerCase() === nameLower || r.toLowerCase() === roleNameWithPrefix,
   );
   if (dupedRoles.length > 0) {
     errors.push({ type: "duplicate_role", names: dupedRoles });

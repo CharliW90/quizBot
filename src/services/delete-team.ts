@@ -22,7 +22,7 @@ export interface DeleteTeamResult {
 export async function deleteTeamByRole(
   ctx: DeleteTeamContext,
   teamRole: Role,
-  team: Team
+  team: Team,
 ): Promise<Result<DeleteTeamResult>> {
   const guild = ctx.guild;
 

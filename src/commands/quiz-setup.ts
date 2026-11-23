@@ -21,13 +21,10 @@ const command: Command = {
         .setDescription("Round number")
         .setRequired(true)
         .setMinValue(1)
-        .setAutocomplete(true)
+        .setAutocomplete(true),
     )
     .addStringOption((opt) =>
-      opt
-        .setName("form_id")
-        .setDescription("Google Form ID or full URL")
-        .setRequired(true)
+      opt.setName("form_id").setDescription("Google Form ID or full URL").setRequired(true),
     ) as unknown as SlashCommandBuilder,
 
   async autocomplete(interaction) {
@@ -41,7 +38,9 @@ const command: Command = {
     }
 
     const existing = result.data;
-    const keys = Object.keys(existing).map(Number).sort((a, b) => a - b);
+    const keys = Object.keys(existing)
+      .map(Number)
+      .sort((a, b) => a - b);
     const nextRound = keys.length > 0 ? Math.max(...keys) + 1 : 1;
 
     const choices = [
@@ -49,16 +48,17 @@ const command: Command = {
       { name: `Round ${nextRound} (next)`, value: nextRound },
     ];
 
-    const filtered = focused
-      ? choices.filter((c) => String(c.value).startsWith(focused))
-      : choices;
+    const filtered = focused ? choices.filter((c) => String(c.value).startsWith(focused)) : choices;
 
     await interaction.respond(filtered.slice(0, 25));
   },
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: "This command can only be used in a server.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -69,7 +69,10 @@ const command: Command = {
     const result = await setFormId(db, interaction.guild.id, roundNumber, formInput);
 
     if (!result.ok) {
-      await interaction.reply({ embeds: [errorEmbed("Setup Error", result.error)], flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        embeds: [errorEmbed("Setup Error", result.error)],
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 

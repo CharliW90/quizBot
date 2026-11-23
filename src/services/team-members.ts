@@ -15,7 +15,7 @@ export interface TeamMemberContext {
 
 export async function addMembers(
   ctx: TeamMemberContext,
-  members: GuildMember[]
+  members: GuildMember[],
 ): Promise<Result<void>> {
   const teamsRole = ctx.guild.roles.cache.find((r) => r.name === "Teams");
 
@@ -43,7 +43,7 @@ export async function addMembers(
 
 export async function removeMembers(
   ctx: TeamMemberContext,
-  members: GuildMember[]
+  members: GuildMember[],
 ): Promise<Result<void>> {
   const teamsRole = ctx.guild.roles.cache.find((r) => r.name === "Teams");
 
@@ -72,7 +72,7 @@ export async function removeMembers(
 export async function promoteToCaptain(
   ctx: TeamMemberContext,
   currentCaptain: GuildMember,
-  newCaptain: GuildMember
+  newCaptain: GuildMember,
 ): Promise<Result<void>> {
   const captainRole = ctx.guild.roles.cache.find((r) => r.name === "Team Captain");
 
@@ -98,7 +98,5 @@ export async function promoteToCaptain(
 }
 
 function getAllTeamMemberIds(ctx: TeamMemberContext): string[] {
-  return ctx.guild.members.cache
-    .filter((m) => m.roles.cache.has(ctx.teamRole.id))
-    .map((m) => m.id);
+  return ctx.guild.members.cache.filter((m) => m.roles.cache.has(ctx.teamRole.id)).map((m) => m.id);
 }

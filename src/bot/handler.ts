@@ -1,6 +1,6 @@
 import { Collection, Interaction, MessageFlags } from "discord.js";
-import { logger } from "../utils/logger";
-import type { Command } from "./types";
+import { logger } from "../utils/logger.js";
+import type { Command } from "./types.js";
 
 export function createInteractionHandler(commands: Collection<string, Command>) {
   return async (interaction: Interaction) => {

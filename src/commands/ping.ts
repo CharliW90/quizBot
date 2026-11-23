@@ -8,13 +8,15 @@ const command: Command = {
     .setDMPermission(false) as SlashCommandBuilder,
 
   async execute(interaction: ChatInputCommandInteraction) {
-    const response = await interaction.reply({ content: "Pinging...", flags: MessageFlags.Ephemeral, withResponse: true });
+    const response = await interaction.reply({
+      content: "Pinging...",
+      flags: MessageFlags.Ephemeral,
+      withResponse: true,
+    });
     const roundtrip = response.resource!.message!.createdTimestamp - interaction.createdTimestamp;
     const ws = interaction.client.ws.ping;
 
-    await interaction.editReply(
-      `Pong! Latency: **${roundtrip}ms** | WebSocket: **${ws}ms**`
-    );
+    await interaction.editReply(`Pong! Latency: **${roundtrip}ms** | WebSocket: **${ws}ms**`);
   },
 };
 

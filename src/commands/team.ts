@@ -29,31 +29,49 @@ const command: Command = {
         .setName("add-member")
         .setDescription("Add a new member to the team")
         .addStringOption((opt) =>
-          opt.setName("team").setDescription("The team to modify").setRequired(true).setAutocomplete(true)
+          opt
+            .setName("team")
+            .setDescription("The team to modify")
+            .setRequired(true)
+            .setAutocomplete(true),
         )
-        .addUserOption((opt) => opt.setName("member").setDescription("The member to add").setRequired(true))
+        .addUserOption((opt) =>
+          opt.setName("member").setDescription("The member to add").setRequired(true),
+        )
         .addUserOption((opt) => opt.setName("member-2").setDescription("Another member to add"))
-        .addUserOption((opt) => opt.setName("member-3").setDescription("Another member to add"))
+        .addUserOption((opt) => opt.setName("member-3").setDescription("Another member to add")),
     )
     .addSubcommand((sub) =>
       sub
         .setName("remove-member")
         .setDescription("Remove a member from the team")
         .addStringOption((opt) =>
-          opt.setName("team").setDescription("The team to modify").setRequired(true).setAutocomplete(true)
+          opt
+            .setName("team")
+            .setDescription("The team to modify")
+            .setRequired(true)
+            .setAutocomplete(true),
         )
-        .addUserOption((opt) => opt.setName("member").setDescription("The member to remove").setRequired(true))
+        .addUserOption((opt) =>
+          opt.setName("member").setDescription("The member to remove").setRequired(true),
+        )
         .addUserOption((opt) => opt.setName("member-2").setDescription("Another member to remove"))
-        .addUserOption((opt) => opt.setName("member-3").setDescription("Another member to remove"))
+        .addUserOption((opt) => opt.setName("member-3").setDescription("Another member to remove")),
     )
     .addSubcommand((sub) =>
       sub
         .setName("promote-to-captain")
         .setDescription("Promote a team member to team captain")
         .addStringOption((opt) =>
-          opt.setName("team").setDescription("The team to modify").setRequired(true).setAutocomplete(true)
+          opt
+            .setName("team")
+            .setDescription("The team to modify")
+            .setRequired(true)
+            .setAutocomplete(true),
         )
-        .addUserOption((opt) => opt.setName("member").setDescription("The new captain").setRequired(true))
+        .addUserOption((opt) =>
+          opt.setName("member").setDescription("The new captain").setRequired(true),
+        ),
     ) as unknown as SlashCommandBuilder,
 
   async autocomplete(interaction) {
@@ -64,25 +82,24 @@ const command: Command = {
     const teamRoles = guild.roles.cache.filter((r) => r.name.startsWith("Team: "));
     const userRoleIds = (interaction.member as GuildMember).roles.cache;
 
-    const manageable = teamRoles.filter(
-      (role) => isAdmin || userRoleIds.has(role.id)
-    );
+    const manageable = teamRoles.filter((role) => isAdmin || userRoleIds.has(role.id));
 
-    const filtered = manageable.filter((r) =>
-      r.name.toLowerCase().includes(focused.toLowerCase())
-    );
+    const filtered = manageable.filter((r) => r.name.toLowerCase().includes(focused.toLowerCase()));
 
     await interaction.respond(
       [...filtered.values()].slice(0, 25).map((r) => ({
         name: r.name.replace("Team: ", ""),
         value: r.name,
-      }))
+      })),
     );
   },
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: "This command can only be used in a server.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -105,18 +122,23 @@ const command: Command = {
       }
     }
     if (!teamRole) {
-      await interaction.editReply({ embeds: [errorEmbed("Team Not Found", `Could not find team "${teamName}"`)] });
+      await interaction.editReply({
+        embeds: [errorEmbed("Team Not Found", `Could not find team "${teamName}"`)],
+      });
       return;
     }
 
     // Permission check: must be admin or captain of this team
     const captainRole = guild.roles.cache.find((r) => r.name === "Team Captain");
     const memberRoles = (interaction.member as GuildMember).roles.cache;
-    const isTeamCaptain = captainRole && memberRoles.has(captainRole.id) && memberRoles.has(teamRole.id);
+    const isTeamCaptain =
+      captainRole && memberRoles.has(captainRole.id) && memberRoles.has(teamRole.id);
 
     if (!isAdmin && !isTeamCaptain) {
       await interaction.editReply({
-        embeds: [errorEmbed("Permission Denied", `You are not the Team Captain of ${teamRole.name}`)],
+        embeds: [
+          errorEmbed("Permission Denied", `You are not the Team Captain of ${teamRole.name}`),
+        ],
       });
       return;
     }
@@ -155,12 +177,15 @@ const command: Command = {
       .addFields(
         { name: "Team", value: teamRole.name },
         { name: "Captain", value: teamCaptain ? `${teamCaptain}` : "Unknown" },
-        { name: formatSubcommandLabel(subcommand), value: members.map((m) => `${m}`).join("\n") }
+        { name: formatSubcommandLabel(subcommand), value: members.map((m) => `${m}`).join("\n") },
       );
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setCustomId("confirm").setLabel("Update Team").setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Danger)
+      new ButtonBuilder()
+        .setCustomId("confirm")
+        .setLabel("Update Team")
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Danger),
     );
 
     await interaction.editReply({
@@ -174,7 +199,7 @@ const command: Command = {
         msg.awaitMessageComponent({
           filter: (i) => i.user.id === interaction.user.id,
           time: CONFIRMATION_TIMEOUT_MS,
-        })
+        }),
       );
 
       if (reply.customId === "cancel") {
@@ -193,7 +218,9 @@ const command: Command = {
         result = await removeMembers(ctx, members);
       } else {
         if (!teamCaptain) {
-          await interaction.editReply({ embeds: [errorEmbed("Error", "Could not find current team captain")] });
+          await interaction.editReply({
+            embeds: [errorEmbed("Error", "Could not find current team captain")],
+          });
           return;
         }
         result = await promoteToCaptain(ctx, teamCaptain, members[0]);
@@ -208,10 +235,17 @@ const command: Command = {
     } catch (e: unknown) {
       const isTimeout = e instanceof Error && e.message.includes("reason: time");
       if (isTimeout) {
-        await interaction.editReply({ content: "Timed out - no response received within 60 seconds.", embeds: [], components: [] });
+        await interaction.editReply({
+          content: "Timed out - no response received within 60 seconds.",
+          embeds: [],
+          components: [],
+        });
       } else {
         logger.error({ error: e }, "Team command error");
-        await interaction.editReply({ embeds: [errorEmbed("Error", "Something went wrong. Please try again.")], components: [] });
+        await interaction.editReply({
+          embeds: [errorEmbed("Error", "Something went wrong. Please try again.")],
+          components: [],
+        });
       }
     }
   },
@@ -219,10 +253,14 @@ const command: Command = {
 
 function formatSubcommandLabel(subcommand: string): string {
   switch (subcommand) {
-    case "add-member": return "Adding";
-    case "remove-member": return "Removing";
-    case "promote-to-captain": return "Promoting to Captain";
-    default: return subcommand;
+    case "add-member":
+      return "Adding";
+    case "remove-member":
+      return "Removing";
+    case "promote-to-captain":
+      return "Promoting to Captain";
+    default:
+      return subcommand;
   }
 }
 

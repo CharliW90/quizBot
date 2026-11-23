@@ -11,9 +11,11 @@ export interface TeamResources {
 }
 
 export async function resolveTeamResources(guild: Guild, team: Team): Promise<TeamResources> {
-  const role = guild.roles.cache.get(team.roleId) as Role | undefined ?? null;
-  const textChannel = guild.channels.cache.get(team.textChannelId) as TextChannel | undefined ?? null;
-  const voiceChannel = guild.channels.cache.get(team.voiceChannelId) as VoiceChannel | undefined ?? null;
+  const role = (guild.roles.cache.get(team.roleId) as Role | undefined) ?? null;
+  const textChannel =
+    (guild.channels.cache.get(team.textChannelId) as TextChannel | undefined) ?? null;
+  const voiceChannel =
+    (guild.channels.cache.get(team.voiceChannelId) as VoiceChannel | undefined) ?? null;
 
   const missing: MissingResource[] = [];
   if (!role) missing.push("role");

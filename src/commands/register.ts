@@ -80,25 +80,19 @@ const command: Command = {
         .setMinLength(4)
         .setMaxLength(64)
         .setRequired(true)
-        .setAutocomplete(true)
+        .setAutocomplete(true),
     )
     .addUserOption((option) =>
-      option.setName("team-captain").setDescription("Team Captain").setRequired(true)
+      option.setName("team-captain").setDescription("Team Captain").setRequired(true),
     )
-    .addUserOption((option) =>
-      option.setName("team-member-1").setDescription("Team Member")
-    )
-    .addUserOption((option) =>
-      option.setName("team-member-2").setDescription("Team Member")
-    )
-    .addUserOption((option) =>
-      option.setName("team-member-3").setDescription("Team Member")
-    )
+    .addUserOption((option) => option.setName("team-member-1").setDescription("Team Member"))
+    .addUserOption((option) => option.setName("team-member-2").setDescription("Team Member"))
+    .addUserOption((option) => option.setName("team-member-3").setDescription("Team Member"))
     .addStringOption((option) =>
       option
         .setName("colour")
         .setDescription("Team Colour")
-        .addChoices(...COLOUR_CHOICES)
+        .addChoices(...COLOUR_CHOICES),
     ) as unknown as SlashCommandBuilder,
 
   async autocomplete(interaction) {
@@ -112,7 +106,10 @@ const command: Command = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild || !interaction.guildId) {
-      await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: "This command can only be used in a server.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -120,7 +117,10 @@ const command: Command = {
     const captainMember = interaction.options.getMember("team-captain") as GuildMember | null;
 
     if (!captainMember) {
-      await interaction.reply({ embeds: [errorEmbed("Invalid Captain", "Could not resolve the team captain.")], flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        embeds: [errorEmbed("Invalid Captain", "Could not resolve the team captain.")],
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -152,7 +152,12 @@ const command: Command = {
     const aliasResult = await lookupAlias(db, interaction.guildId, quizDate, textifiedName);
     const aliasMatch = aliasResult.ok ? aliasResult.data : null;
 
-    const conflictsResult = await checkMembersRegistered(db, interaction.guildId, quizDate, allMemberIds);
+    const conflictsResult = await checkMembersRegistered(
+      db,
+      interaction.guildId,
+      quizDate,
+      allMemberIds,
+    );
     const memberConflicts = conflictsResult.ok ? conflictsResult.data : [];
 
     const validationInput: TeamValidationInput = {
@@ -192,12 +197,15 @@ const command: Command = {
         { name: "Captain", value: `${captainMember}` },
         ...(members.length > 0
           ? [{ name: "Members", value: members.map((m) => `${m}`).join("\n") }]
-          : [])
+          : []),
       );
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setCustomId("register").setLabel("Register Team").setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Danger)
+      new ButtonBuilder()
+        .setCustomId("register")
+        .setLabel("Register Team")
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId("cancel").setLabel("Cancel").setStyle(ButtonStyle.Danger),
     );
 
     const confirmation = await interaction.reply({
@@ -214,7 +222,11 @@ const command: Command = {
       });
 
       if (reply.customId === "cancel") {
-        await interaction.editReply({ content: "Registration cancelled.", embeds: [], components: [] });
+        await interaction.editReply({
+          content: "Registration cancelled.",
+          embeds: [],
+          components: [],
+        });
         return;
       }
 
@@ -222,7 +234,7 @@ const command: Command = {
 
       const result = await registerTeam(
         { teamName, captain: captainMember, members, color: colour },
-        { guild, db, quizDate, botRoleName: BOT_ROLE_NAME, categoryName: CATEGORY_NAME }
+        { guild, db, quizDate, botRoleName: BOT_ROLE_NAME, categoryName: CATEGORY_NAME },
       );
 
       if (!result.ok) {
@@ -240,14 +252,15 @@ const command: Command = {
         .addFields(
           {
             name: "Team Name",
-            value: textifiedName !== teamName.toLowerCase()
-              ? `${teamName} (${textifiedName})`
-              : teamName,
+            value:
+              textifiedName !== teamName.toLowerCase()
+                ? `${teamName} (${textifiedName})`
+                : teamName,
           },
           { name: "Team Captain", value: `${captainMember}` },
           ...(members.length > 0
             ? [{ name: "Team Members", value: members.map((m) => `${m}`).join("\n") }]
-            : [])
+            : []),
         );
 
       if (interaction.channel && "send" in interaction.channel) {
@@ -258,8 +271,7 @@ const command: Command = {
       // DMs
       await sendRegistrationDMs(interaction.user.id, captainMember, members, teamName);
     } catch (e: unknown) {
-      const isTimeout =
-        e instanceof Error && e.message.includes("reason: time");
+      const isTimeout = e instanceof Error && e.message.includes("reason: time");
       if (isTimeout) {
         await interaction.editReply({
           content: "Registration timed out - no response received within 60 seconds.",
@@ -282,18 +294,20 @@ async function sendRegistrationDMs(
   requesterId: string,
   captain: GuildMember,
   members: GuildMember[],
-  teamName: string
+  teamName: string,
 ): Promise<void> {
   try {
     if (captain.id !== requesterId) {
-      await captain.send(`Hey there - you've been registered as the team captain for Team: ${teamName}`);
+      await captain.send(
+        `Hey there - you've been registered as the team captain for Team: ${teamName}`,
+      );
     }
     for (const member of members) {
       if (member.id !== requesterId) {
         await member.send(
           `Hey there - you've been registered as a member of Team: ${teamName}\n` +
-          `Think this is incorrect? You can leave the team with the /leave command.\n\n` +
-          `Good luck, have fun!`
+            `Think this is incorrect? You can leave the team with the /leave command.\n\n` +
+            `Good luck, have fun!`,
         );
       }
     }
@@ -304,7 +318,7 @@ async function sendRegistrationDMs(
 
 function formatValidationError(
   error: ReturnType<typeof validateTeamRegistration>[number],
-  members: GuildMember[]
+  members: GuildMember[],
 ): string {
   switch (error.type) {
     case "not_self_registering":

@@ -18,16 +18,14 @@ interface CorrectTeamNameResult {
 }
 
 export async function correctTeamName(
-  input: CorrectTeamNameInput
+  input: CorrectTeamNameInput,
 ): Promise<Result<CorrectTeamNameResult>> {
   const { db, guildId, quizDate, incorrectName, correctName } = input;
 
   const roundsResult = await listRounds(db, guildId, quizDate);
   if (!roundsResult.ok) return roundsResult;
 
-  const affectedRounds = roundsResult.data.filter(
-    (r) => incorrectName in r.responses
-  );
+  const affectedRounds = roundsResult.data.filter((r) => incorrectName in r.responses);
 
   if (affectedRounds.length === 0) {
     return err(`"${incorrectName}" not found in any round`);

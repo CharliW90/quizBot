@@ -29,18 +29,13 @@ function parseEmbed(embed: V3Embed): TeamResponse {
   const questionFields = embed.fields.filter((f) => f.name.startsWith("Question"));
   const totalField = embed.fields.find((f) => f.name === "Total Score");
 
-  const totalScore = totalField
-    ? parseInt(totalField.value.split("/")[0].trim(), 10)
-    : 0;
+  const totalScore = totalField ? parseInt(totalField.value.split("/")[0].trim(), 10) : 0;
 
-  const maxScore = totalField
-    ? parseInt(totalField.value.split("/")[1].trim(), 10)
-    : 0;
+  const maxScore = totalField ? parseInt(totalField.value.split("/")[1].trim(), 10) : 0;
 
   const questionCount = questionFields.length;
-  const scorePerCorrect = questionCount > 0 && maxScore > 0
-    ? Math.round(maxScore / questionCount)
-    : 1;
+  const scorePerCorrect =
+    questionCount > 0 && maxScore > 0 ? Math.round(maxScore / questionCount) : 1;
 
   const answers: Answer[] = questionFields.map((field) => {
     const isCorrect = field.value.includes(":white_check_mark:");

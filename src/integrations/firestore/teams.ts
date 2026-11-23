@@ -19,7 +19,7 @@ export async function createTeam(
   db: Firestore,
   guildId: string,
   quizDate: string,
-  team: Omit<Team, "registeredAt">
+  team: Omit<Team, "registeredAt">,
 ): Promise<Result<Team>> {
   const guard = await checkQuizNotEnded(db, guildId, quizDate);
   if (!guard.ok) return guard;
@@ -35,7 +35,7 @@ export async function getTeam(
   db: Firestore,
   guildId: string,
   quizDate: string,
-  teamName: string
+  teamName: string,
 ): Promise<Result<Team>> {
   const snapshot = await db
     .collection(`guilds/${guildId}/quizzes/${quizDate}/teams`)
@@ -52,11 +52,9 @@ export async function getTeam(
 export async function listTeams(
   db: Firestore,
   guildId: string,
-  quizDate: string
+  quizDate: string,
 ): Promise<Result<Team[]>> {
-  const snapshot = await db
-    .collection(`guilds/${guildId}/quizzes/${quizDate}/teams`)
-    .get();
+  const snapshot = await db.collection(`guilds/${guildId}/quizzes/${quizDate}/teams`).get();
 
   const teams = snapshot.docs.map((doc) => doc.data() as Team);
   return ok(teams);
@@ -66,14 +64,12 @@ export async function deleteTeam(
   db: Firestore,
   guildId: string,
   quizDate: string,
-  teamName: string
+  teamName: string,
 ): Promise<Result<void>> {
   const guard = await checkQuizNotEnded(db, guildId, quizDate);
   if (!guard.ok) return guard;
 
-  const docRef = db
-    .collection(`guilds/${guildId}/quizzes/${quizDate}/teams`)
-    .doc(teamName);
+  const docRef = db.collection(`guilds/${guildId}/quizzes/${quizDate}/teams`).doc(teamName);
 
   const snapshot = await docRef.get();
   if (!snapshot.exists) {
@@ -89,14 +85,12 @@ export async function updateTeam(
   guildId: string,
   quizDate: string,
   teamName: string,
-  fields: Partial<Omit<Team, "name" | "registeredAt">>
+  fields: Partial<Omit<Team, "name" | "registeredAt">>,
 ): Promise<Result<void>> {
   const guard = await checkQuizNotEnded(db, guildId, quizDate);
   if (!guard.ok) return guard;
 
-  const docRef = db
-    .collection(`guilds/${guildId}/quizzes/${quizDate}/teams`)
-    .doc(teamName);
+  const docRef = db.collection(`guilds/${guildId}/quizzes/${quizDate}/teams`).doc(teamName);
 
   const snapshot = await docRef.get();
   if (!snapshot.exists) {
