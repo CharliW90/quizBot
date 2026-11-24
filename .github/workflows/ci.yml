@@ -26,7 +26,7 @@ jobs:
 
       - run: npm run build
 
-      - run: npm run test
+      - run: npm run test:coverage
 
   integration:
     runs-on: ubuntu-latest
