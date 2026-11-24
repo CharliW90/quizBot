@@ -1,23 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { google } from "googleapis";
 
-vi.mock("googleapis", () => {
-  const mockGet = vi.fn();
-  const mockList = vi.fn();
-  return {
-    google: {
-      auth: {
-        GoogleAuth: vi.fn(() => ({ getClient: vi.fn() })),
-      },
-      forms: vi.fn(() => ({
-        forms: {
-          get: mockGet,
-          responses: { list: mockList },
-        },
-      })),
+const mockGet = vi.fn();
+const mockList = vi.fn();
+
+vi.mock("googleapis", () => ({
+  google: {
+    auth: {
+      GoogleAuth: vi.fn(function () {
+        return { getClient: vi.fn() };
+      }),
     },
-  };
-});
+    forms: vi.fn(() => ({
+      forms: {
+        get: mockGet,
+        responses: { list: mockList },
+      },
+    })),
+  },
+}));
 
 vi.mock("../../../src/utils/logger", () => ({
   logger: { info: vi.fn(), error: vi.fn() },
