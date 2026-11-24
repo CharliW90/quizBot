@@ -296,8 +296,8 @@ describe("registerTeam", () => {
     const { guild, input, ctx } = setup();
     guild.roles.cache.find = vi.fn((fn: (r: any) => boolean) => {
       const roles = [
-        { name: "Teams", id: "teams-role-id" },
-        { name: "Team Captain", id: "captain-role-id" },
+        { name: "Teams", id: "teams-role-id", delete: vi.fn() },
+        { name: "Team Captain", id: "captain-role-id", delete: vi.fn() },
       ];
       return roles.find(fn);
     });

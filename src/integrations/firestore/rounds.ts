@@ -1,4 +1,4 @@
-import type { firestore } from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import { ok, err, type Result } from "../../utils/result.js";
 import { checkQuizNotEnded } from "./quiz.js";
 import { logger } from "../../utils/logger.js";
@@ -28,7 +28,6 @@ export interface RoundData {
   history: HistoryEntry[];
 }
 
-type Firestore = firestore.Firestore;
 
 function roundsCollection(guildId: string, quizDate: string) {
   return `guilds/${guildId}/quizzes/${quizDate}/rounds`;

@@ -1,9 +1,7 @@
-import type { firestore } from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import { ok, err, type Result } from "../../utils/result.js";
 import { checkQuizNotEnded } from "./quiz.js";
 import { logger } from "../../utils/logger.js";
-
-type Firestore = firestore.Firestore;
 
 export interface ScoreboardEntry {
   rounds: number[];

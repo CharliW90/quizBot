@@ -1,4 +1,4 @@
-import type { firestore } from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import type { Guild } from "discord.js";
 import { EmbedBuilder } from "discord.js";
 import { ok, type Result } from "../utils/result.js";
@@ -8,8 +8,6 @@ import { getAliases } from "../integrations/firestore/aliases.js";
 import { listTeams } from "../integrations/firestore/teams.js";
 import type { Team } from "../integrations/firestore/teams.js";
 import { logger } from "../utils/logger.js";
-
-type Firestore = firestore.Firestore;
 
 export interface SendSuccess {
   teamName: string;

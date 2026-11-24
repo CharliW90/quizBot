@@ -1,4 +1,4 @@
-import type { firestore } from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import type { forms_v1 } from "googleapis";
 import { err, type Result } from "../utils/result.js";
 import { getFormIds } from "../integrations/firestore/guild-config.js";
@@ -7,8 +7,6 @@ import type { RoundData } from "../integrations/firestore/rounds.js";
 import { parseFormResponses } from "../integrations/forms/parser.js";
 import { validateFormStructure } from "../integrations/forms/validator.js";
 import { logger } from "../utils/logger.js";
-
-type Firestore = firestore.Firestore;
 
 interface FormsClient {
   getForm: (formId: string) => Promise<forms_v1.Schema$Form>;

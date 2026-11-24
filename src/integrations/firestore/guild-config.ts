@@ -1,8 +1,6 @@
-import type { firestore } from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import { ok, err, type Result } from "../../utils/result.js";
 import { logger } from "../../utils/logger.js";
-
-type Firestore = firestore.Firestore;
 
 export type FormIds = Record<string, string>;
 

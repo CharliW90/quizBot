@@ -1,10 +1,8 @@
-import type { firestore } from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import type { Guild } from "discord.js";
 import { ok, type Result } from "../utils/result.js";
 import { listTeams, deleteTeam } from "../integrations/firestore/teams.js";
 import { logger } from "../utils/logger.js";
-
-type Firestore = firestore.Firestore;
 
 interface ResetQuizInput {
   db: Firestore;

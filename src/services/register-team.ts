@@ -1,4 +1,4 @@
-import type { firestore } from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import type {
   CategoryChannel,
   Guild,
@@ -25,7 +25,7 @@ export interface RegisterTeamInput {
 
 export interface RegisterTeamContext {
   guild: Guild;
-  db: firestore.Firestore;
+  db: Firestore;
   quizDate: string;
   botRoleName: string;
   categoryName: string;
