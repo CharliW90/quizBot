@@ -1,10 +1,8 @@
-import type { firestore } from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import { ok, err, type Result } from "../utils/result.js";
 import { listRounds, storeRound } from "../integrations/firestore/rounds.js";
 import { setAlias } from "../integrations/firestore/aliases.js";
 import { logger } from "../utils/logger.js";
-
-type Firestore = firestore.Firestore;
 
 interface CorrectTeamNameInput {
   db: Firestore;

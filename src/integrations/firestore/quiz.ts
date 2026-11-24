@@ -1,4 +1,4 @@
-import type { firestore } from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import { ok, err, type Result } from "../../utils/result.js";
 import { logger } from "../../utils/logger.js";
 
@@ -8,7 +8,6 @@ export interface Quiz {
   createdAt: string;
 }
 
-type Firestore = firestore.Firestore;
 
 export async function checkQuizNotEnded(
   db: Firestore,

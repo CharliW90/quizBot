@@ -1,19 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Client, GatewayIntentBits } from "discord.js";
 
-vi.mock("discord.js", () => {
-  const mockClient = {
-    login: vi.fn().mockResolvedValue("token"),
-    destroy: vi.fn().mockResolvedValue(undefined),
-    once: vi.fn(),
-    on: vi.fn(),
-    user: { tag: "QuizBot#1234" },
-  };
-  return {
-    Client: vi.fn(() => mockClient),
-    GatewayIntentBits: { Guilds: 1, GuildMembers: 2 },
-  };
-});
+const mockClient = {
+  login: vi.fn().mockResolvedValue("token"),
+  destroy: vi.fn().mockResolvedValue(undefined),
+  once: vi.fn(),
+  on: vi.fn(),
+  user: { tag: "QuizBot#1234" },
+};
+
+vi.mock("discord.js", () => ({
+  Client: vi.fn(function () {
+    return mockClient;
+  }),
+  GatewayIntentBits: { Guilds: 1, GuildMembers: 2 },
+}));
 
 vi.mock("../../src/utils/logger.js", () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },

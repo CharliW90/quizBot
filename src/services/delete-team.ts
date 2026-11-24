@@ -1,4 +1,4 @@
-import type { firestore } from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import type { Guild, Role } from "discord.js";
 import { ok, err, type Result } from "../utils/result.js";
 import { deleteTeam as deleteTeamDoc } from "../integrations/firestore/teams.js";
@@ -9,7 +9,7 @@ import { logger } from "../utils/logger.js";
 
 export interface DeleteTeamContext {
   guild: Guild;
-  db: firestore.Firestore;
+  db: Firestore;
   quizDate: string;
 }
 

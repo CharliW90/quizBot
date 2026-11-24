@@ -1,9 +1,7 @@
-import type { firestore } from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import { ok, type Result } from "../../utils/result.js";
 import { checkQuizNotEnded } from "./quiz.js";
 import { logger } from "../../utils/logger.js";
-
-type Firestore = firestore.Firestore;
 
 function aliasesDocPath(guildId: string, quizDate: string) {
   return `guilds/${guildId}/quizzes/${quizDate}/maps/teamsAliases`;
