@@ -13,12 +13,13 @@ vi.mock("../../src/integrations/firestore/scoreboard.js", () => ({
   getScoreboard: vi.fn(),
 }));
 
-import { endQuiz } from "../../src/integrations/firestore/quiz.js";
+import { endQuiz, listQuizzes } from "../../src/integrations/firestore/quiz.js";
 import { getScoreboard } from "../../src/integrations/firestore/scoreboard.js";
 import command from "../../src/commands/quiz-end.js";
 
 const mockEndQuiz = vi.mocked(endQuiz);
 const mockGetScoreboard = vi.mocked(getScoreboard);
+const mockListQuizzes = vi.mocked(listQuizzes);
 
 function mockInteraction(customId: string, date: string | null = null) {
   const reply = {
@@ -130,6 +131,38 @@ describe("/quiz end", () => {
     expect(lastEdit.embeds[0].data.title).toContain("Error");
   });
 
+  it("cancels from no-scoreboard warning without ending", async () => {
+    mockGetScoreboard.mockResolvedValue({ ok: true, data: null });
+
+    const interaction = mockInteraction("cancel");
+    interaction._reply.awaitMessageComponent.mockResolvedValue({
+      customId: "cancel",
+    });
+
+    await command.execute(interaction);
+
+    expect(mockEndQuiz).not.toHaveBeenCalled();
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "Cancelled.", components: [] }),
+    );
+  });
+
+  it("handles timeout on no-scoreboard warning", async () => {
+    mockGetScoreboard.mockResolvedValue({ ok: true, data: null });
+
+    const interaction = mockInteraction("timeout");
+    interaction._reply.awaitMessageComponent.mockRejectedValue(
+      new Error("Collector received no interactions before ending with reason: time"),
+    );
+
+    await command.execute(interaction);
+
+    expect(mockEndQuiz).not.toHaveBeenCalled();
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "Timed out.", components: [] }),
+    );
+  });
+
   it("replies with server-only message when guild is null", async () => {
     const interaction = mockInteraction("confirm");
     interaction.guild = null;
@@ -140,5 +173,65 @@ describe("/quiz end", () => {
       expect.objectContaining({ content: "This command can only be used in a server." }),
     );
     expect(mockEndQuiz).not.toHaveBeenCalled();
+  });
+
+  describe("autocomplete", () => {
+    it("lists active quizzes", async () => {
+      mockListQuizzes.mockResolvedValue({
+        ok: true,
+        data: [
+          { date: "2026-06-01", status: "active" },
+          { date: "2026-06-08", status: "ended" },
+        ],
+      });
+
+      const interaction = {
+        guildId: "guild-1",
+        options: { getFocused: vi.fn(() => "") },
+        respond: vi.fn(),
+      } as any;
+
+      await command.autocomplete!(interaction);
+
+      const choices = interaction.respond.mock.calls[0][0];
+      expect(choices).toHaveLength(1);
+      expect(choices[0].value).toBe("2026-06-01");
+    });
+
+    it("responds with empty list when listQuizzes fails", async () => {
+      mockListQuizzes.mockResolvedValue({ ok: false, error: "Firestore error" });
+
+      const interaction = {
+        guildId: "guild-1",
+        options: { getFocused: vi.fn(() => "") },
+        respond: vi.fn(),
+      } as any;
+
+      await command.autocomplete!(interaction);
+
+      expect(interaction.respond).toHaveBeenCalledWith([]);
+    });
+
+    it("filters by typed text", async () => {
+      mockListQuizzes.mockResolvedValue({
+        ok: true,
+        data: [
+          { date: "2026-06-01", status: "active" },
+          { date: "2026-07-01", status: "active" },
+        ],
+      });
+
+      const interaction = {
+        guildId: "guild-1",
+        options: { getFocused: vi.fn(() => "06") },
+        respond: vi.fn(),
+      } as any;
+
+      await command.autocomplete!(interaction);
+
+      const choices = interaction.respond.mock.calls[0][0];
+      expect(choices).toHaveLength(1);
+      expect(choices[0].value).toBe("2026-06-01");
+    });
   });
 });

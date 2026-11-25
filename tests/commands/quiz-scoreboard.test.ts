@@ -14,9 +14,11 @@ vi.mock("../../src/integrations/firestore/quiz.js", () => ({
 }));
 
 import { generateScoreboard } from "../../src/services/generate-scoreboard.js";
+import { listQuizzes } from "../../src/integrations/firestore/quiz.js";
 import command from "../../src/commands/quiz-scoreboard.js";
 
 const mockGenerateScoreboard = vi.mocked(generateScoreboard);
+const mockListQuizzes = vi.mocked(listQuizzes);
 
 function mockInteraction() {
   return {
@@ -153,5 +155,65 @@ describe("/quiz scoreboard", () => {
     await command.execute(interaction);
 
     expect(interaction.deleteReply).toHaveBeenCalled();
+  });
+
+  describe("autocomplete", () => {
+    it("lists all quizzes with status labels", async () => {
+      mockListQuizzes.mockResolvedValue({
+        ok: true,
+        data: [
+          { date: "2026-06-01", status: "active" },
+          { date: "2026-05-01", status: "ended" },
+        ],
+      });
+
+      const interaction = {
+        guildId: "guild-1",
+        options: { getFocused: vi.fn(() => "") },
+        respond: vi.fn(),
+      } as any;
+
+      await command.autocomplete!(interaction);
+
+      const choices = interaction.respond.mock.calls[0][0];
+      expect(choices).toHaveLength(2);
+      expect(choices[1].name).toContain("ended");
+    });
+
+    it("responds with empty list when listQuizzes fails", async () => {
+      mockListQuizzes.mockResolvedValue({ ok: false, error: "Firestore error" });
+
+      const interaction = {
+        guildId: "guild-1",
+        options: { getFocused: vi.fn(() => "") },
+        respond: vi.fn(),
+      } as any;
+
+      await command.autocomplete!(interaction);
+
+      expect(interaction.respond).toHaveBeenCalledWith([]);
+    });
+
+    it("filters by typed text", async () => {
+      mockListQuizzes.mockResolvedValue({
+        ok: true,
+        data: [
+          { date: "2026-06-01", status: "active" },
+          { date: "2026-07-01", status: "active" },
+        ],
+      });
+
+      const interaction = {
+        guildId: "guild-1",
+        options: { getFocused: vi.fn(() => "07") },
+        respond: vi.fn(),
+      } as any;
+
+      await command.autocomplete!(interaction);
+
+      const choices = interaction.respond.mock.calls[0][0];
+      expect(choices).toHaveLength(1);
+      expect(choices[0].value).toBe("2026-07-01");
+    });
   });
 });

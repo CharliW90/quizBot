@@ -3,6 +3,7 @@ import {
   setTeamMembers,
   getTeamMembers,
   checkMembersRegistered,
+  deleteAllMembers,
   deleteTeamMembers,
 } from "../../../src/integrations/firestore/members.js";
 
@@ -20,6 +21,9 @@ function mockFirestore() {
     update: vi.fn(async (data: Record<string, unknown>) => {
       if (!(path in store)) throw new Error("NOT_FOUND");
       store[path] = { ...store[path], ...data };
+    }),
+    delete: vi.fn(async () => {
+      delete store[path];
     }),
   });
 
@@ -143,6 +147,26 @@ describe("members", () => {
       if (result.ok) {
         expect(result.data).toEqual([]);
       }
+    });
+  });
+
+  describe("deleteAllMembers", () => {
+    it("deletes the entire members doc", async () => {
+      db._store["guilds/guild-1/quizzes/2026-06-06/maps/teamsMembers"] = {
+        "user-1": "Alpha",
+        "user-2": "Beta",
+      };
+
+      const result = await deleteAllMembers(db as any, "guild-1", "2026-06-06");
+
+      expect(result.ok).toBe(true);
+      expect(db._store["guilds/guild-1/quizzes/2026-06-06/maps/teamsMembers"]).toBeUndefined();
+    });
+
+    it("succeeds when no members doc exists", async () => {
+      const result = await deleteAllMembers(db as any, "guild-1", "2026-06-06");
+
+      expect(result.ok).toBe(true);
     });
   });
 
