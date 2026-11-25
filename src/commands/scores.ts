@@ -69,7 +69,7 @@ function buildLeaderboardEmbed(
 
 const command: Command = {
   data: new SlashCommandBuilder()
-    .setName("quiz-scoreboard")
+    .setName("scores")
     .setDescription("Generate and post the quiz leaderboard")
     .setDMPermission(false)
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
@@ -119,7 +119,7 @@ const command: Command = {
     const db = getDb();
     const quizDate = interaction.options.getString("date") ?? getQuizDate();
 
-    logger.info({ quizDate, guild: interaction.guildId }, `[quiz-scoreboard] Generating scoreboard for ${quizDate}`);
+    logger.info({ quizDate, guild: interaction.guildId }, `[scores] Generating scoreboard for ${quizDate}`);
 
     const result = await generateScoreboard({ db, guildId: interaction.guild.id, quizDate });
 
@@ -129,7 +129,7 @@ const command: Command = {
     }
 
     const teamCount = Object.keys(result.data.scoreboard).length;
-    logger.info({ quizDate, teamCount }, `[quiz-scoreboard] Scoreboard generated with ${teamCount} teams`);
+    logger.info({ quizDate, teamCount }, `[scores] Scoreboard generated with ${teamCount} teams`);
 
     const embed = buildLeaderboardEmbed(result.data, quizDate);
 

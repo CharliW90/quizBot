@@ -20,7 +20,7 @@ const CONFIRMATION_TIMEOUT_MS = 60_000;
 
 const command: Command = {
   data: new SlashCommandBuilder()
-    .setName("quiz-end")
+    .setName("end-quiz")
     .setDescription("End a quiz session (prevents further changes)")
     .setDMPermission(false)
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
@@ -68,7 +68,7 @@ const command: Command = {
 
     const quizDate = interaction.options.getString("date") ?? getQuizDate();
 
-    logger.info({ quizDate, guild: interaction.guildId }, `[quiz-end] Ending quiz for ${quizDate}`);
+    logger.info({ quizDate, guild: interaction.guildId }, `[end-quiz] Ending quiz for ${quizDate}`);
 
     const db = getDb();
 
@@ -118,7 +118,7 @@ const command: Command = {
         });
 
         if (reply.customId === "cancel") {
-          logger.info({ quizDate }, "[quiz-end] User cancelled");
+          logger.info({ quizDate }, "[end-quiz] User cancelled");
           await interaction.editReply({ content: "Cancelled.", components: [] });
           return;
         }
@@ -128,7 +128,7 @@ const command: Command = {
       }
     }
 
-    logger.info({ quizDate }, "[quiz-end] User confirmed");
+    logger.info({ quizDate }, "[end-quiz] User confirmed");
     const result = await endQuiz(db, interaction.guild.id, quizDate);
 
     if (!result.ok) {
@@ -139,7 +139,7 @@ const command: Command = {
       return;
     }
 
-    logger.info({ quizDate }, `[quiz-end] Quiz ended for ${quizDate}`);
+    logger.info({ quizDate }, `[end-quiz] Quiz ended for ${quizDate}`);
     await interaction.editReply({
       embeds: [
         successEmbed(

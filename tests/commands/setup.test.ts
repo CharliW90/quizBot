@@ -11,7 +11,7 @@ vi.mock("../../src/integrations/firestore/guild-config.js", () => ({
 }));
 
 import { getFormIds, setFormId } from "../../src/integrations/firestore/guild-config.js";
-import command from "../../src/commands/quiz-setup.js";
+import command from "../../src/commands/setup.js";
 
 const mockGetFormIds = vi.mocked(getFormIds);
 const mockSetFormId = vi.mocked(setFormId);
@@ -45,7 +45,7 @@ function mockAutocompleteInteraction(focused: string, guildId = "guild-1") {
   } as any;
 }
 
-describe("/quiz setup", () => {
+describe("/setup", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

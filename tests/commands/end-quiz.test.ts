@@ -15,7 +15,7 @@ vi.mock("../../src/integrations/firestore/scoreboard.js", () => ({
 
 import { endQuiz, listQuizzes } from "../../src/integrations/firestore/quiz.js";
 import { getScoreboard } from "../../src/integrations/firestore/scoreboard.js";
-import command from "../../src/commands/quiz-end.js";
+import command from "../../src/commands/end-quiz.js";
 
 const mockEndQuiz = vi.mocked(endQuiz);
 const mockGetScoreboard = vi.mocked(getScoreboard);
@@ -38,7 +38,7 @@ function mockInteraction(customId: string, date: string | null = null) {
   } as any;
 }
 
-describe("/quiz end", () => {
+describe("/end-quiz", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetScoreboard.mockResolvedValue({ ok: true, data: { "Team A": { rounds: [5], total: 5 } } });

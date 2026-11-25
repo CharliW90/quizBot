@@ -15,7 +15,7 @@ vi.mock("../../src/integrations/firestore/quiz.js", () => ({
 
 import { generateScoreboard } from "../../src/services/generate-scoreboard.js";
 import { listQuizzes } from "../../src/integrations/firestore/quiz.js";
-import command from "../../src/commands/quiz-scoreboard.js";
+import command from "../../src/commands/scores.js";
 
 const mockGenerateScoreboard = vi.mocked(generateScoreboard);
 const mockListQuizzes = vi.mocked(listQuizzes);
@@ -40,7 +40,7 @@ function scoreboardResult(scoreboard: Record<string, { rounds: number[]; total: 
   };
 }
 
-describe("/quiz scoreboard", () => {
+describe("/scores", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -120,7 +120,7 @@ describe("/quiz scoreboard", () => {
   it("replies with error when generation fails", async () => {
     mockGenerateScoreboard.mockResolvedValue({
       ok: false,
-      error: "No rounds fetched yet - use /quiz-fetch first",
+      error: "No rounds fetched yet - use /fetch-responses first",
     });
 
     const interaction = mockInteraction();

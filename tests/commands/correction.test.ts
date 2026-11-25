@@ -19,7 +19,7 @@ vi.mock("../../src/integrations/firestore/teams.js", () => ({
 import { correctTeamName } from "../../src/services/correct-team-name.js";
 import { listRounds } from "../../src/integrations/firestore/rounds.js";
 import { listTeams } from "../../src/integrations/firestore/teams.js";
-import command from "../../src/commands/quiz-correct.js";
+import command from "../../src/commands/correction.js";
 
 const mockCorrectTeamName = vi.mocked(correctTeamName);
 const mockListRounds = vi.mocked(listRounds);
@@ -40,7 +40,7 @@ function mockInteraction(options: { incorrect: string; correct: string }) {
   } as any;
 }
 
-describe("/quiz correct", () => {
+describe("/correction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

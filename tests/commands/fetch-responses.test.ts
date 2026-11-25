@@ -19,7 +19,7 @@ vi.mock("../../src/integrations/firestore/guild-config.js", () => ({
 
 import { fetchRound } from "../../src/services/fetch-round.js";
 import { getFormIds } from "../../src/integrations/firestore/guild-config.js";
-import command from "../../src/commands/quiz-fetch.js";
+import command from "../../src/commands/fetch-responses.js";
 
 const mockFetchRound = vi.mocked(fetchRound);
 const mockGetFormIds = vi.mocked(getFormIds);
@@ -50,7 +50,7 @@ function mockAutocompleteInteraction(focused: string) {
   } as any;
 }
 
-describe("/quiz fetch", () => {
+describe("/fetch-responses", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

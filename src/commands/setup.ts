@@ -12,7 +12,7 @@ import { logger } from "../utils/logger.js";
 
 const command: Command = {
   data: new SlashCommandBuilder()
-    .setName("quiz-setup")
+    .setName("setup")
     .setDescription("Configure a Google Form ID for a quiz round")
     .setDMPermission(false)
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
@@ -66,7 +66,7 @@ const command: Command = {
     const roundNumber = interaction.options.getInteger("round", true);
     const formInput = interaction.options.getString("form_id", true);
 
-    logger.info({ roundNumber, formId: formInput, guild: interaction.guildId }, `[quiz-setup] Configuring round ${roundNumber}`);
+    logger.info({ roundNumber, formId: formInput, guild: interaction.guildId }, `[setup] Configuring round ${roundNumber}`);
 
     const db = getDb();
     const result = await setFormId(db, interaction.guild.id, roundNumber, formInput);
@@ -84,7 +84,7 @@ const command: Command = {
       ? `Round ${roundNumber} form ID overwritten (was: \`${previousFormId}\`)`
       : `Round ${roundNumber} configured successfully`;
 
-    logger.info({ roundNumber, overwritten }, `[quiz-setup] Round ${roundNumber} configured${overwritten ? " (overwritten)" : ""}`);
+    logger.info({ roundNumber, overwritten }, `[setup] Round ${roundNumber} configured${overwritten ? " (overwritten)" : ""}`);
 
     await interaction.reply({
       embeds: [successEmbed("Quiz Setup", description)],

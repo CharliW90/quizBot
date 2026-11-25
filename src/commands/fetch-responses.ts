@@ -15,7 +15,7 @@ import { getQuizDate } from "../utils/quiz-date.js";
 
 const command: Command = {
   data: new SlashCommandBuilder()
-    .setName("quiz-fetch")
+    .setName("fetch-responses")
     .setDescription("Fetch responses from a round's Google Form")
     .setDMPermission(false)
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
@@ -61,7 +61,7 @@ const command: Command = {
 
     const roundNumber = interaction.options.getInteger("round", true);
 
-    logger.info({ roundNumber, guild: interaction.guildId }, `[quiz-fetch] Fetching round ${roundNumber}`);
+    logger.info({ roundNumber, guild: interaction.guildId }, `[fetch-responses] Fetching round ${roundNumber}`);
 
     const db = getDb();
     const formsClient = createFormsClient();
@@ -81,7 +81,7 @@ const command: Command = {
     }
 
     const teamCount = Object.keys(result.data.responses).length;
-    logger.info({ roundNumber, teamCount }, `[quiz-fetch] Round ${roundNumber} fetched - ${teamCount} responses stored`);
+    logger.info({ roundNumber, teamCount }, `[fetch-responses] Round ${roundNumber} fetched - ${teamCount} responses stored`);
     const description = `Round ${roundNumber} fetched - ${teamCount} team response${teamCount !== 1 ? "s" : ""} stored.`;
 
     await interaction.editReply({

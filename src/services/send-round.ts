@@ -81,7 +81,7 @@ export async function sendRound(input: SendRoundInput): Promise<Result<SendRound
     const team = teamsByName.get(resolvedName);
 
     if (!team) {
-      const reason = `"${formName}" not registered - use /quiz correct to fix`;
+      const reason = `"${formName}" not registered - use /correction to fix`;
       failures.push({ teamName: resolvedName, reason });
       logger.warn({ teamName: resolvedName, reason }, "[send-round] Failed to send to team");
       continue;
