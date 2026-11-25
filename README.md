@@ -36,6 +36,46 @@ V4 is a ground-up rewrite — single TypeScript service replacing the old three-
 | Unpinned dependencies, no lockfile | Pinned versions, committed lockfile |
 | Fragile interaction timeouts | Deferred replies, proper error handling |
 
+## Commands
+
+`/help` shows available commands (admin commands are hidden from regular users):
+
+```
+QuizBot v4.0.0
+
+  /register        Create a team
+  /team            Manage team roster
+  /leave           Leave your team
+  /delete-team     Delete a team              (admin)
+  /quiz-setup      Link a Google Form to a round (admin)
+  /quiz-fetch      Fetch responses from a form   (admin)
+  /quiz-send       Send results to team channels  (admin)
+  /quiz-scoreboard Post the leaderboard           (admin)
+  /quiz-correct    Fix a team name typo            (admin)
+  /quiz-end        End the current quiz            (admin)
+  /quiz-reset      Wipe all teams and quiz data    (admin)
+  /ping            Check latency
+  /help            Show this list, or detail for a command
+```
+
+`/help <command>` shows detailed usage:
+
+| Command | Usage | Detail |
+|---------|-------|--------|
+| register | `/register <name> <captain> <members...> [color]` | Creates a role, text channel, and voice channel for the team. The captain can manage the roster afterwards with /team. Color is an optional hex code for the team's role. |
+| team | `/team <add-member\|remove-member\|promote-to-captain> <team> <user>` | add-member and remove-member do what they say. promote-to-captain transfers captaincy to another member. Requires captain on the team, or server admin. |
+| leave | `/leave` | Removes you from your team. Captains must /team promote-to-captain first. If you're the last member, ask an admin to /delete-team instead. |
+| delete-team | `/delete-team <team>` | Permanently removes the team's role, channels, and stored data. You'll be asked to confirm before anything is deleted. |
+| quiz-setup | `/quiz-setup <round> <form-id>` | The form ID is the long string in the Google Form URL. Rounds are numbered from 1. Run this once per round before the quiz starts. |
+| quiz-fetch | `/quiz-fetch <round>` | Pulls answers from the linked Google Form and stores them. Safe to re-run - picks up late submissions without losing earlier data. |
+| quiz-send | `/quiz-send <round>` | Posts each team's answers and scores to their private channel. Team names in the form must match registered names (case-insensitive). Use /quiz-correct first if there are typos. |
+| quiz-scoreboard | `/quiz-scoreboard` | Calculates cumulative scores across all fetched rounds and posts the leaderboard to the current channel. Visible to everyone. |
+| quiz-correct | `/quiz-correct <incorrect> <correct>` | Fixes a misspelled team name in form responses. Updates all stored rounds and saves an alias so future fetches auto-correct. Better than asking the team to resubmit. |
+| quiz-end | `/quiz-end` | Closes the quiz session. No more fetches or sends after this. Run this before /quiz-reset if you want to preserve final scores. |
+| quiz-reset | `/quiz-reset` | Nuclear option. Deletes ALL teams, roles, channels, and quiz data. Not reversible. You'll be asked to confirm. |
+| ping | `/ping` | Shows round-trip and WebSocket latency. |
+| help | `/help [command]` | Without an argument, lists all commands. With a command name, shows detailed usage. |
+
 ## Running
 
 ```bash

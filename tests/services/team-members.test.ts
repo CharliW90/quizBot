@@ -224,6 +224,7 @@ describe("promoteToCaptain", () => {
 
     expect(updateTeam).toHaveBeenCalledWith({}, "guild-1", "2026-08-07", "Wizards", {
       captain: "new",
+      members: ["m1", "m2"],
     });
   });
 

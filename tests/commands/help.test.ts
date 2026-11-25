@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { MessageFlags, PermissionFlagsBits } from "discord.js";
 import command from "../../src/commands/help.js";
 
-function mockInteraction(hasManageChannels: boolean) {
+function mockInteraction(hasManageChannels: boolean, commandArg: string | null = null) {
   return {
     member: {
       permissions: {
@@ -11,71 +11,61 @@ function mockInteraction(hasManageChannels: boolean) {
         ),
       },
     },
+    options: {
+      getString: vi.fn(() => commandArg),
+    },
     reply: vi.fn(),
+  } as any;
+}
+
+function mockAutocomplete(hasManageChannels: boolean, focused: string) {
+  return {
+    member: {
+      permissions: {
+        has: vi.fn((perm: bigint) =>
+          perm === PermissionFlagsBits.ManageChannels ? hasManageChannels : false,
+        ),
+      },
+    },
+    options: {
+      getFocused: vi.fn(() => focused),
+    },
+    respond: vi.fn(),
   } as any;
 }
 
 describe("/help", () => {
   it("has correct metadata", () => {
     expect(command.data.name).toBe("help");
-    expect(command.data.description).toBe("Show the QuizBot manual");
   });
 
-  describe("admin view", () => {
-    it("replies ephemerally with all sections", async () => {
-      const interaction = mockInteraction(true);
+  it("has an autocomplete command option", () => {
+    const option = command.data.options[0]?.toJSON() as unknown as Record<string, unknown>;
+    expect(option?.name).toBe("command");
+    expect(option?.autocomplete).toBe(true);
+  });
 
+  describe("index (no argument)", () => {
+    it("replies ephemerally", async () => {
+      const interaction = mockInteraction(false);
       await command.execute(interaction);
-
-      const call = interaction.reply.mock.calls[0][0];
-      expect(call.flags).toBe(MessageFlags.Ephemeral);
-      expect(call.content).toContain("QUIZBOT(1)");
-      expect(call.content).toContain("SYNOPSIS");
-      expect(call.content).toContain("GETTING STARTED");
-      expect(call.content).toContain("TEAM COMMANDS");
-      expect(call.content).toContain("QUIZ COMMANDS");
-      expect(call.content).toContain("UTILITY COMMANDS");
-      expect(call.content).toContain("PERMISSIONS");
-      expect(call.content).toContain("WORKFLOW TIPS");
+      expect(interaction.reply.mock.calls[0][0].flags).toBe(MessageFlags.Ephemeral);
     });
 
-    it("includes admin commands", async () => {
-      const interaction = mockInteraction(true);
-
+    it("shows player commands for non-admin", async () => {
+      const interaction = mockInteraction(false);
       await command.execute(interaction);
-
       const content = interaction.reply.mock.calls[0][0].content;
-      expect(content).toContain("/delete-team");
-      expect(content).toContain("/quiz-setup");
-      expect(content).toContain("/quiz-fetch");
-      expect(content).toContain("/quiz-send");
-      expect(content).toContain("/quiz-scoreboard");
-      expect(content).toContain("/quiz-correct");
-      expect(content).toContain("/quiz-end");
-      expect(content).toContain("/quiz-reset");
-    });
-  });
-
-  describe("player view", () => {
-    it("replies ephemerally without admin sections", async () => {
-      const interaction = mockInteraction(false);
-
-      await command.execute(interaction);
-
-      const call = interaction.reply.mock.calls[0][0];
-      expect(call.flags).toBe(MessageFlags.Ephemeral);
-      expect(call.content).toContain("QUIZBOT(1)");
-      expect(call.content).toContain("TEAM COMMANDS");
-      expect(call.content).toContain("UTILITY COMMANDS");
-      expect(call.content).not.toContain("QUIZ COMMANDS");
-      expect(call.content).not.toContain("WORKFLOW TIPS");
+      expect(content).toContain("/register");
+      expect(content).toContain("/team");
+      expect(content).toContain("/leave");
+      expect(content).toContain("/ping");
+      expect(content).toContain("/help");
     });
 
-    it("excludes admin commands from synopsis", async () => {
+    it("hides admin commands for non-admin", async () => {
       const interaction = mockInteraction(false);
-
       await command.execute(interaction);
-
       const content = interaction.reply.mock.calls[0][0].content;
       expect(content).not.toContain("/delete-team");
       expect(content).not.toContain("/quiz-setup");
@@ -87,25 +77,84 @@ describe("/help", () => {
       expect(content).not.toContain("/quiz-reset");
     });
 
-    it("still includes common commands", async () => {
-      const interaction = mockInteraction(false);
-
+    it("shows all commands for admin", async () => {
+      const interaction = mockInteraction(true);
       await command.execute(interaction);
-
       const content = interaction.reply.mock.calls[0][0].content;
       expect(content).toContain("/register");
-      expect(content).toContain("/team");
-      expect(content).toContain("/leave");
-      expect(content).toContain("/ping");
-      expect(content).toContain("/help");
+      expect(content).toContain("/delete-team");
+      expect(content).toContain("/quiz-setup");
+      expect(content).toContain("/quiz-reset");
+    });
+
+    it("shows version header", async () => {
+      const interaction = mockInteraction(false);
+      await command.execute(interaction);
+      expect(interaction.reply.mock.calls[0][0].content).toContain("QuizBot v4.0.0");
     });
   });
 
-  it("shows 2026 in footer", async () => {
-    const interaction = mockInteraction(false);
+  describe("detail (with argument)", () => {
+    it("shows usage and detail for a valid command", async () => {
+      const interaction = mockInteraction(false, "register");
+      await command.execute(interaction);
+      const content = interaction.reply.mock.calls[0][0].content;
+      expect(content).toContain("/register <name> <captain> <members...> [color]");
+      expect(content).toContain("Creates a role");
+    });
 
-    await command.execute(interaction);
+    it("shows admin command detail for admin", async () => {
+      const interaction = mockInteraction(true, "quiz-setup");
+      await command.execute(interaction);
+      const content = interaction.reply.mock.calls[0][0].content;
+      expect(content).toContain("/quiz-setup");
+      expect(content).toContain("form ID");
+    });
 
-    expect(interaction.reply.mock.calls[0][0].content).toContain("2026");
+    it("rejects admin command for non-admin", async () => {
+      const interaction = mockInteraction(false, "quiz-setup");
+      await command.execute(interaction);
+      const content = interaction.reply.mock.calls[0][0].content;
+      expect(content).toContain("Unknown command");
+    });
+
+    it("rejects unknown command", async () => {
+      const interaction = mockInteraction(true, "nonexistent");
+      await command.execute(interaction);
+      const content = interaction.reply.mock.calls[0][0].content;
+      expect(content).toContain("Unknown command");
+    });
+  });
+
+  describe("autocomplete", () => {
+    it("shows only player commands for non-admin", async () => {
+      const interaction = mockAutocomplete(false, "");
+      await command.autocomplete!(interaction);
+      const choices = interaction.respond.mock.calls[0][0];
+      const names = choices.map((c: { name: string }) => c.name);
+      expect(names).toContain("register");
+      expect(names).toContain("leave");
+      expect(names).not.toContain("quiz-setup");
+      expect(names).not.toContain("delete-team");
+    });
+
+    it("shows all commands for admin", async () => {
+      const interaction = mockAutocomplete(true, "");
+      await command.autocomplete!(interaction);
+      const choices = interaction.respond.mock.calls[0][0];
+      const names = choices.map((c: { name: string }) => c.name);
+      expect(names).toContain("register");
+      expect(names).toContain("quiz-setup");
+      expect(names).toContain("delete-team");
+    });
+
+    it("filters by typed text", async () => {
+      const interaction = mockAutocomplete(true, "quiz");
+      await command.autocomplete!(interaction);
+      const choices = interaction.respond.mock.calls[0][0];
+      const names = choices.map((c: { name: string }) => c.name);
+      expect(names.every((n: string) => n.includes("quiz"))).toBe(true);
+      expect(names).not.toContain("register");
+    });
   });
 });

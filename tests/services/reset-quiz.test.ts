@@ -1,160 +1,252 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { resetQuiz } from "../../src/services/reset-quiz.js";
+import { ChannelType } from "discord.js";
+import { resetQuiz, discoverQuizTeamCategory, discoverTeamRoles } from "../../src/services/reset-quiz.js";
 
 vi.mock("../../src/utils/logger.js", () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
+vi.mock("../../src/utils/quiz-date.js", () => ({
+  getQuizDate: vi.fn(() => "2026-06-06"),
+}));
+
 const mockListTeams = vi.fn();
 const mockDeleteTeam = vi.fn();
+const mockDeleteAllAliases = vi.fn();
+const mockDeleteAllMembers = vi.fn();
+const mockGetQuiz = vi.fn();
 
 vi.mock("../../src/integrations/firestore/teams.js", () => ({
   listTeams: (...args: unknown[]) => mockListTeams(...args),
   deleteTeam: (...args: unknown[]) => mockDeleteTeam(...args),
 }));
 
+vi.mock("../../src/integrations/firestore/aliases.js", () => ({
+  deleteAllAliases: (...args: unknown[]) => mockDeleteAllAliases(...args),
+}));
+
+vi.mock("../../src/integrations/firestore/members.js", () => ({
+  deleteAllMembers: (...args: unknown[]) => mockDeleteAllMembers(...args),
+}));
+
+vi.mock("../../src/integrations/firestore/quiz.js", () => ({
+  getQuiz: (...args: unknown[]) => mockGetQuiz(...args),
+}));
+
+function mockChannel(id: string, name: string) {
+  return { id, name, delete: vi.fn() };
+}
+
+function mockRole(id: string, name: string) {
+  return { id, name, delete: vi.fn() };
+}
+
+function mockMember(id: string, roleIds: string[]) {
+  const roleCache = new Map(roleIds.map((rid) => [rid, { id: rid }]));
+  return {
+    id,
+    roles: {
+      cache: { has: (rid: string) => roleCache.has(rid) },
+      remove: vi.fn(),
+    },
+  };
+}
+
 function mockGuild(options: {
-  roles: Array<{ id: string; name: string; delete: ReturnType<typeof vi.fn> }>;
-  channels: Array<{ id: string; name: string; delete: ReturnType<typeof vi.fn> }>;
+  channels?: Array<ReturnType<typeof mockChannel>>;
+  categoryChildren?: Array<ReturnType<typeof mockChannel>>;
+  roles?: Array<ReturnType<typeof mockRole>>;
+  members?: Array<ReturnType<typeof mockMember>>;
 }) {
-  const roleCache = new Map(options.roles.map((r) => [r.id, r]));
-  const channelCache = new Map(options.channels.map((c) => [c.id, c]));
+  const categoryChildren = new Map((options.categoryChildren ?? []).map((c) => [c.id, c]));
+  const category = options.categoryChildren
+    ? { id: "cat-1", name: "QUIZ TEAMS", type: ChannelType.GuildCategory, children: { cache: categoryChildren } }
+    : null;
+
+  const allChannels = [...(options.channels ?? [])];
+  if (category) allChannels.push(category as any);
+
+  const channelCache = new Map(allChannels.map((c) => [c.id, c]));
+  const roleCache = new Map((options.roles ?? []).map((r) => [r.id, r]));
+  const memberCache = new Map((options.members ?? []).map((m) => [m.id, m]));
 
   return {
-    roles: { cache: roleCache },
-    channels: { cache: channelCache },
+    roles: {
+      cache: {
+        find: (fn: (r: any) => boolean) => [...roleCache.values()].find(fn),
+        filter: (fn: (r: any) => boolean) => {
+          const matches = [...roleCache.values()].filter(fn);
+          return { toJSON: () => matches };
+        },
+      },
+    },
+    channels: {
+      cache: {
+        find: (fn: (c: any) => boolean) => [...channelCache.values()].find(fn),
+      },
+    },
+    members: {
+      fetch: vi.fn(),
+      cache: {
+        filter: (fn: (m: any) => boolean) => new Map([...memberCache.entries()].filter(([, m]) => fn(m))),
+      },
+    },
   } as any;
 }
+
+describe("discoverQuizTeamCategory", () => {
+  it("finds the QUIZ TEAMS category", () => {
+    const guild = mockGuild({
+      categoryChildren: [mockChannel("c1", "the-foxes")],
+    });
+    const category = discoverQuizTeamCategory(guild);
+    expect(category).not.toBeNull();
+    expect(category!.name).toBe("QUIZ TEAMS");
+  });
+
+  it("returns null when no category exists", () => {
+    const guild = mockGuild({});
+    expect(discoverQuizTeamCategory(guild)).toBeNull();
+  });
+});
+
+describe("discoverTeamRoles", () => {
+  it("finds Team: prefixed roles", () => {
+    const guild = mockGuild({
+      roles: [
+        mockRole("r1", "Team: The Foxes"),
+        mockRole("r2", "Team: Quiz Masters"),
+        mockRole("r3", "Admin"),
+      ],
+    });
+    const roles = discoverTeamRoles(guild);
+    expect(roles).toHaveLength(2);
+  });
+});
 
 describe("resetQuiz", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetQuiz.mockResolvedValue({ ok: true, data: { status: "active" } });
+    mockListTeams.mockResolvedValue({ ok: true, data: [] });
+    mockDeleteTeam.mockResolvedValue({ ok: true, data: undefined });
+    mockDeleteAllAliases.mockResolvedValue({ ok: true, data: undefined });
+    mockDeleteAllMembers.mockResolvedValue({ ok: true, data: undefined });
   });
 
-  it("deletes team roles, channels, and Firestore docs", async () => {
-    const role1 = { id: "r1", name: "Team: The Foxes", delete: vi.fn() };
-    const role2 = { id: "r2", name: "Team: Quiz Masters", delete: vi.fn() };
-    const ch1 = { id: "c1", name: "the-foxes", delete: vi.fn() };
-    const ch2 = { id: "c2", name: "quiz-masters", delete: vi.fn() };
+  it("deletes channels from QUIZ TEAMS category", async () => {
+    const ch1 = mockChannel("c1", "the-foxes");
+    const ch2 = mockChannel("c2", "quiz-masters");
+    const guild = mockGuild({ categoryChildren: [ch1, ch2], roles: [] });
 
-    mockListTeams.mockResolvedValue({
-      ok: true,
-      data: [
-        { name: "The Foxes", textChannelId: "c1", voiceChannelId: "v1", roleId: "r1" },
-        { name: "Quiz Masters", textChannelId: "c2", voiceChannelId: "v2", roleId: "r2" },
-      ],
-    });
-    mockDeleteTeam.mockResolvedValue({ ok: true, data: undefined });
-
-    const guild = mockGuild({
-      roles: [role1, role2],
-      channels: [ch1, ch2],
-    });
-
-    const result = await resetQuiz({
-      db: "mock-db" as any,
-      guildId: "guild-1",
-      quizDate: "2026-06-06",
-      guild,
-    });
+    const result = await resetQuiz({ db: "mock-db" as any, guildId: "guild-1", guild });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.data.rolesDeleted).toBe(2);
-      expect(result.data.channelsDeleted).toBe(2);
-      expect(result.data.teamsDeleted).toBe(2);
-    }
-    expect(role1.delete).toHaveBeenCalled();
-    expect(role2.delete).toHaveBeenCalled();
+    if (result.ok) expect(result.data.channelsDeleted).toBe(2);
     expect(ch1.delete).toHaveBeenCalled();
     expect(ch2.delete).toHaveBeenCalled();
+  });
+
+  it("deletes Team: roles", async () => {
+    const r1 = mockRole("r1", "Team: The Foxes");
+    const r2 = mockRole("r2", "Team: Quiz Masters");
+    const guild = mockGuild({ roles: [r1, r2] });
+
+    const result = await resetQuiz({ db: "mock-db" as any, guildId: "guild-1", guild });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.rolesDeleted).toBe(2);
+    expect(r1.delete).toHaveBeenCalled();
+    expect(r2.delete).toHaveBeenCalled();
+  });
+
+  it("clears Team Captain role assignments", async () => {
+    const captainRole = mockRole("captain-id", "Team Captain");
+    const member1 = mockMember("m1", ["captain-id"]);
+    const guild = mockGuild({ roles: [captainRole], members: [member1] });
+
+    const result = await resetQuiz({ db: "mock-db" as any, guildId: "guild-1", guild });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.captainRolesCleared).toBe(1);
+    expect(member1.roles.remove).toHaveBeenCalledWith(captainRole);
+  });
+
+  it("clears Teams role assignments", async () => {
+    const teamsRole = mockRole("teams-id", "Teams");
+    const member1 = mockMember("m1", ["teams-id"]);
+    const member2 = mockMember("m2", ["teams-id"]);
+    const guild = mockGuild({ roles: [teamsRole], members: [member1, member2] });
+
+    const result = await resetQuiz({ db: "mock-db" as any, guildId: "guild-1", guild });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.teamsRolesCleared).toBe(2);
+  });
+
+  it("does best-effort Firestore cleanup for active quiz", async () => {
+    mockListTeams.mockResolvedValue({
+      ok: true,
+      data: [{ name: "The Foxes" }, { name: "Quiz Masters" }],
+    });
+    const guild = mockGuild({ roles: [] });
+
+    const result = await resetQuiz({ db: "mock-db" as any, guildId: "guild-1", guild });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.firestoreTeamsDeleted).toBe(2);
+      expect(result.data.firestoreAliasesDeleted).toBe(true);
+      expect(result.data.firestoreMembersDeleted).toBe(true);
+    }
     expect(mockDeleteTeam).toHaveBeenCalledTimes(2);
+    expect(mockDeleteAllAliases).toHaveBeenCalled();
+    expect(mockDeleteAllMembers).toHaveBeenCalled();
   });
 
-  it("continues when a role or channel has already been deleted", async () => {
-    mockListTeams.mockResolvedValue({
-      ok: true,
-      data: [{ name: "The Foxes", textChannelId: "c1", voiceChannelId: "v1", roleId: "r1" }],
-    });
-    mockDeleteTeam.mockResolvedValue({ ok: true, data: undefined });
+  it("skips Firestore cleanup when quiz is ended", async () => {
+    mockGetQuiz.mockResolvedValue({ ok: true, data: { status: "ended" } });
+    const guild = mockGuild({ roles: [] });
 
-    const guild = mockGuild({ roles: [], channels: [] });
-
-    const result = await resetQuiz({
-      db: "mock-db" as any,
-      guildId: "guild-1",
-      quizDate: "2026-06-06",
-      guild,
-    });
+    const result = await resetQuiz({ db: "mock-db" as any, guildId: "guild-1", guild });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data.rolesDeleted).toBe(0);
-      expect(result.data.channelsDeleted).toBe(0);
-      expect(result.data.teamsDeleted).toBe(1);
+      expect(result.data.firestoreTeamsDeleted).toBe(0);
+      expect(result.data.firestoreAliasesDeleted).toBe(false);
     }
+    expect(mockDeleteTeam).not.toHaveBeenCalled();
   });
 
-  it("continues when role.delete() throws", async () => {
-    const failingRole = { id: "r1", name: "Team: Broken", delete: vi.fn().mockRejectedValue(new Error("Missing perms")) };
-    mockListTeams.mockResolvedValue({
-      ok: true,
-      data: [{ name: "Broken", textChannelId: "c1", voiceChannelId: "v1", roleId: "r1" }],
-    });
-    mockDeleteTeam.mockResolvedValue({ ok: true, data: undefined });
+  it("skips Firestore cleanup when no quiz session exists", async () => {
+    mockGetQuiz.mockResolvedValue({ ok: false, error: "not found" });
+    const guild = mockGuild({ roles: [] });
 
-    const guild = mockGuild({ roles: [failingRole], channels: [] });
-
-    const result = await resetQuiz({
-      db: "mock-db" as any,
-      guildId: "guild-1",
-      quizDate: "2026-06-06",
-      guild,
-    });
+    const result = await resetQuiz({ db: "mock-db" as any, guildId: "guild-1", guild });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.data.rolesDeleted).toBe(0);
-      expect(result.data.teamsDeleted).toBe(1);
-    }
+    if (result.ok) expect(result.data.firestoreTeamsDeleted).toBe(0);
   });
 
   it("continues when channel.delete() throws", async () => {
-    const failingChannel = { id: "c1", name: "broken", delete: vi.fn().mockRejectedValue(new Error("Missing perms")) };
-    mockListTeams.mockResolvedValue({
-      ok: true,
-      data: [{ name: "Broken", textChannelId: "c1", voiceChannelId: "v1", roleId: "r1" }],
-    });
-    mockDeleteTeam.mockResolvedValue({ ok: true, data: undefined });
+    const failCh = mockChannel("c1", "broken");
+    failCh.delete.mockRejectedValue(new Error("Missing perms"));
+    const guild = mockGuild({ categoryChildren: [failCh], roles: [] });
 
-    const guild = mockGuild({ roles: [], channels: [failingChannel] });
-
-    const result = await resetQuiz({
-      db: "mock-db" as any,
-      guildId: "guild-1",
-      quizDate: "2026-06-06",
-      guild,
-    });
+    const result = await resetQuiz({ db: "mock-db" as any, guildId: "guild-1", guild });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.data.channelsDeleted).toBe(0);
-      expect(result.data.teamsDeleted).toBe(1);
-    }
+    if (result.ok) expect(result.data.channelsDeleted).toBe(0);
   });
 
-  it("returns error when listTeams fails", async () => {
-    mockListTeams.mockResolvedValue({ ok: false, error: "db error" });
+  it("continues when role.delete() throws", async () => {
+    const failRole = mockRole("r1", "Team: Broken");
+    failRole.delete.mockRejectedValue(new Error("Missing perms"));
+    const guild = mockGuild({ roles: [failRole] });
 
-    const guild = mockGuild({ roles: [], channels: [] });
+    const result = await resetQuiz({ db: "mock-db" as any, guildId: "guild-1", guild });
 
-    const result = await resetQuiz({
-      db: "mock-db" as any,
-      guildId: "guild-1",
-      quizDate: "2026-06-06",
-      guild,
-    });
-
-    expect(result.ok).toBe(false);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.rolesDeleted).toBe(0);
   });
 });

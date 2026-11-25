@@ -17,9 +17,16 @@ vi.mock("../../src/integrations/firestore/scoreboard.js", () => ({
   addScoreboard: (...args: unknown[]) => mockAddScoreboard(...args),
 }));
 
+const mockGetQuiz = vi.fn();
+
+vi.mock("../../src/integrations/firestore/quiz.js", () => ({
+  getQuiz: (...args: unknown[]) => mockGetQuiz(...args),
+}));
+
 describe("generateScoreboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetQuiz.mockResolvedValue({ ok: true, data: { status: "active" } });
   });
 
   it("aggregates scores from multiple rounds", async () => {
@@ -53,10 +60,10 @@ describe("generateScoreboard", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data["Quiz Masters"].total).toBe(15);
-      expect(result.data["Quiz Masters"].rounds).toEqual([6, 9]);
-      expect(result.data["The Foxes"].total).toBe(13);
-      expect(result.data["The Foxes"].rounds).toEqual([8, 5]);
+      expect(result.data.scoreboard["Quiz Masters"].total).toBe(15);
+      expect(result.data.scoreboard["Quiz Masters"].rounds).toEqual([6, 9]);
+      expect(result.data.scoreboard["The Foxes"].total).toBe(13);
+      expect(result.data.scoreboard["The Foxes"].rounds).toEqual([8, 5]);
     }
   });
 
@@ -89,9 +96,9 @@ describe("generateScoreboard", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data["The Foxes"].total).toBe(13);
-      expect(result.data["The Foxes"].rounds).toEqual([8, 5]);
-      expect(result.data["teh foxes"]).toBeUndefined();
+      expect(result.data.scoreboard["The Foxes"].total).toBe(13);
+      expect(result.data.scoreboard["The Foxes"].rounds).toEqual([8, 5]);
+      expect(result.data.scoreboard["teh foxes"]).toBeUndefined();
     }
   });
 
@@ -165,7 +172,7 @@ describe("generateScoreboard", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data["The Foxes"].total).toBe(10);
+      expect(result.data.scoreboard["The Foxes"].total).toBe(10);
     }
   });
 
@@ -211,8 +218,8 @@ describe("generateScoreboard", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data["Quiz Masters"].rounds).toEqual([6, 0]);
-      expect(result.data["Quiz Masters"].total).toBe(6);
+      expect(result.data.scoreboard["Quiz Masters"].rounds).toEqual([6, 0]);
+      expect(result.data.scoreboard["Quiz Masters"].total).toBe(6);
     }
   });
 });

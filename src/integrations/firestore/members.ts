@@ -72,6 +72,22 @@ export async function checkMembersRegistered(
   return ok(conflicts);
 }
 
+export async function deleteAllMembers(
+  db: Firestore,
+  guildId: string,
+  quizDate: string,
+): Promise<Result<void>> {
+  const docRef = db.doc(membersDocPath(guildId, quizDate));
+  const snapshot = await docRef.get();
+
+  if (snapshot.exists) {
+    await docRef.delete();
+    logger.info({ path: membersDocPath(guildId, quizDate) }, "Firestore: deleted all members");
+  }
+
+  return ok(undefined);
+}
+
 export async function deleteTeamMembers(
   db: Firestore,
   guildId: string,

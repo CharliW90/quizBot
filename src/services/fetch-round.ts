@@ -4,6 +4,7 @@ import { err, type Result } from "../utils/result.js";
 import { getFormIds } from "../integrations/firestore/guild-config.js";
 import { storeRound } from "../integrations/firestore/rounds.js";
 import type { RoundData } from "../integrations/firestore/rounds.js";
+import { getAliases } from "../integrations/firestore/aliases.js";
 import { parseFormResponses } from "../integrations/forms/parser.js";
 import { validateFormStructure } from "../integrations/forms/validator.js";
 import { logger } from "../utils/logger.js";
@@ -47,9 +48,21 @@ export async function fetchRound(input: FetchRoundInput): Promise<Result<RoundDa
   const parsed = parseFormResponses(form, responsesResult.data, roundNumber);
   logger.info({ roundNumber, formId, teamCount: Object.keys(parsed.results).length }, "[fetch-round] Parsed form responses");
 
+  const aliasResult = await getAliases(db, guildId, quizDate);
+  const aliases = aliasResult.ok ? aliasResult.data : {};
+
+  const resolvedResponses: typeof parsed.results = {};
+  for (const [formName, response] of Object.entries(parsed.results)) {
+    const resolvedName = aliases[formName] ?? formName;
+    resolvedResponses[resolvedName] = response;
+    if (resolvedName !== formName) {
+      logger.info({ formName, resolvedName, roundNumber }, "[fetch-round] Auto-corrected team name via alias");
+    }
+  }
+
   return storeRound(db, guildId, quizDate, {
     roundNumber,
     formId,
-    responses: parsed.results,
+    responses: resolvedResponses,
   });
 }

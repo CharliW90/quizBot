@@ -8,19 +8,17 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import type { Command } from "../bot/types.js";
+import { resetQuiz, discoverQuizTeamCategory, discoverTeamRoles } from "../services/reset-quiz.js";
 import { getDb } from "../integrations/firestore/client.js";
-import { listTeams } from "../integrations/firestore/teams.js";
-import { resetQuiz } from "../services/reset-quiz.js";
 import { errorEmbed, successEmbed } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
-import { getQuizDate } from "../utils/quiz-date.js";
 
 const CONFIRMATION_TIMEOUT_MS = 60_000;
 
 const command: Command = {
   data: new SlashCommandBuilder()
     .setName("quiz-reset")
-    .setDescription("Delete all team roles, channels, and Firestore data for today's quiz")
+    .setDescription("Delete all team roles, channels, and quiz data from the server")
     .setDMPermission(false)
     .setDefaultMemberPermissions(
       PermissionFlagsBits.ManageChannels,
@@ -35,23 +33,37 @@ const command: Command = {
       return;
     }
 
-    const db = getDb();
-    const quizDate = getQuizDate();
+    const guild = interaction.guild;
+    const category = discoverQuizTeamCategory(guild);
+    const teamRoles = discoverTeamRoles(guild);
 
-    const teamsResult = await listTeams(db, interaction.guild.id, quizDate);
-    const teamCount = teamsResult.ok ? teamsResult.data.length : 0;
+    const channelNames: string[] = [];
+    if (category) {
+      for (const [, channel] of category.children.cache) {
+        channelNames.push(channel.name);
+      }
+    }
 
-    logger.info({ quizDate, teamCount, guild: interaction.guildId }, `[quiz-reset] Reset requested for ${quizDate} (${teamCount} teams)`);
-
-    if (teamCount === 0) {
+    if (channelNames.length === 0 && teamRoles.length === 0) {
       await interaction.reply({
-        embeds: [errorEmbed("Nothing to Reset", "No teams found for today's quiz.")],
+        embeds: [errorEmbed("Nothing to Reset", "No team channels or roles found on this server.")],
         flags: MessageFlags.Ephemeral,
       });
       return;
     }
 
-    const teamNames = teamsResult.ok ? teamsResult.data.map((t) => t.name).join(", ") : "";
+    const details: string[] = [];
+    if (channelNames.length > 0) {
+      details.push(`**${channelNames.length} channel${channelNames.length !== 1 ? "s" : ""}**: ${channelNames.join(", ")}`);
+    }
+    if (teamRoles.length > 0) {
+      details.push(`**${teamRoles.length} role${teamRoles.length !== 1 ? "s" : ""}**: ${teamRoles.map((r) => r.name.replace("Team: ", "")).join(", ")}`);
+    }
+
+    logger.info(
+      { channels: channelNames.length, roles: teamRoles.length, guild: interaction.guildId },
+      `[quiz-reset] Reset requested (${channelNames.length} channels, ${teamRoles.length} roles)`,
+    );
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
@@ -62,7 +74,7 @@ const command: Command = {
     );
 
     const confirmation = await interaction.reply({
-      content: `**CAUTION: Quiz Reset**\n\nThis will delete **${teamCount} teams** (${teamNames}) - their roles, channels, and Firestore data.\n\nThis cannot be undone.`,
+      content: `**CAUTION: Quiz Reset**\n\nThis will delete:\n${details.join("\n")}\n\nPlus Team Captain and Teams role assignments.\n\nThis cannot be undone.`,
       components: [row],
       flags: MessageFlags.Ephemeral,
     });
@@ -74,19 +86,19 @@ const command: Command = {
       });
 
       if (reply.customId === "cancel") {
-        logger.info({ quizDate }, "[quiz-reset] User cancelled");
+        logger.info("[quiz-reset] User cancelled");
         await interaction.editReply({ content: "Cancelled.", components: [] });
         return;
       }
 
-      logger.info({ quizDate }, "[quiz-reset] User confirmed reset");
+      logger.info("[quiz-reset] User confirmed reset");
       await interaction.editReply({ content: "Resetting...", components: [] });
 
+      const db = getDb();
       const result = await resetQuiz({
         db,
-        guildId: interaction.guild.id,
-        quizDate,
-        guild: interaction.guild,
+        guildId: guild.id,
+        guild,
       });
 
       if (!result.ok) {
@@ -97,19 +109,22 @@ const command: Command = {
         return;
       }
 
-      const { rolesDeleted, channelsDeleted, teamsDeleted } = result.data;
+      const { channelsDeleted, rolesDeleted, captainRolesCleared, teamsRolesCleared, firestoreTeamsDeleted } = result.data;
       logger.info(
-        { quizDate, rolesDeleted, channelsDeleted, teamsDeleted },
-        `[quiz-reset] Reset complete - ${teamsDeleted} teams, ${rolesDeleted} roles, ${channelsDeleted} channels deleted`,
+        { channelsDeleted, rolesDeleted, captainRolesCleared, teamsRolesCleared, firestoreTeamsDeleted },
+        "[quiz-reset] Reset complete",
       );
-      const description = [
-        `${teamsDeleted} team${teamsDeleted !== 1 ? "s" : ""} removed from Firestore`,
-        `${rolesDeleted} role${rolesDeleted !== 1 ? "s" : ""} deleted`,
+
+      const lines = [
         `${channelsDeleted} channel${channelsDeleted !== 1 ? "s" : ""} deleted`,
-      ].join("\n");
+        `${rolesDeleted} role${rolesDeleted !== 1 ? "s" : ""} deleted`,
+      ];
+      if (captainRolesCleared > 0) lines.push(`${captainRolesCleared} captain role${captainRolesCleared !== 1 ? "s" : ""} cleared`);
+      if (teamsRolesCleared > 0) lines.push(`${teamsRolesCleared} Teams role${teamsRolesCleared !== 1 ? "s" : ""} cleared`);
+      if (firestoreTeamsDeleted > 0) lines.push(`${firestoreTeamsDeleted} team${firestoreTeamsDeleted !== 1 ? "s" : ""} removed from Firestore`);
 
       await interaction.editReply({
-        embeds: [successEmbed("Quiz Reset Complete", description)],
+        embeds: [successEmbed("Quiz Reset Complete", lines.join("\n"))],
         components: [],
       });
     } catch (e: unknown) {

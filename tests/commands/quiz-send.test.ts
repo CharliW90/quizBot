@@ -13,6 +13,10 @@ vi.mock("../../src/integrations/firestore/rounds.js", () => ({
   listRounds: vi.fn(),
 }));
 
+vi.mock("../../src/integrations/firestore/quiz.js", () => ({
+  listQuizzes: vi.fn(),
+}));
+
 import { sendRound } from "../../src/services/send-round.js";
 import { listRounds } from "../../src/integrations/firestore/rounds.js";
 import command from "../../src/commands/quiz-send.js";
@@ -29,6 +33,7 @@ function mockInteraction(round: number) {
         if (name === "round") return round;
         return null;
       }),
+      getString: vi.fn(() => null),
     },
     deferReply: vi.fn(),
     editReply: vi.fn(),
@@ -51,6 +56,7 @@ describe("/quiz send", () => {
             { teamName: "Quiz Masters", formName: "Quiz Masters" },
           ],
           failures: [],
+          missingTeams: [],
         },
       });
 
@@ -75,6 +81,7 @@ describe("/quiz send", () => {
               reason: "Text channel no longer exists or bot cannot access it",
             },
           ],
+          missingTeams: [],
         },
       });
 
@@ -121,6 +128,7 @@ describe("/quiz send", () => {
         data: {
           successes: [],
           failures: [{ teamName: "The Foxes", reason: "Channel missing" }],
+          missingTeams: [],
         },
       });
 
@@ -137,6 +145,7 @@ describe("/quiz send", () => {
         data: {
           successes: [{ teamName: "The Foxes", formName: "The Foxes" }],
           failures: [{ teamName: "Quiz Masters", reason: "Channel missing" }],
+          missingTeams: [],
         },
       });
 
@@ -150,7 +159,7 @@ describe("/quiz send", () => {
     it("shows no-responses message when both successes and failures are empty", async () => {
       mockSendRound.mockResolvedValue({
         ok: true,
-        data: { successes: [], failures: [] },
+        data: { successes: [], failures: [], missingTeams: [] },
       });
 
       const interaction = mockInteraction(1);
@@ -167,7 +176,7 @@ describe("/quiz send", () => {
 
       const interaction = {
         guildId: "guild-1",
-        options: { getFocused: vi.fn(() => "") },
+        options: { getFocused: vi.fn(() => ({ name: "round", value: "" })), getString: vi.fn(() => null) },
         respond: vi.fn(),
       } as any;
 
@@ -188,7 +197,7 @@ describe("/quiz send", () => {
 
       const interaction = {
         guildId: "guild-1",
-        options: { getFocused: vi.fn(() => "1") },
+        options: { getFocused: vi.fn(() => ({ name: "round", value: "1" })), getString: vi.fn(() => null) },
         respond: vi.fn(),
       } as any;
 
@@ -224,7 +233,7 @@ describe("/quiz send", () => {
 
       const interaction = {
         guildId: "guild-1",
-        options: { getFocused: vi.fn(() => "") },
+        options: { getFocused: vi.fn(() => ({ name: "round", value: "" })), getString: vi.fn(() => null) },
         respond: vi.fn(),
       } as any;
 

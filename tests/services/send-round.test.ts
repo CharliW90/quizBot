@@ -461,6 +461,38 @@ describe("sendRound", () => {
     }
   });
 
+  it("reports registered teams that did not submit", async () => {
+    const oneTeamRound: RoundData = {
+      ...roundData,
+      responses: {
+        "The Foxes": { answers: [{ answer: "Paris", score: 2, correct: true }], score: 2 },
+      },
+    };
+
+    mockGetRound.mockResolvedValue({ ok: true, data: oneTeamRound });
+    mockGetAliases.mockResolvedValue({ ok: true, data: {} });
+    mockListTeams.mockResolvedValue({ ok: true, data: teams });
+    mockPublishRound.mockResolvedValue({ ok: true, data: undefined });
+
+    const ch1 = { send: vi.fn() };
+    const guild = mockGuild({ "channel-1": ch1 });
+
+    const result = await sendRound({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      roundNumber: 1,
+      guild,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.successes).toHaveLength(1);
+      expect(result.data.missingTeams).toHaveLength(1);
+      expect(result.data.missingTeams[0].teamName).toBe("Quiz Masters");
+    }
+  });
+
   it("returns error when round not found", async () => {
     mockGetRound.mockResolvedValue({ ok: false, error: "Round 5 not found" });
 

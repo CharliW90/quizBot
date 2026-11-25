@@ -9,6 +9,10 @@ vi.mock("../../src/services/generate-scoreboard.js", () => ({
   generateScoreboard: vi.fn(),
 }));
 
+vi.mock("../../src/integrations/firestore/quiz.js", () => ({
+  listQuizzes: vi.fn(),
+}));
+
 import { generateScoreboard } from "../../src/services/generate-scoreboard.js";
 import command from "../../src/commands/quiz-scoreboard.js";
 
@@ -18,6 +22,7 @@ function mockInteraction() {
   return {
     guild: { id: "guild-1" },
     guildId: "guild-1",
+    options: { getString: vi.fn(() => null) },
     channel: { send: vi.fn() },
     deferReply: vi.fn(),
     editReply: vi.fn(),
@@ -26,20 +31,27 @@ function mockInteraction() {
   } as any;
 }
 
+function scoreboardResult(scoreboard: Record<string, { rounds: number[]; total: number }>, roundNumbers: number[]) {
+  return {
+    ok: true as const,
+    data: { scoreboard, roundNumbers, savedToFirestore: true },
+  };
+}
+
 describe("/quiz scoreboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("generates scoreboard and posts leaderboard to channel", async () => {
-    mockGenerateScoreboard.mockResolvedValue({
-      ok: true,
-      data: {
+    mockGenerateScoreboard.mockResolvedValue(scoreboardResult(
+      {
         "The Foxes": { rounds: [8, 5], total: 13 },
         "Quiz Masters": { rounds: [6, 9], total: 15 },
         Underdogs: { rounds: [6, 9], total: 15 },
       },
-    });
+      [1, 2],
+    ));
 
     const interaction = mockInteraction();
     await command.execute(interaction);
@@ -53,14 +65,14 @@ describe("/quiz scoreboard", () => {
   });
 
   it("shows teams with same score as joint position", async () => {
-    mockGenerateScoreboard.mockResolvedValue({
-      ok: true,
-      data: {
+    mockGenerateScoreboard.mockResolvedValue(scoreboardResult(
+      {
         "The Foxes": { rounds: [10], total: 10 },
         "Quiz Masters": { rounds: [10], total: 10 },
         Underdogs: { rounds: [5], total: 5 },
       },
-    });
+      [1],
+    ));
 
     const interaction = mockInteraction();
     await command.execute(interaction);
@@ -69,6 +81,38 @@ describe("/quiz scoreboard", () => {
     const firstField = sentEmbed.fields[0].name;
     expect(firstField).toContain("joint");
     expect(firstField).toContain("1st");
+  });
+
+  it("shows round labels in score breakdown", async () => {
+    mockGenerateScoreboard.mockResolvedValue(scoreboardResult(
+      { "The Foxes": { rounds: [8, 5], total: 13 } },
+      [1, 2],
+    ));
+
+    const interaction = mockInteraction();
+    await command.execute(interaction);
+
+    const sentEmbed = interaction.channel.send.mock.calls[0][0].embeds[0].data;
+    const value = sentEmbed.fields[0].value;
+    expect(value).toContain("R1: 8");
+    expect(value).toContain("R2: 5");
+  });
+
+  it("shows historic footer when not saved to Firestore", async () => {
+    mockGenerateScoreboard.mockResolvedValue({
+      ok: true,
+      data: {
+        scoreboard: { "The Foxes": { rounds: [10], total: 10 } },
+        roundNumbers: [1],
+        savedToFirestore: false,
+      },
+    });
+
+    const interaction = mockInteraction();
+    await command.execute(interaction);
+
+    const sentEmbed = interaction.channel.send.mock.calls[0][0].embeds[0].data;
+    expect(sentEmbed.footer.text).toContain("Historic");
   });
 
   it("replies with error when generation fails", async () => {
@@ -98,12 +142,10 @@ describe("/quiz scoreboard", () => {
   });
 
   it("skips channel.send when channel lacks send method", async () => {
-    mockGenerateScoreboard.mockResolvedValue({
-      ok: true,
-      data: {
-        "The Foxes": { rounds: [10], total: 10 },
-      },
-    });
+    mockGenerateScoreboard.mockResolvedValue(scoreboardResult(
+      { "The Foxes": { rounds: [10], total: 10 } },
+      [1],
+    ));
 
     const interaction = mockInteraction();
     interaction.channel = {};

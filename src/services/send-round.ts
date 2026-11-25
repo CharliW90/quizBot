@@ -19,9 +19,14 @@ export interface SendFailure {
   reason: string;
 }
 
+export interface MissingTeam {
+  teamName: string;
+}
+
 export interface SendRoundResult {
   successes: SendSuccess[];
   failures: SendFailure[];
+  missingTeams: MissingTeam[];
 }
 
 interface SendRoundInput {
@@ -103,11 +108,26 @@ export async function sendRound(input: SendRoundInput): Promise<Result<SendRound
     }
   }
 
+  const sentTeamNames = new Set([
+    ...successes.map((s) => s.teamName),
+    ...failures.map((f) => f.teamName),
+  ]);
+  const missingTeams: MissingTeam[] = teamsResult.data
+    .filter((t) => !sentTeamNames.has(t.name))
+    .map((t) => ({ teamName: t.name }));
+
+  if (missingTeams.length > 0) {
+    logger.warn(
+      { roundNumber, missingTeams: missingTeams.map((m) => m.teamName) },
+      "[send-round] Registered teams did not receive results",
+    );
+  }
+
   if (successes.length > 0) {
     await publishRound(db, guildId, quizDate, roundNumber);
   }
 
-  logger.info({ roundNumber, successes: successes.length, failures: failures.length }, "[send-round] Send complete");
+  logger.info({ roundNumber, successes: successes.length, failures: failures.length, missing: missingTeams.length }, "[send-round] Send complete");
 
-  return ok({ successes, failures });
+  return ok({ successes, failures, missingTeams });
 }

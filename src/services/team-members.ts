@@ -91,8 +91,10 @@ export async function promoteToCaptain(
     ]);
     logger.info({ teamName: ctx.teamName, newCaptain: newCaptain.id, oldCaptain: currentCaptain.id }, "[team-members] Captain promoted");
 
+    const updatedMembers = getAllTeamMemberIds(ctx).filter((id) => id !== newCaptain.id);
     await updateTeam(ctx.db, ctx.guild.id, ctx.quizDate, ctx.teamName, {
       captain: newCaptain.id,
+      members: updatedMembers,
     });
 
     return ok(undefined);
