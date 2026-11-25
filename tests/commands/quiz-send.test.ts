@@ -236,8 +236,8 @@ describe("/quiz send", () => {
       mockListQuizzes.mockResolvedValue({
         ok: true,
         data: [
-          { date: "2026-06-01", status: "active" },
-          { date: "2026-05-01", status: "ended" },
+          { date: "2026-06-01", status: "active", createdAt: "2026-06-01T00:00:00Z" },
+          { date: "2026-05-01", status: "ended", createdAt: "2026-05-01T00:00:00Z" },
         ],
       });
 
@@ -278,8 +278,8 @@ describe("/quiz send", () => {
       mockListQuizzes.mockResolvedValue({
         ok: true,
         data: [
-          { date: "2026-06-01", status: "active" },
-          { date: "2026-07-01", status: "active" },
+          { date: "2026-06-01", status: "active", createdAt: "2026-06-01T00:00:00Z" },
+          { date: "2026-07-01", status: "active", createdAt: "2026-07-01T00:00:00Z" },
         ],
       });
 
