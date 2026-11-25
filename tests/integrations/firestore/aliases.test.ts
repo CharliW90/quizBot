@@ -3,6 +3,7 @@ import {
   setAlias,
   getAliases,
   lookupAlias,
+  deleteAllAliases,
   deleteAliasesForTeam,
 } from "../../../src/integrations/firestore/aliases.js";
 
@@ -20,6 +21,9 @@ function mockFirestore() {
     update: vi.fn(async (data: Record<string, unknown>) => {
       if (!(path in store)) throw new Error("NOT_FOUND");
       store[path] = { ...store[path], ...data };
+    }),
+    delete: vi.fn(async () => {
+      delete store[path];
     }),
   });
 
@@ -139,6 +143,26 @@ describe("aliases", () => {
       if (result.ok) {
         expect(result.data).toBe("Quizzly Bears!");
       }
+    });
+  });
+
+  describe("deleteAllAliases", () => {
+    it("deletes the entire aliases doc", async () => {
+      db._store["guilds/guild-1/quizzes/2026-06-06/maps/teamsAliases"] = {
+        "team-alpha": "Team Alpha",
+        "team-beta": "Team Beta",
+      };
+
+      const result = await deleteAllAliases(db as any, "guild-1", "2026-06-06");
+
+      expect(result.ok).toBe(true);
+      expect(db._store["guilds/guild-1/quizzes/2026-06-06/maps/teamsAliases"]).toBeUndefined();
+    });
+
+    it("succeeds when no aliases doc exists", async () => {
+      const result = await deleteAllAliases(db as any, "guild-1", "2026-06-06");
+
+      expect(result.ok).toBe(true);
     });
   });
 

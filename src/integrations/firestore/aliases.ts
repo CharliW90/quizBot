@@ -63,6 +63,22 @@ export async function lookupAlias(
   return ok(data[alias] ?? null);
 }
 
+export async function deleteAllAliases(
+  db: Firestore,
+  guildId: string,
+  quizDate: string,
+): Promise<Result<void>> {
+  const docRef = db.doc(aliasesDocPath(guildId, quizDate));
+  const snapshot = await docRef.get();
+
+  if (snapshot.exists) {
+    await docRef.delete();
+    logger.info({ path: aliasesDocPath(guildId, quizDate) }, "Firestore: deleted all aliases");
+  }
+
+  return ok(undefined);
+}
+
 export async function deleteAliasesForTeam(
   db: Firestore,
   guildId: string,

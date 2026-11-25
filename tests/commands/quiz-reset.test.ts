@@ -6,18 +6,16 @@ vi.mock("../../src/integrations/firestore/client.js", () => ({
 
 vi.mock("../../src/services/reset-quiz.js", () => ({
   resetQuiz: vi.fn(),
+  discoverQuizTeamCategory: vi.fn(),
+  discoverTeamRoles: vi.fn(),
 }));
 
-vi.mock("../../src/integrations/firestore/teams.js", () => ({
-  listTeams: vi.fn(),
-}));
-
-import { resetQuiz } from "../../src/services/reset-quiz.js";
-import { listTeams } from "../../src/integrations/firestore/teams.js";
+import { resetQuiz, discoverQuizTeamCategory, discoverTeamRoles } from "../../src/services/reset-quiz.js";
 import command from "../../src/commands/quiz-reset.js";
 
 const mockResetQuiz = vi.mocked(resetQuiz);
-const mockListTeams = vi.mocked(listTeams);
+const mockDiscoverCategory = vi.mocked(discoverQuizTeamCategory);
+const mockDiscoverRoles = vi.mocked(discoverTeamRoles);
 
 function mockInteraction(customId: string) {
   const reply = {
@@ -38,35 +36,27 @@ function mockInteraction(customId: string) {
 describe("/quiz reset", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListTeams.mockResolvedValue({
-      ok: true,
-      data: [
-        {
-          name: "The Foxes",
-          captain: "",
-          members: [],
-          roleId: "r1",
-          textChannelId: "c1",
-          voiceChannelId: "v1",
-          color: "",
-        },
-        {
-          name: "Quiz Masters",
-          captain: "",
-          members: [],
-          roleId: "r2",
-          textChannelId: "c2",
-          voiceChannelId: "v2",
-          color: "",
-        },
-      ],
-    });
+    mockDiscoverCategory.mockReturnValue({
+      children: { cache: new Map([["c1", { name: "the-foxes" }], ["c2", { name: "quiz-masters" }]]) },
+    } as any);
+    mockDiscoverRoles.mockReturnValue([
+      { id: "r1", name: "Team: The Foxes" },
+      { id: "r2", name: "Team: Quiz Masters" },
+    ] as any);
   });
 
-  it("shows team count in confirmation and resets on confirm", async () => {
+  it("shows channel and role counts in confirmation and resets on confirm", async () => {
     mockResetQuiz.mockResolvedValue({
       ok: true,
-      data: { rolesDeleted: 2, channelsDeleted: 4, teamsDeleted: 2 },
+      data: {
+        channelsDeleted: 4,
+        rolesDeleted: 2,
+        captainRolesCleared: 2,
+        teamsRolesCleared: 4,
+        firestoreTeamsDeleted: 2,
+        firestoreAliasesDeleted: true,
+        firestoreMembersDeleted: true,
+      },
     });
 
     const interaction = mockInteraction("confirm");
@@ -75,7 +65,8 @@ describe("/quiz reset", () => {
     await command.execute(interaction);
 
     const replyContent = interaction.reply.mock.calls[0][0].content;
-    expect(replyContent).toContain("2 teams");
+    expect(replyContent).toContain("2 channels");
+    expect(replyContent).toContain("2 roles");
 
     expect(mockResetQuiz).toHaveBeenCalled();
     const lastEdit = interaction.editReply.mock.calls.at(-1)[0];
@@ -117,8 +108,9 @@ describe("/quiz reset", () => {
     expect(mockResetQuiz).not.toHaveBeenCalled();
   });
 
-  it("replies with nothing to reset when no teams exist", async () => {
-    mockListTeams.mockResolvedValue({ ok: true, data: [] });
+  it("replies with nothing to reset when no channels or roles found", async () => {
+    mockDiscoverCategory.mockReturnValue(null);
+    mockDiscoverRoles.mockReturnValue([]);
 
     const interaction = mockInteraction("confirm");
     await command.execute(interaction);
@@ -141,40 +133,6 @@ describe("/quiz reset", () => {
 
     const lastEdit = interaction.editReply.mock.calls.at(-1)[0];
     expect(lastEdit.embeds[0].data.title).toContain("Error");
-  });
-
-  it("treats listTeams error as zero teams", async () => {
-    mockListTeams.mockResolvedValue({ ok: false, error: "Firestore error" });
-
-    const interaction = mockInteraction("confirm");
-    await command.execute(interaction);
-
-    expect(interaction.reply).toHaveBeenCalledWith(
-      expect.objectContaining({
-        embeds: [expect.objectContaining({ data: expect.objectContaining({ title: "Nothing to Reset" }) })],
-      }),
-    );
-  });
-
-  it("uses singular grammar for 1 team, 1 role, 1 channel", async () => {
-    mockResetQuiz.mockResolvedValue({
-      ok: true,
-      data: { rolesDeleted: 1, channelsDeleted: 1, teamsDeleted: 1 },
-    });
-
-    const interaction = mockInteraction("confirm");
-    interaction._reply.awaitMessageComponent.mockResolvedValue({ customId: "confirm" });
-
-    await command.execute(interaction);
-
-    const lastEdit = interaction.editReply.mock.calls.at(-1)[0];
-    const desc = lastEdit.embeds[0].data.description;
-    expect(desc).toContain("1 team removed");
-    expect(desc).toContain("1 role deleted");
-    expect(desc).toContain("1 channel deleted");
-    expect(desc).not.toContain("teams");
-    expect(desc).not.toContain("roles");
-    expect(desc).not.toContain("channels");
   });
 
   it("handles unexpected errors in catch block", async () => {

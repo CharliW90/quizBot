@@ -3,6 +3,7 @@ import { ok, err, type Result } from "../utils/result.js";
 import { listRounds } from "../integrations/firestore/rounds.js";
 import { getAliases } from "../integrations/firestore/aliases.js";
 import { addScoreboard } from "../integrations/firestore/scoreboard.js";
+import { getQuiz } from "../integrations/firestore/quiz.js";
 import type { ScoreboardEntry } from "../integrations/firestore/scoreboard.js";
 import { logger } from "../utils/logger.js";
 
@@ -12,9 +13,15 @@ interface GenerateScoreboardInput {
   quizDate: string;
 }
 
+export interface ScoreboardResult {
+  scoreboard: Record<string, ScoreboardEntry>;
+  roundNumbers: number[];
+  savedToFirestore: boolean;
+}
+
 export async function generateScoreboard(
   input: GenerateScoreboardInput,
-): Promise<Result<Record<string, ScoreboardEntry>>> {
+): Promise<Result<ScoreboardResult>> {
   const { db, guildId, quizDate } = input;
 
   const roundsResult = await listRounds(db, guildId, quizDate);
@@ -37,6 +44,7 @@ export async function generateScoreboard(
   }
 
   const scoreboard: Record<string, ScoreboardEntry> = {};
+  const roundNumbers = rounds.map((r) => r.roundNumber);
 
   for (const teamName of allTeams) {
     const roundScores: number[] = [];
@@ -61,7 +69,14 @@ export async function generateScoreboard(
 
   logger.info({ teamCount: allTeams.size, roundCount: rounds.length }, "[scoreboard] Generated scoreboard");
 
-  await addScoreboard(db, guildId, quizDate, scoreboard);
+  let savedToFirestore = false;
+  const quizResult = await getQuiz(db, guildId, quizDate);
+  if (quizResult.ok && quizResult.data.status !== "ended") {
+    await addScoreboard(db, guildId, quizDate, scoreboard);
+    savedToFirestore = true;
+  } else {
+    logger.info({ quizDate }, "[scoreboard] Quiz is ended or not found - skipping Firestore save");
+  }
 
-  return ok(scoreboard);
+  return ok({ scoreboard, roundNumbers, savedToFirestore });
 }

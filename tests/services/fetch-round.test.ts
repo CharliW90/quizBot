@@ -14,6 +14,12 @@ vi.mock("../../src/integrations/firestore/rounds.js", () => ({
   storeRound: (...args: unknown[]) => mockStoreRound(...args),
 }));
 
+const mockGetAliases = vi.fn();
+
+vi.mock("../../src/integrations/firestore/aliases.js", () => ({
+  getAliases: (...args: unknown[]) => mockGetAliases(...args),
+}));
+
 const mockForm = {
   items: [
     { questionItem: { question: { questionId: "q-team" } } },
@@ -65,6 +71,7 @@ function makeMockFormsClient() {
 describe("fetchRound", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAliases.mockResolvedValue({ ok: true, data: {} });
   });
 
   it("fetches, parses, and stores round data", async () => {
@@ -209,5 +216,28 @@ describe("fetchRound", () => {
     expect(storeCall.responses["The Foxes"]).toBeDefined();
     expect(storeCall.responses["The Foxes"].score).toBe(2);
     expect(storeCall.responses["The Foxes"].answers).toHaveLength(2);
+  });
+
+  it("applies known aliases when storing responses", async () => {
+    mockGetFormIds.mockResolvedValue({ ok: true, data: { "1": "form-abc" } });
+    mockListResponses.mockResolvedValue({ ok: true, data: mockResponses });
+    mockGetForm.mockResolvedValue(mockForm);
+    mockGetAliases.mockResolvedValue({ ok: true, data: { "The Foxes": "Corrected Foxes" } });
+    mockStoreRound.mockResolvedValue({
+      ok: true,
+      data: { roundNumber: 1, formId: "form-abc", responses: {}, fetchedAt: "", publishedAt: null, history: [] },
+    });
+
+    await fetchRound({
+      db: "mock-db" as any,
+      guildId: "guild-1",
+      quizDate: "2026-06-06",
+      roundNumber: 1,
+      formsClient: makeMockFormsClient() as any,
+    });
+
+    const storeCall = mockStoreRound.mock.calls[0][3];
+    expect(storeCall.responses["Corrected Foxes"]).toBeDefined();
+    expect(storeCall.responses["The Foxes"]).toBeUndefined();
   });
 });
