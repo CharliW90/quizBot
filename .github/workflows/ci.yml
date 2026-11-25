@@ -26,6 +26,8 @@ jobs:
 
       - run: npm run build
 
+      - run: npm run check:imports
+
       - run: npm run test:coverage
 
   integration:
