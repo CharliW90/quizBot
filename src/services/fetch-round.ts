@@ -33,7 +33,7 @@ export async function fetchRound(input: FetchRoundInput): Promise<Result<RoundDa
   const formId = configResult.data[String(roundNumber)];
   if (!formId) {
     logger.error({ roundNumber }, `[fetch-round] No form ID configured for round ${roundNumber}`);
-    return err(`No form configured for round ${roundNumber}. Run /quiz-setup first.`);
+    return err(`No form configured for round ${roundNumber}. Run /setup first.`);
   }
 
   logger.info({ roundNumber, formId }, `[fetch-round] Fetching form ${formId}`);

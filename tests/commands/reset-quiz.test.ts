@@ -11,7 +11,7 @@ vi.mock("../../src/services/reset-quiz.js", () => ({
 }));
 
 import { resetQuiz, discoverQuizTeamCategory, discoverTeamRoles } from "../../src/services/reset-quiz.js";
-import command from "../../src/commands/quiz-reset.js";
+import command from "../../src/commands/reset-quiz.js";
 
 const mockResetQuiz = vi.mocked(resetQuiz);
 const mockDiscoverCategory = vi.mocked(discoverQuizTeamCategory);
@@ -33,7 +33,7 @@ function mockInteraction(customId: string) {
   } as any;
 }
 
-describe("/quiz reset", () => {
+describe("/reset-quiz", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDiscoverCategory.mockReturnValue({

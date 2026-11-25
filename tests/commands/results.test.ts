@@ -20,7 +20,7 @@ vi.mock("../../src/integrations/firestore/quiz.js", () => ({
 import { sendRound } from "../../src/services/send-round.js";
 import { listRounds } from "../../src/integrations/firestore/rounds.js";
 import { listQuizzes } from "../../src/integrations/firestore/quiz.js";
-import command from "../../src/commands/quiz-send.js";
+import command from "../../src/commands/results.js";
 
 const mockSendRound = vi.mocked(sendRound);
 const mockListRounds = vi.mocked(listRounds);
@@ -43,7 +43,7 @@ function mockInteraction(round: number) {
   } as any;
 }
 
-describe("/quiz send", () => {
+describe("/results", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

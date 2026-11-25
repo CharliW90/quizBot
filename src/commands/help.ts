@@ -54,38 +54,38 @@ const commands: CommandEntry[] = [
     admin: true,
   },
   {
-    name: "quiz-setup",
+    name: "setup",
     summary: "Link a Google Form to a round",
-    usage: "/quiz-setup <round> <form-id>",
+    usage: "/setup <round> <form-id>",
     detail:
       "The form ID is the long string in the Google Form URL. " +
       "Rounds are numbered from 1. Run this once per round before the quiz starts.",
     admin: true,
   },
   {
-    name: "quiz-fetch",
+    name: "fetch-responses",
     summary: "Fetch responses from a form",
-    usage: "/quiz-fetch <round>",
+    usage: "/fetch-responses <round>",
     detail:
       "Pulls answers from the linked Google Form and stores them. " +
       "Safe to re-run - picks up late submissions without losing earlier data.",
     admin: true,
   },
   {
-    name: "quiz-send",
+    name: "results",
     summary: "Send results to team channels",
-    usage: "/quiz-send <round> [date]",
+    usage: "/results <round> [date]",
     detail:
       "Posts each team's answers and scores to their private channel. " +
       "Defaults to today if no date given. " +
       "Teams that didn't submit are flagged. " +
-      "Use /quiz-correct first if there are name typos.",
+      "Use /correction first if there are name typos.",
     admin: true,
   },
   {
-    name: "quiz-scoreboard",
+    name: "scores",
     summary: "Post the leaderboard",
-    usage: "/quiz-scoreboard [date]",
+    usage: "/scores [date]",
     detail:
       "Calculates cumulative scores across all fetched rounds and " +
       "posts the leaderboard to the current channel. Visible to everyone. " +
@@ -93,9 +93,9 @@ const commands: CommandEntry[] = [
     admin: true,
   },
   {
-    name: "quiz-correct",
+    name: "correction",
     summary: "Fix a team name typo",
-    usage: "/quiz-correct <incorrect> <correct>",
+    usage: "/correction <incorrect> <correct>",
     detail:
       "Fixes a misspelled team name in form responses. " +
       "Updates all stored rounds and saves an alias so future fetches auto-correct. " +
@@ -103,19 +103,19 @@ const commands: CommandEntry[] = [
     admin: true,
   },
   {
-    name: "quiz-end",
+    name: "end-quiz",
     summary: "End a quiz session",
-    usage: "/quiz-end [date]",
+    usage: "/end-quiz [date]",
     detail:
       "Closes a quiz session. No more fetches or sends after this. " +
       "Defaults to today if no date given. Warns if no scoreboard has been generated yet. " +
-      "Run this before /quiz-reset if you want to preserve final scores.",
+      "Run this before /reset-quiz if you want to preserve final scores.",
     admin: true,
   },
   {
-    name: "quiz-reset",
+    name: "reset-quiz",
     summary: "Wipe all teams and quiz data",
-    usage: "/quiz-reset",
+    usage: "/reset-quiz",
     detail:
       "Nuclear option. Scans the server for team roles and channels and deletes them all. " +
       "Also clears Firestore data for today's active quiz. " +

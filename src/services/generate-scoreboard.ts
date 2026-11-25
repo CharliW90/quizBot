@@ -29,7 +29,7 @@ export async function generateScoreboard(
 
   const rounds = roundsResult.data.sort((a, b) => a.roundNumber - b.roundNumber);
   if (rounds.length === 0) {
-    return err("No rounds fetched yet - use /quiz-fetch first");
+    return err("No rounds fetched yet - use /fetch-responses first");
   }
 
   const aliasResult = await getAliases(db, guildId, quizDate);

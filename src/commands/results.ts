@@ -17,7 +17,7 @@ import { getQuizDate } from "../utils/quiz-date.js";
 
 const command: Command = {
   data: new SlashCommandBuilder()
-    .setName("quiz-send")
+    .setName("results")
     .setDescription("Send stored round results to team channels")
     .setDMPermission(false)
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
@@ -97,7 +97,7 @@ const command: Command = {
     const roundNumber = interaction.options.getInteger("round", true);
     const quizDate = interaction.options.getString("date") ?? getQuizDate();
 
-    logger.info({ roundNumber, quizDate, guild: interaction.guildId }, `[quiz-send] Sending round ${roundNumber} for ${quizDate}`);
+    logger.info({ roundNumber, quizDate, guild: interaction.guildId }, `[results] Sending round ${roundNumber} for ${quizDate}`);
 
     const db = getDb();
 
@@ -117,7 +117,7 @@ const command: Command = {
     const { successes, failures, missingTeams } = result.data;
     logger.info(
       { roundNumber, successes: successes.length, failures: failures.length, missing: missingTeams.length },
-      `[quiz-send] Round ${roundNumber} sent`,
+      `[results] Round ${roundNumber} sent`,
     );
 
     const embed = new EmbedBuilder()

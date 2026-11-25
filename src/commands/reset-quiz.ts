@@ -17,7 +17,7 @@ const CONFIRMATION_TIMEOUT_MS = 60_000;
 
 const command: Command = {
   data: new SlashCommandBuilder()
-    .setName("quiz-reset")
+    .setName("reset-quiz")
     .setDescription("Delete all team roles, channels, and quiz data from the server")
     .setDMPermission(false)
     .setDefaultMemberPermissions(
@@ -62,7 +62,7 @@ const command: Command = {
 
     logger.info(
       { channels: channelNames.length, roles: teamRoles.length, guild: interaction.guildId },
-      `[quiz-reset] Reset requested (${channelNames.length} channels, ${teamRoles.length} roles)`,
+      `[reset-quiz] Reset requested (${channelNames.length} channels, ${teamRoles.length} roles)`,
     );
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -86,12 +86,12 @@ const command: Command = {
       });
 
       if (reply.customId === "cancel") {
-        logger.info("[quiz-reset] User cancelled");
+        logger.info("[reset-quiz] User cancelled");
         await interaction.editReply({ content: "Cancelled.", components: [] });
         return;
       }
 
-      logger.info("[quiz-reset] User confirmed reset");
+      logger.info("[reset-quiz] User confirmed reset");
       await interaction.editReply({ content: "Resetting...", components: [] });
 
       const db = getDb();
@@ -112,7 +112,7 @@ const command: Command = {
       const { channelsDeleted, rolesDeleted, captainRolesCleared, teamsRolesCleared, firestoreTeamsDeleted } = result.data;
       logger.info(
         { channelsDeleted, rolesDeleted, captainRolesCleared, teamsRolesCleared, firestoreTeamsDeleted },
-        "[quiz-reset] Reset complete",
+        "[reset-quiz] Reset complete",
       );
 
       const lines = [

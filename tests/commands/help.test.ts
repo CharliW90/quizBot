@@ -68,13 +68,13 @@ describe("/help", () => {
       await command.execute(interaction);
       const content = interaction.reply.mock.calls[0][0].content;
       expect(content).not.toContain("/delete-team");
-      expect(content).not.toContain("/quiz-setup");
-      expect(content).not.toContain("/quiz-fetch");
-      expect(content).not.toContain("/quiz-send");
-      expect(content).not.toContain("/quiz-scoreboard");
-      expect(content).not.toContain("/quiz-correct");
-      expect(content).not.toContain("/quiz-end");
-      expect(content).not.toContain("/quiz-reset");
+      expect(content).not.toContain("/setup");
+      expect(content).not.toContain("/fetch-responses");
+      expect(content).not.toContain("/results");
+      expect(content).not.toContain("/scores");
+      expect(content).not.toContain("/correction");
+      expect(content).not.toContain("/end-quiz");
+      expect(content).not.toContain("/reset-quiz");
     });
 
     it("shows all commands for admin", async () => {
@@ -83,8 +83,8 @@ describe("/help", () => {
       const content = interaction.reply.mock.calls[0][0].content;
       expect(content).toContain("/register");
       expect(content).toContain("/delete-team");
-      expect(content).toContain("/quiz-setup");
-      expect(content).toContain("/quiz-reset");
+      expect(content).toContain("/setup");
+      expect(content).toContain("/reset-quiz");
     });
 
     it("shows version header", async () => {
@@ -104,15 +104,15 @@ describe("/help", () => {
     });
 
     it("shows admin command detail for admin", async () => {
-      const interaction = mockInteraction(true, "quiz-setup");
+      const interaction = mockInteraction(true, "setup");
       await command.execute(interaction);
       const content = interaction.reply.mock.calls[0][0].content;
-      expect(content).toContain("/quiz-setup");
+      expect(content).toContain("/setup");
       expect(content).toContain("form ID");
     });
 
     it("rejects admin command for non-admin", async () => {
-      const interaction = mockInteraction(false, "quiz-setup");
+      const interaction = mockInteraction(false, "setup");
       await command.execute(interaction);
       const content = interaction.reply.mock.calls[0][0].content;
       expect(content).toContain("Unknown command");
@@ -134,7 +134,7 @@ describe("/help", () => {
       const names = choices.map((c: { name: string }) => c.name);
       expect(names).toContain("register");
       expect(names).toContain("leave");
-      expect(names).not.toContain("quiz-setup");
+      expect(names).not.toContain("setup");
       expect(names).not.toContain("delete-team");
     });
 
@@ -144,16 +144,18 @@ describe("/help", () => {
       const choices = interaction.respond.mock.calls[0][0];
       const names = choices.map((c: { name: string }) => c.name);
       expect(names).toContain("register");
-      expect(names).toContain("quiz-setup");
+      expect(names).toContain("setup");
       expect(names).toContain("delete-team");
     });
 
     it("filters by typed text", async () => {
-      const interaction = mockAutocomplete(true, "quiz");
+      const interaction = mockAutocomplete(true, "res");
       await command.autocomplete!(interaction);
       const choices = interaction.respond.mock.calls[0][0];
       const names = choices.map((c: { name: string }) => c.name);
-      expect(names.every((n: string) => n.includes("quiz"))).toBe(true);
+      expect(names.every((n: string) => n.includes("res"))).toBe(true);
+      expect(names).toContain("results");
+      expect(names).toContain("reset-quiz");
       expect(names).not.toContain("register");
     });
   });
