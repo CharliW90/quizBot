@@ -164,6 +164,36 @@ describe("parseV3Round", () => {
     expect(result.responses["test team"].answers).toEqual([]);
   });
 
+  it("handles missing current field gracefully", () => {
+    const v3 = { published: true, current: undefined };
+    const result = parseV3Round("Round 1", v3);
+
+    expect(result.responses).toEqual({});
+    expect(result.roundNumber).toBe(1);
+  });
+
+  it("handles missing teams/embeds arrays in current", () => {
+    const v3 = { published: false, current: {} };
+    const result = parseV3Round("Round 1", v3);
+
+    expect(result.responses).toEqual({});
+    expect(result.publishedAt).toBeNull();
+  });
+
+  it("handles embed with missing fields array", () => {
+    const v3 = {
+      published: true,
+      current: {
+        teams: ["test team"],
+        embeds: [{ author: { name: "Round 1" }, color: 0 }],
+      },
+    };
+    const result = parseV3Round("Round 1", v3);
+
+    expect(result.responses["test team"].score).toBe(0);
+    expect(result.responses["test team"].answers).toEqual([]);
+  });
+
   it("preserves history from V3 as-is", () => {
     const withHistory = {
       ...V3_ROUND,
