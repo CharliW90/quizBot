@@ -112,6 +112,50 @@ describe("parseV3Team", () => {
     expect(result.registeredAt! <= after).toBe(true);
   });
 
+  it("uses 'unknown' when roles or teamRole is missing", () => {
+    const v3 = { ...V3_TEAM, roles: undefined };
+    const result = parseV3Team(v3);
+
+    expect(result.roleId).toBe("unknown");
+  });
+
+  it("uses 'unknown' when captain is missing", () => {
+    const v3 = { ...V3_TEAM, captain: undefined };
+    const result = parseV3Team(v3);
+
+    expect(result.captain).toBe("unknown");
+    expect(result.members[0]).toBe("unknown");
+  });
+
+  it("uses 'unknown' when channels are missing", () => {
+    const v3 = { ...V3_TEAM, channels: undefined };
+    const result = parseV3Team(v3);
+
+    expect(result.textChannelId).toBe("unknown");
+    expect(result.voiceChannelId).toBe("unknown");
+  });
+
+  it("defaults to empty members array when members field is missing", () => {
+    const v3 = { ...V3_TEAM, members: undefined };
+    const result = parseV3Team(v3);
+
+    expect(result.members).toEqual(["563354282741727269"]);
+  });
+
+  it("uses default blurple when settledColour is missing", () => {
+    const v3 = { ...V3_TEAM, settledColour: undefined };
+    const result = parseV3Team(v3);
+
+    expect(result.color).toBe("7289da");
+  });
+
+  it("uses 'unknown' when teamName is missing", () => {
+    const v3 = { ...V3_TEAM, teamName: undefined };
+    const result = parseV3Team(v3);
+
+    expect(result.name).toBe("unknown");
+  });
+
   it("deduplicates members when captain is also in members array", () => {
     const v3 = {
       ...V3_TEAM,

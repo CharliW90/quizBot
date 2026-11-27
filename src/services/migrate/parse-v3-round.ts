@@ -8,14 +8,14 @@ interface V3Field {
 interface V3Embed {
   author?: { name?: string };
   color?: number;
-  fields: V3Field[];
+  fields?: V3Field[];
 }
 
 export interface V3Round {
-  published: boolean;
-  current: {
-    teams: string[];
-    embeds: V3Embed[];
+  published?: boolean;
+  current?: {
+    teams?: string[];
+    embeds?: V3Embed[];
   };
   history?: unknown[];
 }
@@ -26,8 +26,9 @@ function parseRoundNumber(docName: string): number {
 }
 
 function parseEmbed(embed: V3Embed): TeamResponse {
-  const questionFields = embed.fields.filter((f) => f.name.startsWith("Question"));
-  const totalField = embed.fields.find((f) => f.name === "Total Score");
+  const fields = embed.fields ?? [];
+  const questionFields = fields.filter((f) => f.name.startsWith("Question"));
+  const totalField = fields.find((f) => f.name === "Total Score");
 
   const totalScore = totalField ? parseInt(totalField.value.split("/")[0].trim(), 10) : 0;
 
@@ -54,10 +55,12 @@ function parseEmbed(embed: V3Embed): TeamResponse {
 
 export function parseV3Round(docName: string, v3: V3Round): RoundData {
   const responses: Record<string, TeamResponse> = {};
+  const teams = v3.current?.teams ?? [];
+  const embeds = v3.current?.embeds ?? [];
 
-  for (let i = 0; i < v3.current.teams.length; i++) {
-    const teamName = v3.current.teams[i];
-    const embed = v3.current.embeds[i];
+  for (let i = 0; i < teams.length; i++) {
+    const teamName = teams[i];
+    const embed = embeds[i];
     if (embed) {
       responses[teamName] = parseEmbed(embed);
     }
