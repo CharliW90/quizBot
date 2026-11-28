@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseV3Round } from "../../../src/services/migrate/parse-v3-round.js";
+import { parseV3Round, validateV3Round } from "../../../src/services/migrate/parse-v3-round.js";
 
 const V3_ROUND = {
   published: true,
@@ -201,5 +201,22 @@ describe("parseV3Round", () => {
     };
     const result = parseV3Round("Round 1", withHistory);
     expect(result.history).toEqual([]);
+  });
+});
+
+describe("validateV3Round", () => {
+  it("returns empty array for complete round", () => {
+    expect(validateV3Round(V3_ROUND)).toEqual([]);
+  });
+
+  it("flags missing current field", () => {
+    const warnings = validateV3Round({});
+    expect(warnings).toContain("no current data");
+  });
+
+  it("flags missing teams and embeds in current", () => {
+    const warnings = validateV3Round({ current: {} });
+    expect(warnings).toContain("no teams");
+    expect(warnings).toContain("no embeds");
   });
 });

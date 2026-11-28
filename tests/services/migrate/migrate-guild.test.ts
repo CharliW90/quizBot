@@ -329,6 +329,119 @@ describe("migrateGuild", () => {
     }
   });
 
+  // --- Empty quiz skip ---
+
+  it("skips quiz dates with no teams or rounds", async () => {
+    const { db, store } = mockFirestore({
+      ...fullV3Data(),
+      [`Servers/${GUILD_ID}/Quizzes/${QUIZ_DATE_2}`]: V3_QUIZ_2,
+    });
+
+    const result = await migrateGuild(db, GUILD_ID);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.data.quizzesMigrated).toBe(1);
+    expect(store[`guilds/${GUILD_ID}/quizzes/${QUIZ_DATE_2}`]).toBeUndefined();
+  });
+
+  // --- Dry run ---
+
+  it("dry run returns quiz details without writing", async () => {
+    const { db, store } = mockFirestore(fullV3Data());
+
+    const result = await migrateGuild(db, GUILD_ID, true);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.data.quizDetails).toBeDefined();
+    expect(result.data.quizDetails!.length).toBe(1);
+    expect(result.data.quizDetails![0].date).toBe(QUIZ_DATE_1);
+    expect(result.data.quizDetails![0].status).toBe("ok");
+    expect(result.data.quizDetails![0].teamCount).toBe(1);
+    expect(result.data.quizDetails![0].roundCount).toBe(1);
+
+    expect(store[`guilds/${GUILD_ID}/quizzes/${QUIZ_DATE_1}`]).toBeUndefined();
+  });
+
+  it("dry run marks empty quizzes as skip", async () => {
+    const { db } = mockFirestore({
+      ...fullV3Data(),
+      [`Servers/${GUILD_ID}/Quizzes/${QUIZ_DATE_2}`]: V3_QUIZ_2,
+    });
+
+    const result = await migrateGuild(db, GUILD_ID, true);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const skipped = result.data.quizDetails!.find((q) => q.date === QUIZ_DATE_2);
+    expect(skipped).toBeDefined();
+    expect(skipped!.status).toBe("skip");
+  });
+
+  it("dry run detects teams with missing fields", async () => {
+    const { db } = mockFirestore({
+      [`Servers/${GUILD_ID}/Quizzes/${QUIZ_DATE_1}`]: V3_QUIZ,
+      [`Servers/${GUILD_ID}/Quizzes/${QUIZ_DATE_1}/Teams/broken team`]: {
+        teamName: "broken team",
+      },
+      [`Servers/${GUILD_ID}/Quizzes/${QUIZ_DATE_1}/Rounds/Round 1`]: V3_ROUND_DOC,
+      [`Users/563354282741727269`]: V3_USER_1,
+    });
+
+    const result = await migrateGuild(db, GUILD_ID, true);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const detail = result.data.quizDetails![0];
+    expect(detail.status).toBe("warning");
+    expect(detail.warnings.some((w) => w.includes("roleId missing"))).toBe(true);
+  });
+
+  it("dry run detects would-overwrite when V4 data exists", async () => {
+    const data = {
+      ...fullV3Data(),
+      [`guilds/${GUILD_ID}/quizzes/${QUIZ_DATE_1}`]: { status: "active", createdAt: "existing" },
+    };
+    const { db } = mockFirestore(data);
+
+    const result = await migrateGuild(db, GUILD_ID, true);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const detail = result.data.quizDetails![0];
+    expect(detail.status).toBe("warning");
+    expect(detail.wouldOverwrite).toBe(true);
+    expect(detail.warnings.some((w) => w.includes("overwrite"))).toBe(true);
+  });
+
+  it("dry run returns error when no V3 quizzes exist", async () => {
+    const { db } = mockFirestore({});
+
+    const result = await migrateGuild(db, GUILD_ID, true);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("No V3 quiz data found");
+    }
+  });
+
+  it("dry run counts users", async () => {
+    const { db } = mockFirestore(fullV3Data());
+
+    const result = await migrateGuild(db, GUILD_ID, true);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.data.usersMigrated).toBe(2);
+  });
+
   // --- Result counts ---
 
   it("returns correct counts in MigrateResult", async () => {

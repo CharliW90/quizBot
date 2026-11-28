@@ -53,6 +53,16 @@ function parseEmbed(embed: V3Embed): TeamResponse {
   return { answers, score: totalScore };
 }
 
+export function validateV3Round(v3: V3Round): string[] {
+  const warnings: string[] = [];
+  if (!v3.current) warnings.push("no current data");
+  else {
+    if (!v3.current.teams?.length) warnings.push("no teams");
+    if (!v3.current.embeds?.length) warnings.push("no embeds");
+  }
+  return warnings;
+}
+
 export function parseV3Round(docName: string, v3: V3Round): RoundData {
   const responses: Record<string, TeamResponse> = {};
   const teams = v3.current?.teams ?? [];

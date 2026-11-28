@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseV3Team } from "../../../src/services/migrate/parse-v3-team.js";
+import { parseV3Team, validateV3Team } from "../../../src/services/migrate/parse-v3-team.js";
 
 const V3_TEAM = {
   teamName: "squam fam",
@@ -168,5 +168,27 @@ describe("parseV3Team", () => {
     const result = parseV3Team(v3);
 
     expect(result.members).toEqual(["563354282741727269", "261269804801982465"]);
+  });
+});
+
+describe("validateV3Team", () => {
+  it("returns empty array for complete team", () => {
+    expect(validateV3Team(V3_TEAM)).toEqual([]);
+  });
+
+  it("flags missing roleId", () => {
+    const v3 = { ...V3_TEAM, roles: { teamRole: {} } };
+    const warnings = validateV3Team(v3);
+    expect(warnings).toContain("roleId missing");
+  });
+
+  it("flags all missing fields at once", () => {
+    const warnings = validateV3Team({});
+    expect(warnings).toContain("name missing");
+    expect(warnings).toContain("captain missing");
+    expect(warnings).toContain("roleId missing");
+    expect(warnings).toContain("textChannelId missing");
+    expect(warnings).toContain("voiceChannelId missing");
+    expect(warnings).toContain("color missing");
   });
 });

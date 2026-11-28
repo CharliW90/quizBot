@@ -22,6 +22,17 @@ export interface V3Team {
   [key: string]: unknown;
 }
 
+export function validateV3Team(v3: V3Team): string[] {
+  const warnings: string[] = [];
+  if (!v3.teamName) warnings.push("name missing");
+  if (!v3.captain?.userId) warnings.push("captain missing");
+  if (!v3.roles?.teamRole?.id) warnings.push("roleId missing");
+  if (!v3.channels?.textChannel?.id) warnings.push("textChannelId missing");
+  if (!v3.channels?.voiceChannel?.id) warnings.push("voiceChannelId missing");
+  if (v3.settledColour == null) warnings.push("color missing");
+  return warnings;
+}
+
 export function parseV3Team(v3: V3Team): Team {
   const captainId = v3.captain?.userId ?? "unknown";
   const memberIds = (v3.members ?? []).map((m) => m.userId ?? "unknown");
