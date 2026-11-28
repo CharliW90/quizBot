@@ -13,7 +13,7 @@ import type { Command } from "../bot/types.js";
 import { getDb } from "../integrations/firestore/client.js";
 import { getTeam } from "../integrations/firestore/teams.js";
 import { addMembers, removeMembers, promoteToCaptain } from "../services/team-members.js";
-import { errorEmbed } from "../utils/embeds.js";
+import { EMBED_AUTHOR, errorEmbed } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
 import { getQuizDate } from "../utils/quiz-date.js";
 
@@ -177,6 +177,7 @@ const command: Command = {
 
     // Confirmation embed
     const confirmEmbed = new EmbedBuilder()
+      .setAuthor(EMBED_AUTHOR)
       .setColor(teamRole.color)
       .setTitle("Team Amendment")
       .addFields(

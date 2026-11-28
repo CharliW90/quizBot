@@ -10,6 +10,8 @@ vi.mock("../../src/services/team-members.js", () => ({
 }));
 
 vi.mock("../../src/utils/embeds.js", () => ({
+  EMBED_AUTHOR: { name: "Virtual Quizzes", iconURL: "https://example.com/icon.png", url: "https://example.com" },
+  EMBED_IMAGES: { adminLeave: "https://example.com/gif.gif" },
   errorEmbed: vi.fn((title: string, desc: string) => ({
     data: { title, description: desc },
   })),
@@ -170,7 +172,7 @@ describe("/leave", () => {
 
     expect(interaction.deferReply).toHaveBeenCalled();
     const editCall = interaction.editReply.mock.calls[0][0];
-    expect(editCall.embeds[0].data.title).toBe("Wrong Command");
+    expect(editCall.embeds[0].data.title).toBe("Error 400: This is not the command you are looking for...");
   });
 
   it("shows error when user has no team role", async () => {

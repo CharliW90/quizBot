@@ -16,6 +16,7 @@ vi.mock("../../src/services/team-members.js", () => ({
 }));
 
 vi.mock("../../src/utils/embeds.js", () => ({
+  EMBED_AUTHOR: { name: "Virtual Quizzes", iconURL: "https://example.com/icon.png", url: "https://example.com" },
   errorEmbed: vi.fn((title: string, desc: string) => ({
     data: { title, description: desc },
   })),

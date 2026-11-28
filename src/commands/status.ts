@@ -9,6 +9,7 @@ import { getDb } from "../integrations/firestore/client.js";
 import { createFormsClient } from "../integrations/forms/client.js";
 import { checkStatus, type StatusResult } from "../services/check-status.js";
 import { EmbedBuilder } from "discord.js";
+import { EMBED_AUTHOR } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
 
 const REQUIRED_PERMISSIONS = ["ManageChannels", "ManageRoles"];
@@ -51,7 +52,9 @@ function formatResult(result: StatusResult): EmbedBuilder {
   lines.push(statusLine("Uptime", true, result.uptime));
 
   return new EmbedBuilder()
+    .setAuthor(EMBED_AUTHOR)
     .setTitle("Bot Status")
+    .setThumbnail(EMBED_AUTHOR.iconURL)
     .setDescription(lines.join("\n"))
     .setColor(allHealthy ? 0x2ecc71 : 0xe74c3c);
 }

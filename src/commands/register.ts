@@ -17,7 +17,7 @@ import { lookupAlias } from "../integrations/firestore/aliases.js";
 import { validateTeamRegistration, type TeamValidationInput } from "../services/validate-team.js";
 import { registerTeam } from "../services/register-team.js";
 import { textifyTeamName } from "../utils/textify.js";
-import { errorEmbed } from "../utils/embeds.js";
+import { EMBED_AUTHOR, EMBED_IMAGES, errorEmbed } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
 import { getQuizDate } from "../utils/quiz-date.js";
 
@@ -197,6 +197,7 @@ const command: Command = {
 
     // Confirmation flow
     const confirmEmbed = new EmbedBuilder()
+      .setAuthor(EMBED_AUTHOR)
       .setColor(colour)
       .setTitle("Draft Quiz Team to Register")
       .addFields(
@@ -258,8 +259,10 @@ const command: Command = {
 
       // Public success message
       const successEmbed = new EmbedBuilder()
+        .setAuthor(EMBED_AUTHOR)
         .setColor(colour)
         .setTitle("Registration Successful")
+        .setImage(EMBED_IMAGES.banner)
         .addFields(
           {
             name: "Team Name",

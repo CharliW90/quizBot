@@ -12,7 +12,7 @@ import {
 import type { Command } from "../bot/types.js";
 import { getDb } from "../integrations/firestore/client.js";
 import { removeMembers } from "../services/team-members.js";
-import { errorEmbed } from "../utils/embeds.js";
+import { EMBED_AUTHOR, EMBED_IMAGES, errorEmbed } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
 import { getQuizDate } from "../utils/quiz-date.js";
 
@@ -40,9 +40,12 @@ const command: Command = {
 
     // Admins should use /delete-team instead
     if (member.permissions.has(PermissionFlagsBits.Administrator)) {
-      await interaction.editReply({
-        embeds: [errorEmbed("Wrong Command", "Admins should use `/delete-team` to manage teams.")],
-      });
+      const adminEmbed = new EmbedBuilder()
+        .setAuthor(EMBED_AUTHOR)
+        .setTitle("Error 400: This is not the command you are looking for...")
+        .setColor(0xe74c3c)
+        .setImage(EMBED_IMAGES.adminLeave);
+      await interaction.editReply({ embeds: [adminEmbed] });
       return;
     }
 
@@ -92,6 +95,7 @@ const command: Command = {
     const otherMembers = roleMembers.filter((m) => m.id !== member.id && m.id !== teamCaptain?.id);
 
     const confirmEmbed = new EmbedBuilder()
+      .setAuthor(EMBED_AUTHOR)
       .setColor(teamRole.color)
       .setTitle(`Leave ${teamRole.name}?`)
       .addFields(

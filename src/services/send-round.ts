@@ -7,6 +7,7 @@ import type { TeamResponse } from "../integrations/firestore/rounds.js";
 import { getAliases } from "../integrations/firestore/aliases.js";
 import { listTeams } from "../integrations/firestore/teams.js";
 import type { Team } from "../integrations/firestore/teams.js";
+import { EMBED_AUTHOR, EMBED_IMAGES, getMedalUrl } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
 
 export interface SendSuccess {
@@ -48,10 +49,16 @@ function buildTeamEmbed(
     return `${icon} Q${i + 1}: ${a.answer} (${a.score}pt${a.score !== 1 ? "s" : ""})`;
   });
 
+  const correctCount = response.answers.filter((a) => a.correct).length;
+  const medalUrl = getMedalUrl(correctCount, response.answers.length);
+
   return new EmbedBuilder()
-    .setTitle(`Round ${roundNumber} Results`)
+    .setAuthor({ name: `Virtual Quizzes - Round ${roundNumber}`, iconURL: EMBED_AUTHOR.iconURL, url: EMBED_AUTHOR.url })
+    .setTitle(teamName)
     .setDescription(lines.join("\n"))
     .addFields({ name: "Total Score", value: String(response.score), inline: true })
+    .setThumbnail(medalUrl)
+    .setImage(EMBED_IMAGES.banner)
     .setColor(parseInt(color.replace("#", ""), 16) || 0x7289da);
 }
 

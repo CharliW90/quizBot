@@ -11,7 +11,7 @@ import { getDb } from "../integrations/firestore/client.js";
 import { listRounds } from "../integrations/firestore/rounds.js";
 import { listQuizzes } from "../integrations/firestore/quiz.js";
 import { sendRound } from "../services/send-round.js";
-import { errorEmbed } from "../utils/embeds.js";
+import { EMBED_AUTHOR, EMBED_IMAGES, errorEmbed } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
 import { getQuizDate } from "../utils/quiz-date.js";
 
@@ -121,7 +121,9 @@ const command: Command = {
     );
 
     const embed = new EmbedBuilder()
-      .setTitle(`Round ${roundNumber} - Send Results`)
+      .setAuthor(EMBED_AUTHOR)
+      .setTitle(`Scorecards Sent for Round ${roundNumber}`)
+      .setThumbnail(EMBED_IMAGES.sent)
       .setColor(failures.length === 0 && missingTeams.length === 0 ? 0x2ecc71 : successes.length > 0 ? 0xf39c12 : 0xe74c3c);
 
     if (successes.length > 0) {

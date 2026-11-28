@@ -10,7 +10,7 @@ import type { Command } from "../bot/types.js";
 import { getDb } from "../integrations/firestore/client.js";
 import { listQuizzes } from "../integrations/firestore/quiz.js";
 import { generateScoreboard, type ScoreboardResult } from "../services/generate-scoreboard.js";
-import { errorEmbed } from "../utils/embeds.js";
+import { EMBED_AUTHOR, errorEmbed } from "../utils/embeds.js";
 import { logger } from "../utils/logger.js";
 import { getQuizDate } from "../utils/quiz-date.js";
 import type { ScoreboardEntry } from "../integrations/firestore/scoreboard.js";
@@ -30,7 +30,8 @@ function buildLeaderboardEmbed(
   const sorted = Object.entries(scoreboard).sort(([, a], [, b]) => b.total - a.total);
 
   const embed = new EmbedBuilder()
-    .setTitle(`Scoreboard - ${quizDate}`)
+    .setAuthor(EMBED_AUTHOR)
+    .setTitle(`Scoreboard - ${quizDate} :tada:`)
     .setColor(0xe511c7);
 
   let position = 1;
